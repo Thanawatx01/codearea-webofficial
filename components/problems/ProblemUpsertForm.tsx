@@ -18,6 +18,7 @@ import Swal from "sweetalert2";
 
 type ProblemDetailResponse = {
   category_id?: string | number | null;
+  categoryId?: string | number | null;
   code: string;
   title: string;
   category_name?: string | null;
@@ -117,6 +118,26 @@ const expectedComplexityOptions = [
   "O(N!)",
 ];
 
+function resolveCategoryIdForForm(
+  data: ProblemDetailResponse,
+  options: Select2Option[],
+): string {
+  const rawId = data.category_id ?? data.categoryId;
+  const idStr =
+    rawId === null || rawId === undefined ? "" : String(rawId).trim();
+  if (idStr && options.some((o) => o.value === idStr)) {
+    return idStr;
+  }
+  const name = data.category_name?.trim();
+  if (name) {
+    const byLabel = options.find(
+      (o) => o.label.toLowerCase() === name.toLowerCase(),
+    );
+    if (byLabel) return byLabel.value;
+  }
+  return idStr;
+}
+
 export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
   const router = useRouter();
   const isEditMode = Boolean(code);
@@ -169,10 +190,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
           status: item.status !== false,
         })) ?? initialFormState.test_cases;
       setFormData({
-        category_id:
-          data.category_id === null || data.category_id === undefined
-            ? ""
-            : String(data.category_id),
+        category_id: resolveCategoryIdForForm(data, categoryOptions),
         title: data.title ?? "",
         description: data.description ?? "",
         constraints: data.constraints ?? "",
@@ -445,10 +463,10 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                 </div>
                 <input
                   ref={fileInputRef}
+                  name="pdf_file"
                   type="file"
                   accept="application/pdf,.pdf"
                   className="hidden"
-                  required
                   onChange={(e) =>
                     handlePickedFile(e.target.files?.[0] ?? null)
                   }
