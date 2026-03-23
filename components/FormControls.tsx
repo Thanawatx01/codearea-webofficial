@@ -2,6 +2,7 @@
 
 import { Icon } from "@/components/icons/Icon";
 import {
+  useId,
   forwardRef,
   type InputHTMLAttributes,
   type ReactNode,
@@ -211,6 +212,7 @@ export function ThemedSelect2({
   size = "default",
 }: ThemedSelect2Props) {
   const isSmall = size === "sm";
+  const instanceId = useId();
   const controlStyles: StylesConfig<
     Select2Option,
     false,
@@ -236,10 +238,8 @@ export function ThemedSelect2({
     <div className="space-y-2">
       {renderLabel(label, required)}
       <Select<Select2Option, false>
-        menuPortalTarget={
-          typeof window !== "undefined" ? document.body : undefined
-        }
-        menuPosition="fixed"
+        instanceId={instanceId}
+        inputId={`${instanceId}-input`}
         value={value}
         options={options}
         onChange={(option) => onChange(option)}
@@ -274,6 +274,7 @@ export function ThemedMultiSelect2({
   size = "default",
 }: ThemedMultiSelect2Props) {
   const isSmall = size === "sm";
+  const instanceId = useId();
   const controlStyles: StylesConfig<
     Select2Option,
     true,
@@ -312,10 +313,8 @@ export function ThemedMultiSelect2({
       {renderLabel(label, required)}
       <Select<Select2Option, true>
         isMulti
-        menuPortalTarget={
-          typeof window !== "undefined" ? document.body : undefined
-        }
-        menuPosition="fixed"
+        instanceId={instanceId}
+        inputId={`${instanceId}-input`}
         value={value}
         options={options}
         onChange={(option) => onChange([...option])}
@@ -350,10 +349,14 @@ export function ThemedAsyncSelect2({
   isClearable = true,
   isDisabled = false,
 }: ThemedAsyncSelect2Props) {
+  const instanceId = useId();
+
   return (
     <div className="space-y-2">
       {renderLabel(label, required)}
       <AsyncSelect<Select2Option, false>
+        instanceId={instanceId}
+        inputId={`${instanceId}-input`}
         cacheOptions
         defaultOptions={defaultOptions}
         value={value}

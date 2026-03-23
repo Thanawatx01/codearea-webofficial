@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 
 interface HeaderProps {
   title: string;
@@ -9,8 +9,7 @@ interface HeaderProps {
 }
 
 export default function Header({ title, icon }: HeaderProps) {
-  const [displayName] = useState(() => {
-    if (typeof window === "undefined") return "ผู้ใช้งาน";
+  const getClientDisplayName = () => {
     try {
       const userRaw = window.localStorage.getItem("user");
       if (!userRaw) return "ผู้ใช้งาน";
@@ -20,7 +19,13 @@ export default function Header({ title, icon }: HeaderProps) {
     } catch {
       return "ผู้ใช้งาน";
     }
-  });
+  };
+
+  const displayName = useSyncExternalStore(
+    () => () => {},
+    getClientDisplayName,
+    () => "ผู้ใช้งาน",
+  );
 
   const avatarText = useMemo(() => {
     const trimmed = displayName.trim();

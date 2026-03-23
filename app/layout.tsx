@@ -19,8 +19,7 @@ const notoSansThai = Noto_Sans_Thai({
 const appName =
   process.env.app_name ?? process.env.NEXT_PUBLIC_APP_NAME ?? "CodeArea";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-const description =
-  `${appName} คือแพลตฟอร์มฝึกทักษะการเขียนโปรแกรมแนว LeetCode สำหรับผู้เรียนและผู้เตรียมสัมภาษณ์งาน พร้อมระบบหลังบ้านสำหรับบริหารโจทย์ แท็ก ประเภท สถิติ และข้อมูลผู้ใช้งานอย่างเป็นระบบ`;
+const description = `${appName} คือแพลตฟอร์มฝึกทักษะการเขียนโปรแกรมแนว LeetCode สำหรับผู้เรียนและผู้เตรียมสัมภาษณ์งาน พร้อมระบบหลังบ้านสำหรับบริหารโจทย์ แท็ก ประเภท สถิติ และข้อมูลผู้ใช้งานอย่างเป็นระบบ`;
 const keywords = [
   "CodeArea",
   "competitive programming",

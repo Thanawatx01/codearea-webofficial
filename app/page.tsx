@@ -58,7 +58,7 @@ export default function Home() {
 
             <p className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 fill-mode-both">
               Master algorithms, prepare for interviews, and level up your
-              career with the world's most advanced coding ecosystem.
+              career with the world&apos;s most advanced coding ecosystem.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300 fill-mode-both">
