@@ -20,8 +20,8 @@ interface LoginResponse {
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: "admin@codearea.app",
+    password: "1234567890",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");

@@ -397,6 +397,36 @@ export function SvgSprite() {
           strokeLinejoin="round"
         />
       </symbol>
+
+      <symbol id="icon-logout" viewBox="0 0 24 24">
+        <path
+          d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <polyline
+          points="16 17 21 12 16 7"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <line
+          x1="21"
+          y1="12"
+          x2="9"
+          y2="12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </symbol>
     </svg>
   );
 }

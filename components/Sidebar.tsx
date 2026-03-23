@@ -3,7 +3,7 @@
 import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface MenuItem {
   label: string;
@@ -72,6 +72,19 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    document.cookie =
+      "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
+    document.cookie =
+      "role_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
+    document.cookie =
+      "display_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
+    router.replace("/login");
+  };
 
   return (
     <aside
@@ -155,6 +168,28 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </div>
         ))}
       </nav>
+
+      <div className={`border-t border-white/10 ${collapsed ? "p-2" : "p-3"}`}>
+        <button
+          type="button"
+          onClick={handleLogout}
+          title="ออกจากระบบ"
+          className={`w-full rounded-lg border border-red-500/20 bg-red-500/10 text-sm font-semibold text-red-400 transition-colors hover:bg-red-500/20 ${
+            collapsed ? "px-2 py-2.5" : "px-3 py-2.5"
+          } ${collapsed ? "text-center" : "text-left"}`}
+        >
+          {collapsed ? (
+            <Icon name="logout" className="h-5 w-5" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <Icon name="logout" className="h-5 w-5" />
+              <span className="text-sm font-semibold text-red-400">
+                ออกจากระบบ
+              </span>
+            </div>
+          )}
+        </button>
+      </div>
     </aside>
   );
 }
