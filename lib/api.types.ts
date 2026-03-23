@@ -8,6 +8,8 @@ export interface ApiRequestOptions extends Omit<RequestInit, "method" | "body"> 
   body?: Record<string, unknown> | FormData | string | null;
   params?: Record<string, string | number | boolean | undefined>;
   timeout?: number;
+  useToken?: boolean;
+  token?: string;
 }
 
 export interface ApiResponse<T = unknown> {

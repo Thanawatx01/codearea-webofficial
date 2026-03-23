@@ -12,10 +12,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@uiw/react-md-editor": "^4.0.11",
     "monaco-editor": "^0.55.1",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-select": "^5.10.2",
+    "recharts": "^3.8.0",
     "sweetalert2": "^11.26.21"
   },
   "devDependencies": {

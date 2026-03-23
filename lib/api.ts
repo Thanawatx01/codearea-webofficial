@@ -32,6 +32,8 @@ export async function callApi<T = unknown>(
     body,
     params,
     timeout = config.apiTimeout,
+    useToken = false,
+    token: tokenOverride,
     headers: customHeaders = {},
     ...rest
   } = options;
@@ -47,6 +49,18 @@ export async function callApi<T = unknown>(
     "Content-Type": "application/json",
     ...customHeaders,
   };
+
+  if (useToken) {
+    const tokenFromStorage =
+      typeof window !== "undefined" ? window.localStorage.getItem("token") : null;
+    const authToken = tokenOverride ?? tokenFromStorage;
+    if (
+      authToken &&
+      !(headers as Record<string, string>).Authorization
+    ) {
+      (headers as Record<string, string>).Authorization = `Bearer ${authToken}`;
+    }
+  }
 
   if (body instanceof FormData) {
     delete (headers as Record<string, string>)["Content-Type"];
