@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { api } from "@/lib/api";
-import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { ThemedInput } from "@/components/FormControls";
+import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
+import { api } from "@/lib/api";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface RegisterResponse {
   token?: string;
@@ -90,7 +90,9 @@ export default function RegisterPage() {
           <CodeAreaLogo iconClassName="h-12 w-12" />
         </div>
 
-        <h2 className="mb-2 text-center text-3xl font-bold text-white">Create Account</h2>
+        <h2 className="mb-2 text-center text-3xl font-bold text-white">
+          Create Account
+        </h2>
         <p className="mb-10 text-center text-sm text-white/40">
           Register your CodeArea account
         </p>
@@ -104,6 +106,7 @@ export default function RegisterPage() {
             onChange={handleInputChange}
             required
             placeholder="admin@codearea.app"
+            className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
           />
 
           <ThemedInput
@@ -114,6 +117,7 @@ export default function RegisterPage() {
             onChange={handleInputChange}
             required
             placeholder="pupha"
+            className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
           />
 
           <ThemedInput
@@ -125,6 +129,7 @@ export default function RegisterPage() {
             required
             minLength={8}
             placeholder="••••••••"
+            className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
             rightSlot={
               <button
                 type="button"
@@ -132,7 +137,10 @@ export default function RegisterPage() {
                 className="text-white/60 hover:text-white"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                <Icon name={showPassword ? "eye-off" : "eye"} className="h-[18px] w-[18px]" />
+                <Icon
+                  name={showPassword ? "eye-off" : "eye"}
+                  className="h-[18px] w-[18px]"
+                />
               </button>
             }
           />
@@ -146,14 +154,22 @@ export default function RegisterPage() {
             required
             minLength={8}
             placeholder="••••••••"
+            className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
             rightSlot={
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword((prev) => !prev)}
                 className="text-white/60 hover:text-white"
-                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                aria-label={
+                  showConfirmPassword
+                    ? "Hide confirm password"
+                    : "Show confirm password"
+                }
               >
-                <Icon name={showConfirmPassword ? "eye-off" : "eye"} className="h-[18px] w-[18px]" />
+                <Icon
+                  name={showConfirmPassword ? "eye-off" : "eye"}
+                  className="h-[18px] w-[18px]"
+                />
               </button>
             }
           />
@@ -174,7 +190,10 @@ export default function RegisterPage() {
         <div className="mt-10 border-t border-white/5 pt-8 text-center">
           <p className="text-sm text-white/40">
             Already have an account?{" "}
-            <Link href="/login" className="font-bold text-primary hover:underline">
+            <Link
+              href="/login"
+              className="font-bold text-primary hover:underline"
+            >
               Log in
             </Link>
           </p>

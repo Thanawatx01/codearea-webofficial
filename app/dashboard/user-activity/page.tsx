@@ -1,6 +1,7 @@
 "use client";
 
 import Header from "@/components/Header";
+import type { DataTableColumn, DataTableHeader } from "@/components/DataTable";
 import FilterSection from "@/components/FilterSection";
 import DataTable from "@/components/DataTable";
 import ActivityChart from "@/components/ActivityChart";
@@ -11,6 +12,15 @@ const ActivityIcon = () => (
   </svg>
 );
 
+type UserActivityRow = {
+  id: string;
+};
+
+const headers: DataTableHeader[] = [{ key: "empty", label: "ข้อมูลกิจกรรมผู้ใช้" }];
+const columns: DataTableColumn<UserActivityRow>[] = [
+  { key: "empty", render: () => "-" },
+];
+
 export default function UserActivityPage() {
   return (
     <>
@@ -18,7 +28,13 @@ export default function UserActivityPage() {
 
       <main className="flex-1 p-6 space-y-5 overflow-y-auto">
         <FilterSection />
-        <DataTable />
+        <DataTable
+          headers={headers}
+          columns={columns}
+          rows={[]}
+          rowKey={(row) => row.id}
+          emptyMessage="ยังไม่มีข้อมูลกิจกรรม"
+        />
         <ActivityChart />
       </main>
     </>
