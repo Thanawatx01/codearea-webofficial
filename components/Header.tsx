@@ -33,7 +33,7 @@ export default function Header({ title, icon }: HeaderProps) {
   }, [displayName]);
 
   return (
-    <header className="flex items-center justify-between h-16 px-6 bg-background/60 backdrop-blur-md border-b border-white/5 shrink-0 sticky top-0 z-30">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-linear-to-r from-black/65 via-violet-950/35 to-blue-950/35 px-6 backdrop-blur-md">
       {/* Page Title */}
       <div className="flex items-center gap-2.5">
         {icon && <span className="text-primary">{icon}</span>}

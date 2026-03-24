@@ -88,7 +88,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   return (
     <aside
-      className={`fixed left-0 top-0 bottom-0 z-40 flex flex-col bg-sidebar-bg border-r border-border overflow-y-auto transition-[width] duration-200 ${
+      className={`fixed bottom-0 left-0 top-0 z-40 flex flex-col overflow-y-auto border-r border-white/10 bg-linear-to-b from-[#05060d]/95 via-[#090b16]/95 to-[#081225]/95 backdrop-blur-md transition-[width] duration-200 ${
         collapsed ? "w-[84px]" : "w-[260px]"
       }`}
     >
@@ -175,8 +175,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           onClick={handleLogout}
           title="ออกจากระบบ"
           className={`w-full rounded-lg border border-red-500/20 bg-red-500/10 text-sm font-semibold text-red-400 transition-colors hover:bg-red-500/20 ${
-            collapsed ? "px-2 py-2.5" : "px-3 py-2.5"
-          } ${collapsed ? "text-center" : "text-left"}`}
+            collapsed
+              ? "flex items-center justify-center px-2 py-2.5"
+              : "px-3 py-2.5 text-left"
+          }`}
         >
           {collapsed ? (
             <Icon name="logout" className="h-5 w-5" />

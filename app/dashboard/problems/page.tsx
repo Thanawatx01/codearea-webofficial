@@ -148,31 +148,33 @@ export default function ProblemsPage() {
         title="โจทย์"
         icon={<Icon name="problem" className="h-5 w-5" />}
       />
-      <main className="w-full min-w-0 flex-1 space-y-5 overflow-y-auto p-6">
-        <ProblemsFilterForm
-          categoryId={categoryId}
-          search={search}
-          difficulty={difficulty}
-          tag={tag}
-          status={status}
-          onCategoryIdChange={setCategoryId}
-          onSearchChange={setSearch}
-          onDifficultyChange={setDifficulty}
-          onTagChange={setTag}
-          onStatusChange={setStatus}
-          onSubmit={() => void fetchQuestions(1)}
-        />
-        <ProblemsTable
-          rows={rows}
-          total={total}
-          isLoading={isLoading}
-          errorMessage={errorMessage}
-          page={page}
-          totalPages={totalPages}
-          onPageChange={(nextPage) => void fetchQuestions(nextPage)}
-          onDelete={(code) => void handleDelete(code)}
-          onActivate={(code) => void handleActivate(code)}
-        />
+      <main className="w-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-6 pb-8 pt-6">
+        <div className="mx-auto flex w-full max-w-[1700px] flex-col gap-5">
+          <ProblemsFilterForm
+            categoryId={categoryId}
+            search={search}
+            difficulty={difficulty}
+            tag={tag}
+            status={status}
+            onCategoryIdChange={setCategoryId}
+            onSearchChange={setSearch}
+            onDifficultyChange={setDifficulty}
+            onTagChange={setTag}
+            onStatusChange={setStatus}
+            onSubmit={() => void fetchQuestions(1)}
+          />
+          <ProblemsTable
+            rows={rows}
+            total={total}
+            isLoading={isLoading}
+            errorMessage={errorMessage}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={(nextPage) => void fetchQuestions(nextPage)}
+            onDelete={(code) => void handleDelete(code)}
+            onActivate={(code) => void handleActivate(code)}
+          />
+        </div>
       </main>
     </>
   );
