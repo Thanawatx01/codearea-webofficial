@@ -11,11 +11,12 @@ frontend/
 │   ├── questions/        # หน้าจัดรายการโจทย์และหน้าทำโจทย์
 │   └── globals.css       # สไตล์ส่วนกลาง (Tailwind v4)
 ├── components/           # คอมโพเนนต์ที่นำมาใช้ซ้ำได้
-│   ├── editor/           # การเชื่อมต่อ Monaco Editor
+│   ├── editor/           # ทุกส่วนประกอบที่เกี่ยวกับ Editor (Monaco, Markdown, Executor)
 │   ├── layout/           # ส่วนประกอบหลัก (Navbar, Footer, Sidebar)
 │   └── ui/               # องค์ประกอบพื้นฐาน (Buttons, Cards, Modals)
 ├── lib/                  # ห้องสมุดและเครื่องมือช่วย
 │   ├── api.ts            # การเชื่อมต่อกับ Backend API
+│   ├── judge0.ts         # การจัดการ Code Execution
 │   └── utils.ts          # ฟังก์ชันช่วยเหลือทั่วไป
 ├── public/               # ไฟล์รูปภาพและสื่อต่างๆ
 ├── .env.example          # แม่แบบไฟล์ตั้งค่าตัวแปรสภาพแวดล้อม

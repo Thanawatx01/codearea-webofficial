@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import CodeEditor from "../CodeEditor/CodeEditor";
+import CodeEditor from "./CodeEditor";
 import { executeCode, JUDGE0_LANGUAGES, SubmissionResult } from "@/lib/judge0";
 
 interface CodeExecutorProps {
