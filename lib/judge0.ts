@@ -61,20 +61,35 @@ const JUDGE0_BASE_URL = process.env.NEXT_PUBLIC_JUDGE0_URL || "http://localhost:
  */
 export async function submitCode(request: SubmissionRequest): Promise<SubmissionResponse> {
   try {
+    // Strictly pick only supported fields for Judge0 API
+    const payload = {
+      source_code: request.source_code,
+      language_id: request.language_id,
+      stdin: request.stdin,
+      expected_output: request.expected_output,
+      cpu_time_limit: request.cpu_time_limit,
+      memory_limit: request.memory_limit,
+      enable_per_process_and_thread_time_limit: false,
+      enable_per_process_and_thread_memory_limit: false,
+    };
+
     const response = await fetch(`${JUDGE0_BASE_URL}/submissions?base64_encoded=false&wait=false`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        enable_per_process_and_thread_time_limit: false,
-        enable_per_process_and_thread_memory_limit: false,
-        ...request,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to submit code to Judge0: ${response.statusText}`);
+      let errorDetail = "";
+      try {
+        const errorData = await response.json();
+        errorDetail = errorData.error || errorData.message || JSON.stringify(errorData);
+      } catch {
+        errorDetail = response.statusText;
+      }
+      throw new Error(`Failed to submit code: ${errorDetail}`);
     }
 
     return response.json();
