@@ -1,100 +1,83 @@
-# CodeArea — แพลตฟอร์มโจทย์โปรแกรมมิ่ง
+# CodeArea — Frontend (Official Web)
 
-เว็บแอปพลิเคชันสำหรับฝึกฝนการเขียนโค้ดและแก้โจทย์โปรแกรมมิ่ง คล้าย [LeetCode](https://leetcode.com) รองรับการทำโจทย์หลายภาษา การรันเทสเคสอัตโนมัติ และฟีเจอร์ **AI Feedback** สำหรับวิเคราะห์และให้คำแนะนำจากผลการส่งคำตอบ
+เว็บแอปพลิเคชันส่วนหน้าสำหรับ CodeArea แพลตฟอร์มฝึกฝนการเขียนโค้ด พัฒนาด้วย Next.js และ Tailwind CSS ออกแบบมาให้มีความทันสมัยและตอบสนองได้ดีเยี่ยม (Responsive)
 
----
+## 📂 Project Structure
 
-## คุณสมบัติหลัก
-
-- **โจทย์โปรแกรมมิ่ง** — โจทย์แบ่งตามหมวดหมู่ (category) และระดับความยาก (difficulty)
-- **แท็กและหมวดหมู่** — จัดกลุ่มโจทย์ด้วย tags และ categories (เช่น Arrays, Dynamic Programming)
-- **รันโค้ดและเทสเคส** — ส่งคำตอบแล้วรันกับ test cases อัตโนมัติ (time limit, memory limit)
-- **หลายภาษา** — รองรับหลายภาษาการเขียนโปรแกรม (compile/run ตาม config ของแต่ละภาษา)
-- **ประวัติการส่ง (Submissions)** — เก็บสถานะ รันไทม์ เมมโมรี และผลต่อเทสเคส
-- **AI Feedback** — ฟีดแบ็กจาก AI เกี่ยวกับประสิทธิภาพ ความอ่านง่าย หรือคำใบ้ correctness
-
----
-
-## สแต็กเทคโนโลยี
-
-| ส่วน | เทคโนโลยี |
-|------|------------|
-| Framework | [Next.js](https://nextjs.org) 16 (App Router) |
-| UI | [React](https://react.dev) 19, [Tailwind CSS](https://tailwindcss.com), [DaisyUI](https://daisyui.com) |
-| Code Editor | [Monaco Editor](https://microsoft.github.io/monaco-editor/) (ตัวแก้โค้ดแบบ VS Code) |
-| อื่นๆ | TypeScript, SweetAlert2 |
-
----
-
-## โครงสร้างข้อมูลหลัก (จาก ERD)
-
-- **users** — ผู้ใช้, บทบาท (role)
-- **questions** — โจทย์ (code, title, description, difficulty, time/memory limit, solution, status)
-- **question_categories** — หมวดหมู่โจทย์ (เช่น Arrays, DP)
-- **tags** — แท็ก (เช่น Recursion, Two Pointers)
-- **question_tag** — ความสัมพันธ์โจทย์–แท็ก (many-to-many)
-- **test_cases** — input/output, ลำดับ, ตัวอย่าง (is_simple)
-- **submissions** — การส่งคำตอบ (user, question, language, code, status, run_time, memory_used)
-- **submission_test_cases** — ผลรันต่อเทสเคส (output, error, runtime, memory, status)
-- **languages** — ภาษาที่รองรับ (compile_cmd, run_cmd)
-- **ai_feedback** — ฟีดแบ็กจาก AI ต่อ submission (feedback_type, feedback_content)
-
----
-
-## โครงสร้างโปรเจค
-
-```
-codearea-webofficial/
-├── app/
-│   ├── globals.css      # สไตล์ส่วนกลาง
-│   ├── layout.tsx       # layout หลัก
-│   └── page.tsx         # หน้าแรก
-├── public/              # สื่อและไฟล์สาธารณะ
-├── next.config.ts
-├── package.json
-├── postcss.config.mjs
-├── tailwind.config (via Tailwind v4)
-└── tsconfig.json
+```text
+frontend/
+├── app/                  # Next.js App Router (หน้าเว็บและ Layout)
+│   ├── (auth)/           # หน้าเข้าสู่ระบบและสมัครสมาชิก
+│   ├── questions/        # หน้าจัดรายการโจทย์และหน้าทำโจทย์
+│   └── globals.css       # สไตล์ส่วนกลาง (Tailwind v4)
+├── components/           # คอมโพเนนต์ที่นำมาใช้ซ้ำได้
+│   ├── editor/           # การเชื่อมต่อ Monaco Editor
+│   ├── layout/           # ส่วนประกอบหลัก (Navbar, Footer, Sidebar)
+│   └── ui/               # องค์ประกอบพื้นฐาน (Buttons, Cards, Modals)
+├── lib/                  # ห้องสมุดและเครื่องมือช่วย
+│   ├── api.ts            # การเชื่อมต่อกับ Backend API
+│   └── utils.ts          # ฟังก์ชันช่วยเหลือทั่วไป
+├── public/               # ไฟล์รูปภาพและสื่อต่างๆ
+├── .env.example          # แม่แบบไฟล์ตั้งค่าตัวแปรสภาพแวดล้อม
+├── next.config.ts        # การตั้งค่า Next.js
+└── package.json          # รายการไลบรารีและคำสั่งรันระบบ
 ```
 
----
+## 🛠️ Requirements
 
-## วิธีรันโปรเจค
-
-### ความต้องการของระบบ
-
-- [Node.js](https://nodejs.org) (แนะนำ v20+)
-- npm หรือ package manager อื่นที่รองรับ
-
-### ติดตั้งและรัน
-
-```bash
-# โคลน repo (ถ้ายังไม่ได้โคลน)
-git clone <repository-url>
-cd codearea-webofficial
-
-# ติดตั้ง dependencies
-npm install
-
-# รันโหมดพัฒนา
-npm run dev
-```
-
-เปิดเบราว์เซอร์ที่ [http://localhost:3000](http://localhost:3000)
-
-### สคริปต์ที่มี
-
-| คำสั่ง | คำอธิบาย |
-|--------|----------|
-| `npm run dev` | รันเซิร์ฟเวอร์พัฒนา (hot reload) |
-| `npm run build` | บิลด์สำหรับ production |
-| `npm run start` | รันเซิร์ฟเวอร์หลัง build แล้ว |
-| `npm run lint` | ตรวจโค้ดด้วย ESLint |
+| Requirement | Badge | Description |
+| :--- | :--- | :--- |
+| **Next.js** | ![NextJS](https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white) | Framework หลัก (v16 App Router) |
+| **React** | ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) | UI Library (v19) |
+| **Tailwind** | ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) | ระบบกำหนดสไตล์ (v4) |
+| **Monaco** | ![Monaco Editor](https://img.shields.io/badge/Monaco%20Editor-0078d4?style=for-the-badge&logo=visual-studio-code&logoColor=white) | ตัวแก้ไขโค้ดระดับแนวหน้า (VS Code Engine) |
+| **DaisyUI** | ![DaisyUI](https://img.shields.io/badge/daisyui-5ad7ff?style=for-the-badge&logo=daisyui&logoColor=white) | Library สำหรับ UI Components |
+| **Node.js** | ![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white) | Runtime แนะนำ v18 ขึ้นไป |
 
 ---
 
-## การพัฒนาต่อ
+## 📖 Setup Guide
 
-- เชื่อมต่อกับฐานข้อมูล (ตาม ERD) สำหรับ users, questions, submissions ฯลฯ
-- พัฒนาหน้าโจทย์ หน้าเขียนโค้ด (Monaco) และระบบส่ง/รันเทสเคส
-- เชื่อมระบบ AI สำหรับ `ai_feedback` (performance, readability, correctness hint)
+ทำตามขั้นตอนด้านล่างเพื่อเริ่มรันโปรเจคในเครื่อง (Local Development):
+
+1.  **ติดตั้ง Dependencies**:
+    ```bash
+    npm install
+    ```
+
+2.  **ตั้งค่า Environment**:
+    คัดลอกไฟล์แม่แบบและตรวจสอบค่า URL ของ Backend:
+    ```bash
+    cp .env.example .env
+    ```
+    *หมายเหตุ: ตรวจสอบให้มั่นใจว่า `NEXT_PUBLIC_API_URL` ตรงกับพอร์ตที่ Backend รันอยู่*
+
+3.  **เริ่มต้นรันระบบ**:
+    ```bash
+    npm run dev
+    ```
+
+เปิดเบราว์เซอร์ที่ [http://localhost:3000](http://localhost:3000) (หรือพอร์ตอื่นๆ ที่ระบบแจ้ง)
+
+---
+
+## 📜 คำสั่งที่ใช้งานบ่อย (Available Scripts)
+
+- `npm run dev`: เริ่มต้นรันเซิร์ฟเวอร์ในโหมดพัฒนา (Hot Reload)
+- `npm run build`: จัดเตรียมแอปพลิเคชันสำหรับใช้งานจริง (Production)
+- `npm run start`: รันแแอปพลิเคชันที่ผ่านการ Build แล้ว
+- `npm run lint`: ตรวจสอบความถูกต้องและคุณภาพของโค้ดด้วย ESLint
+
+## 💻 Tech Stack
+<p align="left">
+  <a href="https://skillicons.dev">
+    <img src="https://skillicons.dev/icons?i=nextjs,react,tailwind,ts,nodejs,vscode,postman,docker" />
+  </a>
+</p>
+
+---
+
+## ✨ คุณสมบัติเด่น (Features)
+- 📝 **Monaco Editor Integration**: ![Badge](https://img.shields.io/badge/Monaco%20Editor-0078d4?style=flat-square&logo=visual-studio-code&logoColor=white) ใช้งาน Engine เดียวกับ VS Code
+- 💅 **Modern UI with DaisyUI**: ![Badge](https://img.shields.io/badge/daisyui-5ad7ff?style=flat-square&logo=daisyui&logoColor=white) สวยงาม รวดเร็ว และรองรับธีมที่หลากหลาย
+- ⚡ **Next.js App Router**: ![Badge](https://img.shields.io/badge/next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white) ระบบ Route ที่ทันสมัยและรองรับ Server Components
