@@ -19,6 +19,7 @@ import {
   loadQuestionCategoryOptionsForForm,
   loadTagOptionsForForm,
 } from "@/lib/questionTaxonomyApi";
+import CodeEditor from "../CodeEditor/CodeEditor";
 
 type ProblemDetailResponse = {
   category_id?: string | number | null;
@@ -680,26 +681,26 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                       </div>
 
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                        <ThemedTextarea
-                          label="INPUT DATA"
-                          value={testCase.input_data}
-                          onChange={(e) =>
-                            updateTestCase(index, "input_data", e.target.value)
-                          }
-                          rows={3}
-                          className="min-h-[90px] rounded-xl px-4 py-3"
-                          required
-                        />
-                        <ThemedTextarea
-                          label="OUTPUT DATA"
-                          value={testCase.output_data}
-                          onChange={(e) =>
-                            updateTestCase(index, "output_data", e.target.value)
-                          }
-                          rows={3}
-                          className="min-h-[90px] rounded-xl px-4 py-3"
-                          required
-                        />
+                        <div className="flex flex-col gap-2">
+                          <label className="text-xs font-bold uppercase text-white/50">INPUT DATA</label>
+                          <CodeEditor
+                            value={testCase.input_data}
+                            onChange={(value) => updateTestCase(index, "input_data", value)}
+                            height="150px"
+                            language="plaintext"
+                            className="rounded-xl border border-white/10"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-xs font-bold uppercase text-white/50">OUTPUT DATA</label>
+                          <CodeEditor
+                            value={testCase.output_data}
+                            onChange={(value) => updateTestCase(index, "output_data", value)}
+                            height="150px"
+                            language="plaintext"
+                            className="rounded-xl border border-white/10"
+                          />
+                        </div>
                       </div>
 
                       <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
