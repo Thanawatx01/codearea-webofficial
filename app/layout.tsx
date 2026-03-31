@@ -1,5 +1,6 @@
 import { SessionGuard } from "@/components/auth/SessionGuard";
 import { SvgSprite } from "@/components/icons/SvgSprite";
+import { LayoutWrapper } from "@/components/LayoutWrapper";
 import type { Metadata } from "next";
 import { Inter, Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
@@ -105,10 +106,10 @@ export default function RootLayout({
       lang="th"
       className={`${inter.variable} ${notoSansThai.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-black">
         <SvgSprite />
         <SessionGuard />
-        {children}
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );
