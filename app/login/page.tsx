@@ -1,7 +1,6 @@
 "use client";
 
 import { ThemedInput } from "@/components/FormControls";
-import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import { api } from "@/lib/api";
 import Link from "next/link";
@@ -65,19 +64,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0B0F] text-white flex items-center justify-center p-4 relative overflow-hidden font-sans">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/20 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none"></div>
-
-      {/* Tech Grid Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[30px_30px] pointer-events-none mask-[radial-gradient(ellipse_at_center,black,transparent_80%)]"></div>
-
-      <div className="w-full max-w-md bg-white/5 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/10 p-8 sm:p-12 relative z-10">
-        <div className="flex justify-center mb-8">
-          <CodeAreaLogo iconClassName="h-12 w-12" />
-        </div>
-
+    <div className="flex flex-1 items-center justify-center px-4 py-40 sm:py-10">
+      <div className="w-full max-w-md bg-white/5 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/10 p-8 sm:p-12 z-10">
         <h2 className="text-3xl font-bold text-white text-center mb-2">
           Welcome Back
         </h2>

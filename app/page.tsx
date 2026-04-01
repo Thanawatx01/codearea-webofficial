@@ -1,158 +1,237 @@
-import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
+import ScrollRevealSection from "@/components/home/ScrollRevealSection";
+import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
+
+const codeImage = "/asset/code.jpeg";
+const aiGuidanceImage = "/asset/ai_human.jpeg";
+
+type MissionDifficulty = "HARD" | "MEDIUM" | "EASY";
+
+const trendingMissions = [
+  {
+    title: "Recursive Vault Breach",
+    difficulty: "HARD" as MissionDifficulty,
+    description:
+      "Design memory-safe recursive exploitation with monitored performance.",
+    points: 500,
+    bgImage: codeImage,
+  },
+  {
+    title: "Neural Path Finder",
+    difficulty: "MEDIUM" as MissionDifficulty,
+    description: "Find optimal paths with heuristics in massive graphs.",
+    points: 300,
+    bgImage: codeImage,
+  },
+  {
+    title: "Binary Star Search",
+    difficulty: "EASY" as MissionDifficulty,
+    description:
+      "Mini-mize runtime for binary coordinate search over 1M nodes.",
+    points: 150,
+    bgImage: codeImage,
+  },
+];
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#0B0B0F] text-white relative overflow-hidden flex flex-col font-sans">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/20 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none"></div>
-      <div className="absolute top-[20%] right-[15%] w-32 h-32 bg-accent-purple/20 rounded-full blur-[60px] pointer-events-none animate-pulse"></div>
+    <main className="w-full flex flex-col items-center py-16 md:py-20 lg:py-24">
+      <div className="relative z-10 w-full px-4 sm:px-6 md:px-20 lg:px-40 xl:px-60 lg:space-y-45 sm:space-y-30">
+        <ScrollRevealSection className="text-center rounded-3xl p-8">
+          <p className="inline-flex items-center gap-2 mb-6 rounded-full border border-blue-400 px-4 py-1 text-xs font-semibold tracking-wide text-blue-400">
+            <Icon name="rocket" className="h-2 w-2 text-blue-400" />
+            SYSTEM VERSION 1.0.0 NOW LIVE
+          </p>
+          <h1 className="text-5xl sm:text-6xl md:text-7xl xl:text-8xl font-black leading-tight tracking-tight">
+            Welcome to Your{" "}
+            <span className="bg-linear-to-r from-cyan-300 via-blue-400 to-violet-400 bg-clip-text text-transparent">
+              Gateway
+            </span>{" "}
+            to the
+            <span className="text-white"> Future of Coding</span>
+          </h1>
+          <p className="mt-6 text-lg text-white/70 max-w-3xl mx-auto">
+            Elevate your engineering potential with AI-augmented environments,
+            hyper-realistic competitive arenas, and a global network of elite
+            architects.
+          </p>
 
-      {/* Tech Grid Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[40px_40px] pointer-events-none mask-[radial-gradient(ellipse_at_center,black,transparent_80%)]"></div>
+          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/register"
+              className="rounded-full bg-linear-to-r from-purple-500 to-indigo-500 px-8 py-3 text-sm font-semibold text-white shadow-[0_15px_30px_rgba(139,92,246,0.45)] transition hover:brightness-110"
+            >
+              Get Started Now
+            </Link>
+            <Link
+              href="/dashboard/problems"
+              className="rounded-full border border-white/20 bg-white/10 px-8 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+            >
+              Enter Dashboard
+            </Link>
+          </div>
+        </ScrollRevealSection>
 
-      {/* Navigation */}
-      <nav className="relative z-10 w-full max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <CodeAreaLogo
-          showText
-          iconClassName="h-8 w-8"
-          textClassName="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-white/60"
-        />
+        <ScrollRevealSection className="mt-14 grid gap-6 lg:grid-cols-3 rounded-3xl ">
+          {/* Real-Time AI Guidance - 2/3 width */}
+          <article className="lg:col-span-2 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5 shadow-[0_15px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-6">
+            <div className="grid items-stretch gap-5 md:grid-cols-2">
+              <div className="flex flex-col justify-center">
+                <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-500/20 text-primary">
+                  <Icon name="feature-1" className="h-5 w-5" />
+                </div>
+                <h3 className="mb-2 text-2xl font-semibold sm:text-3xl">
+                  Real-Time AI Guidance
+                </h3>
+                <p className="text-base text-white/70 sm:text-lg">
+                  Our neural co-pilot analyzes your code path and offers
+                  insights without spoiling the solution.
+                </p>
+              </div>
+              <div
+                className="min-h-[220px] rounded-2xl bg-cover bg-center md:min-h-[280px]"
+                style={{ backgroundImage: `url(${aiGuidanceImage})` }}
+              />
+            </div>
+          </article>
 
-        <div className="flex items-center gap-4">
-          <Link
-            href="/login"
-            className="h-10 px-6 inline-flex items-center justify-center bg-white/5 border border-white/10 text-sm font-medium rounded-full hover:bg-white/10 transition-all backdrop-blur-sm"
-          >
-            Log in
-          </Link>
+          {/* Algorithm Practice - 1/3 width */}
+          <article className="lg:col-span-1 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_15px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+            <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-500/20 text-primary">
+              <Icon name="feature-2" className="h-5 w-5" />
+            </div>
+            <h3 className="text-2xl font-semibold">Algorithm Practice</h3>
+            <p className="mt-2 text-lg text-white/70">
+              Solve curated challenge chains to build mastery in data structures
+              and optimization.
+            </p>
+          </article>
+
+          {/* Seamless Ecosystem - 1/3 width (bottom-left) */}
+          <article className="lg:col-span-1 rounded-3xl border py-12 border-white/10 bg-white/5 p-6 shadow-[0_15px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+            <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-500/20 text-primary">
+              <Icon name="feature-3" className="h-5 w-5" />
+            </div>
+            <h3 className="text-2xl font-semibold">Seamless Ecosystem</h3>
+            <p className="mt-2 text-lg text-white/70">
+              Integrate with GitHub, VS Code, and system APIs for professional
+              coding workflow.
+            </p>
+          </article>
+
+          {/* Enterprise-Grade Sandboxing - 2/3 width bottom-right */}
+          <article className="lg:col-span-2 grid grid-cols-1 gap-4 rounded-3xl border border-white/10 bg-[#0a0f1f]/80 p-5 shadow-[0_12px_30px_rgba(0,0,0,0.4)] sm:p-6 md:grid-cols-5">
+            <div className="md:col-span-3">
+              <p className="text-2xl text-white/70">
+                Enterprise-Grade Sandboxing
+              </p>
+              <h3 className="mt-2 text-lg font-semibold">
+                Isolated runtimes, 40+ languages, secure kernel mode.
+              </h3>
+              <p className="mt-3 text-sm text-white/70">
+                Trusted by top dev teams for safe and scalable evaluation.
+              </p>
+              <div className="mt-4 text-xs text-white/50">
+                Rated 4.9 based on real-time cluster feedback
+              </div>
+            </div>
+            <div className="w-full max-w-[320px] justify-self-start rounded-2xl border border-cyan-300/15 bg-black p-3 shadow-[0_10px_30px_rgba(0,0,0,0.65)] md:col-span-2 md:justify-self-end">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-rose-400" />
+                <span className="h-3 w-3 rounded-full bg-cyan-400" />
+                <span className="h-3 w-3 rounded-full bg-indigo-300" />
+              </div>
+              <div className="font-mono text-sm leading-relaxed text-cyan-300/90 sm:text-base">
+                <p>$ docker run codearea-v4</p>
+                <p>&gt; Initializing kernel...</p>
+                <p>&gt; Network isolated.</p>
+                <p>&gt; Ready.</p>
+              </div>
+            </div>
+          </article>
+        </ScrollRevealSection>
+
+        <ScrollRevealSection className="mt-16 rounded-3xl p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Trending Missions</h2>
+            <Link
+              href="/dashboard/problems"
+              className="text-sm text-primary hover:text-white"
+            >
+              View All Challenges
+            </Link>
+          </div>
+          <div className="mt-6 grid gap-5 md:grid-cols-3">
+            {trendingMissions.map((mission) => {
+              const difficultyColors = {
+                HARD: "text-red-600",
+                MEDIUM: "text-cyan-500",
+                EASY: "text-gray-500",
+              };
+              return (
+                <div
+                  key={mission.title}
+                  className="group rounded-3xl overflow-hidden shadow-[0_0px_100px_rgba(0,0,0,0.9),0_0_70px_rgba(255,255,255,0.3)] backdrop-blur-md"
+                >
+                  {/* Top Half - Image Section */}
+                  <div
+                    className="h-48 relative overflow-hidden"
+                    style={{
+                      backgroundImage: `url(${mission.bgImage})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  >
+                    {/* Dark overlay with binary pattern effect */}
+                    <div className="absolute inset-0 bg-linear-to-b from-slate-900/70 via-slate-900/50 to-slate-900/80 flex items-center justify-center opacity-80 group-hover:opacity-70 transition">
+                      <div className="text-center text-slate-600/50 text-xs font-mono tracking-wider">
+                        <div>0110 1001 0101</div>
+                        <div className="mt-1">101 010 11</div>
+                        <div className="mt-1">1001 0110</div>
+                      </div>
+                    </div>
+
+                    {/* Difficulty Badge */}
+                    <div className="absolute top-4 left-4">
+                      <span
+                        className={`inline-block text-xs uppercase tracking-widest font-bold px-3 py-1 rounded-full border ${difficultyColors[mission.difficulty]} border-opacity-40 bg-slate-900/40 backdrop-blur-sm`}
+                      >
+                        {mission.difficulty}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bottom Half - Content Section */}
+                  <div className="p-6 bg-slate-950/60 backdrop-blur-sm">
+                    <h3 className="text-lg font-bold text-white uppercase tracking-wide leading-tight">
+                      {mission.title}
+                    </h3>
+                    <p className="mt-3 text-sm text-white/70 leading-relaxed">
+                      {mission.description}
+                    </p>
+                    <div className="mt-4 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs text-white shadow-sm shadow-white/30 hover:border-white/40 hover:bg-white/10 hover:shadow-[0_0_16px_rgba(255,255,255,0.35)]">
+                      <span>{mission.points} pts</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollRevealSection>
+
+        <ScrollRevealSection className="mt-16 rounded-3xl py-12 border border-white/10 bg-linear-to-r from-violet-900/20 via-blue-950/15 to-sky-900/20 p-8 text-center">
+          <h2 className="text-2xl font-bold">Ready to Rewrite Your Limits?</h2>
+          <p className="mt-2 text-white/70">
+            Join 10k+ developers pushing the boundaries of what&apos;s possible.
+          </p>
           <Link
             href="/register"
-            className="h-10 px-6 inline-flex items-center justify-center bg-primary text-white text-sm font-medium rounded-full hover:bg-primary-hover transition-all shadow-[0_0_20px_rgba(139,92,246,0.4)]"
+            className="mt-5 inline-flex items-center justify-center rounded-full bg-linear-to-r from-purple-500 to-indigo-500 px-8 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(139,92,246,0.45)] hover:brightness-110 transition"
           >
-            Get Started Now
+            Create Your Free Account
           </Link>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <main className="flex-1 flex flex-col relative z-10 w-full">
-        {/* Full-height Hero Container */}
-        <div
-          className="w-full flex flex-col items-center justify-center px-6"
-          style={{ minHeight: "calc(100vh - 80px)" }}
-        >
-          <div className="max-w-4xl mx-auto text-center space-y-8">
-            <h1 className="text-5xl md:text-8xl font-bold tracking-tight leading-[1.05] animate-in fade-in slide-in-from-bottom-6 duration-700">
-              Welcome to Your{" "}
-              <span className="bg-clip-text text-transparent bg-linear-to-b from-white to-white/40">
-                Gateway
-              </span>
-              <br />
-              to the{" "}
-              <span className="text-primary drop-shadow-[0_0_15px_rgba(139,92,246,0.5)]">
-                Future of Coding
-              </span>
-            </h1>
-
-            <p className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 fill-mode-both">
-              Master algorithms, prepare for interviews, and level up your
-              career with the world&apos;s most advanced coding ecosystem.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300 fill-mode-both">
-              <Link
-                href="/register"
-                className="h-14 px-10 inline-flex items-center justify-center bg-primary text-white text-base font-semibold rounded-full hover:bg-primary-hover transition-all shadow-[0_0_30px_rgba(139,92,246,0.5)] hover:scale-105 active:scale-95"
-              >
-                Get Started Now
-              </Link>
-              <Link
-                href="/dashboard/problems"
-                className="h-14 px-10 inline-flex items-center justify-center bg-white/5 border border-white/10 text-white text-base font-semibold rounded-full hover:bg-white/10 transition-all backdrop-blur-md"
-              >
-                Enter Dashboard
-              </Link>
-            </div>
-
-            {/* Sub-hero glow element */}
-            <div className="w-full max-w-4xl h-[100px] md:h-[200px] bg-primary/20 rounded-[100%] blur-[100px] absolute -bottom-10 left-1/2 -translate-x-1/2 pointer-events-none opacity-40"></div>
-          </div>
-        </div>
-
-        {/* Features Preview - Modern Cards */}
-        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 px-6 pb-20 mt-12 md:mt-24 relative z-10">
-          {[
-            {
-              title: "Real-Time Tracking",
-              desc: "Stay informed about your progress with real-time analytics and performance metrics.",
-              icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6",
-            },
-            {
-              title: "AI-Powered Previews",
-              desc: "Get intelligent feedback and pattern analysis on your solutions using our advanced engine.",
-              icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0012 18.75c-1.03 0-1.9-.4-2.593-1.003L8.86 17.2z",
-            },
-            {
-              title: "Ecosystem Integration",
-              desc: "Connect with GitHub, VS Code, and other popular developer tools seamlessly.",
-              icon: "M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z",
-            },
-          ].map((feature) => (
-            <div
-              key={feature.title}
-              className="group p-8 rounded-4xl bg-white/5 border border-white/10 hover:border-primary/50 transition-all duration-300 backdrop-blur-xl relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6 shadow-inner">
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d={feature.icon}
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-white/40 leading-relaxed text-sm">
-                {feature.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </main>
-
-      <footer className="w-full py-12 px-6 flex flex-col md:flex-row items-center justify-between border-t border-white/5 relative z-10 bg-[#0B0B0F]">
-        <CodeAreaLogo
-          showText
-          className="mb-4 md:mb-0 flex items-center gap-2"
-          iconClassName="h-6 w-6"
-          textClassName="text-sm font-bold text-white/80"
-        />
-        <div className="flex gap-8 text-xs text-white/30">
-          <Link href="#" className="hover:text-white transition-colors">
-            Privacy Policy
-          </Link>
-          <Link href="#" className="hover:text-white transition-colors">
-            Terms of Use
-          </Link>
-          <Link href="#" className="hover:text-white transition-colors">
-            Cookie Settings
-          </Link>
-        </div>
-        <p className="text-[10px] text-white/20 mt-4 md:mt-0 uppercase tracking-widest font-medium">
-          &copy; {new Date().getFullYear()} CodeArea. Global Coding Standard.
-        </p>
-      </footer>
-    </div>
+        </ScrollRevealSection>
+      </div>
+    </main>
   );
 }
