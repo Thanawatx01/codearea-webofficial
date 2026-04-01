@@ -1,6 +1,7 @@
 "use client";
 
 import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
+import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -19,6 +20,7 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   const [displayName, setDisplayName] = useState("");
   const [avatarText, setAvatarText] = useState("U");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -76,6 +78,7 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
     localStorage.removeItem("user");
     setIsLoggedIn(false);
     setIsDropdownOpen(false);
+    setIsMobileMenuOpen(false);
     router.push("/");
   };
 
@@ -88,16 +91,42 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   const navLinks = links.length > 0 ? links : defaultLinks;
 
   return (
-    <nav className="sticky top-0 z-40 w-full bg-[#0B0B0F] border-b border-white/5 backdrop-blur-md">
+    <nav className="fixed inset-x-0 top-0 z-50 w-full bg-black/0">
       <div className="relative w-full max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex-shrink-0">
+        <Link href="/" className="shrink-0">
           <CodeAreaLogo
             showText
             iconClassName="h-8 w-8"
-            textClassName="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-white/60"
+            textClassName="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-white/60"
           />
         </Link>
+
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-white transition-colors hover:bg-white/10"
+          aria-label="Toggle navigation menu"
+          aria-expanded={isMobileMenuOpen}
+        >
+          <span className="relative h-4 w-5">
+            <span
+              className={`absolute left-0 top-0 h-0.5 w-5 rounded-full bg-current transition-all duration-300 ${
+                isMobileMenuOpen ? "top-[7px] rotate-45" : ""
+              }`}
+            />
+            <span
+              className={`absolute left-0 top-[7px] h-0.5 w-5 rounded-full bg-current transition-all duration-300 ${
+                isMobileMenuOpen ? "opacity-0" : "opacity-100"
+              }`}
+            />
+            <span
+              className={`absolute left-0 top-[14px] h-0.5 w-5 rounded-full bg-current transition-all duration-300 ${
+                isMobileMenuOpen ? "top-[7px] -rotate-45" : ""
+              }`}
+            />
+          </span>
+        </button>
 
         {/* Center Navigation Links */}
         <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
@@ -107,9 +136,13 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium transition-colors relative ${
-                  isActive ? "text-primary" : "text-white/60 hover:text-white"
-                } ${isActive ? "after:absolute after:bottom-[-8px] after:left-0 after:right-0 after:h-0.5 after:bg-primary" : ""}`}
+                className={`group relative text-sm font-medium transition-all duration-300 ${
+                  isActive ? "text-blue-400" : "text-white hover:text-blue-300"
+                } after:absolute after:bottom-[-8px] after:left-1/2 after:h-0.5 after:w-full after:-translate-x-1/2 after:rounded-full after:bg-blue-400 after:shadow-[0_0_10px_rgba(96,165,250,0.9)] after:transition-transform after:duration-300 after:ease-out ${
+                  isActive
+                    ? "after:scale-x-100"
+                    : "after:scale-x-0 group-hover:after:scale-x-100"
+                }`}
               >
                 {link.label}
               </Link>
@@ -118,7 +151,7 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-4">
           {!isLoggedIn ? (
             <>
               <Link
@@ -150,21 +183,12 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                   </p>
                 </div>
                 {/* Dropdown Icon */}
-                <svg
-                  className={`w-4 h-4 text-white/60 transition-transform ml-1 ${
+                <Icon
+                  name="chevron"
+                  className={`w-4 h-4 text-white transition-transform ml-1 ${
                     isDropdownOpen ? "rotate-180" : ""
                   }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                  />
-                </svg>
+                />
               </button>
 
               {/* Dropdown Menu */}
@@ -172,33 +196,87 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                 <div className="absolute right-0 mt-2 w-48 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <Link
                     href="/dashboard/settings"
-                    className="block px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-colors border-b border-white/5"
+                    className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white-400 transition-colors flex items-center gap-2"
                   >
-                    Settings
+                    <Icon name="gear" className="w-4 h-4" /> Settings
                   </Link>
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-red-400 transition-colors flex items-center gap-2"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
-                    </svg>
+                    <Icon name="logout" className="w-4 h-4" />
                     Logout
                   </button>
                 </div>
               )}
             </div>
           )}
+        </div>
+      </div>
+
+      <div
+        className={`md:hidden overflow-hidden border-t border-white/10 bg-[#0a0f1f]/95 backdrop-blur-md transition-all duration-300 ${
+          isMobileMenuOpen ? "max-h-[70vh] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-6 py-4">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={`mobile-${link.href}`}
+                href={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-blue-400/15 text-blue-300"
+                    : "text-white/80 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+
+          <div className="mt-2 border-t border-white/10 pt-3">
+            {!isLoggedIn ? (
+              <div className="flex flex-col gap-4">
+                <Link
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="h-10 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="h-10 px-6 inline-flex items-center justify-center bg-primary text-white text-sm font-medium rounded-full hover:bg-primary-hover transition-all shadow-[0_0_20px_rgba(139,92,246,0.4)]"
+                >
+                  Get Started
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <p className="px-1 text-xs text-white/50">
+                  Signed in as {displayName}
+                </p>
+                <Link
+                  href="/dashboard/settings"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="h-10 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10"
+                >
+                  Settings
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="h-10 rounded-full border border-red-400/30 bg-red-500/10 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/20"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>

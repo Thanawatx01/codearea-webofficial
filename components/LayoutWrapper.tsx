@@ -12,10 +12,10 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const isDashboard = pathname.startsWith("/dashboard");
 
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       {!isDashboard && <NavigationHeader />}
-      <main className="flex-1">{children}</main>
+      <main className="flex min-h-0 flex-1 flex-col">{children}</main>
       {!isDashboard && <Footer />}
-    </>
+    </div>
   );
 }

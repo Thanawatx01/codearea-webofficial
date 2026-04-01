@@ -1,7 +1,6 @@
 "use client";
 
 import { ThemedInput } from "@/components/FormControls";
-import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import { api } from "@/lib/api";
 import Link from "next/link";
@@ -80,16 +79,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0B0B0F] p-4 font-sans text-white">
-      <div className="pointer-events-none absolute left-[-10%] top-[-10%] h-[50%] w-[50%] rounded-full bg-primary/20 blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-[-10%] right-[-10%] h-[40%] w-[40%] rounded-full bg-purple-600/10 blur-[100px]" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[30px_30px] mask-[radial-gradient(ellipse_at_center,black,transparent_80%)]" />
-
-      <div className="relative z-10 w-full max-w-md rounded-[2.5rem] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-2xl sm:p-12">
-        <div className="mb-8 flex justify-center">
-          <CodeAreaLogo iconClassName="h-12 w-12" />
-        </div>
-
+    <div className="flex flex-1 items-center justify-center px-4 py-10 pt-20">
+      <div className="w-full max-w-md bg-white/5 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/10 p-8 sm:p-12 z-10">
         <h2 className="mb-2 text-center text-3xl font-bold text-white">
           Create Account
         </h2>
