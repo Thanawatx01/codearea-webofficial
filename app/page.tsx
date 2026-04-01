@@ -1,6 +1,8 @@
 import ScrollRevealSection from "@/components/home/ScrollRevealSection";
 import Link from "next/link";
 
+const codeImage = "/asset/code.jpeg";
+
 const featureCards = [
   {
     title: "Real-Time AI Guidance",
@@ -26,12 +28,14 @@ const trendingMissions = [
     description:
       "Design memory-safe recursive exploitation with monitored performance.",
     points: 500,
+    bgImage: codeImage,
   },
   {
     title: "Neural Path Finder",
     difficulty: "MEDIUM",
     description: "Find optimal paths with heuristics in massive graphs.",
     points: 300,
+    bgImage: codeImage,
   },
   {
     title: "Binary Star Search",
@@ -39,6 +43,7 @@ const trendingMissions = [
     description:
       "Mini-mize runtime for binary coordinate search over 1M nodes.",
     points: 150,
+    bgImage: codeImage,
   },
 ];
 
@@ -61,7 +66,7 @@ export default function Home() {
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
               SYSTEM VERSION 1.0.0 NOW LIVE
             </p>
-            <h1 className="text-6xl md:text-8xl font-black leading-tight tracking-tight">
+            <h1 className="text-6xl md:text-9xl font-black leading-tight tracking-tight">
               Welcome to Your <span className="text-primary">Gateway</span> to
               the
               <span className="text-white"> Future of Coding</span>
@@ -325,28 +330,60 @@ export default function Home() {
               </Link>
             </div>
             <div className="mt-6 grid gap-5 md:grid-cols-3">
-              {trendingMissions.map((mission) => (
-                <div
-                  key={mission.title}
-                  className="rounded-2xl border py-12 border-white/10 bg-[#0f1324]/80 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.4)] hover:border-primary/50 transition"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs uppercase tracking-widest text-white/50">
-                      {mission.difficulty}
-                    </span>
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/80">
-                      {mission.points} pts
-                    </span>
+              {trendingMissions.map((mission) => {
+                const difficultyColors = {
+                  HARD: "text-red-600",
+                  MEDIUM: "text-cyan-500",
+                  EASY: "text-gray-500",
+                };
+                return (
+                  <div
+                    key={mission.title}
+                    className="rounded-3xl overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.8),0_0_60px_rgba(88,28,135,0.15)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_100px_rgba(107,33,168,0.3)] transition-all duration-300 group bg-[#0a0510]/80 border border-purple-900/30 backdrop-blur-md"
+                  >
+                    {/* Top Half - Image Section */}
+                    <div
+                      className="h-48 relative overflow-hidden"
+                      style={{
+                        backgroundImage: `url(${mission.bgImage})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    >
+                      {/* Dark overlay with binary pattern effect */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/50 to-slate-900/80 flex items-center justify-center opacity-80 group-hover:opacity-70 transition">
+                        <div className="text-center text-slate-600/50 text-xs font-mono tracking-wider">
+                          <div>0110 1001 0101</div>
+                          <div className="mt-1">101 010 11</div>
+                          <div className="mt-1">1001 0110</div>
+                        </div>
+                      </div>
+
+                      {/* Difficulty Badge */}
+                      <div className="absolute top-4 left-4">
+                        <span
+                          className={`inline-block text-xs uppercase tracking-widest font-bold px-3 py-1 rounded-full border ${difficultyColors[mission.difficulty]} border-opacity-40 bg-slate-900/40 backdrop-blur-sm`}
+                        >
+                          {mission.difficulty}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Half - Content Section */}
+                    <div className="p-6 bg-slate-950/60 backdrop-blur-sm">
+                      <h3 className="text-lg font-bold text-white uppercase tracking-wide leading-tight">
+                        {mission.title}
+                      </h3>
+                      <p className="mt-3 text-sm text-white/70 leading-relaxed">
+                        {mission.description}
+                      </p>
+                      <div className="mt-4 flex items-center gap-2 text-white/60 text-xs">
+                        <span>{mission.points} pts</span>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-semibold">{mission.title}</h3>
-                  <p className="mt-2 text-sm text-white/70">
-                    {mission.description}
-                  </p>
-                  <button className="mt-4 inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white hover:bg-primary/20 transition">
-                    Start Challenge
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </ScrollRevealSection>
 
