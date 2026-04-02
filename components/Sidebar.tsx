@@ -27,6 +27,7 @@ const menuGroups: MenuGroup[] = [
       },
       { label: "แท็ก", href: "/dashboard/tags", iconName: "tag" },
       { label: "โจทย์", href: "/dashboard/problems", iconName: "problem" },
+      { label: "IDE", href: "/dashboard/ide", iconName: "problem" },
     ],
   },
   {

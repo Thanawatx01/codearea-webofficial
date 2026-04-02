@@ -1,6 +1,6 @@
 "use client";
 
-import { CodeEditor } from "@/components/CodeEditor";
+import { CodeEditor } from "@/components/editor/CodeEditor";
 import DataTable, {
   type DataTableColumn,
   type DataTableHeader,
@@ -465,7 +465,7 @@ const columns: DataTableColumn<RowType>[] = [
                   CodeEditor
                 </p>
                 <pre className="overflow-x-auto rounded bg-base-200 p-3">
-                  {`import { CodeEditor } from "@/components/CodeEditor";
+                  {`import { CodeEditor } from "@/components/editor/CodeEditor";
 
 <CodeEditor
   value={code}
