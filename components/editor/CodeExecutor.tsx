@@ -3,6 +3,9 @@
 import { useState } from "react";
 import CodeEditor from "./CodeEditor";
 import { executeCode, JUDGE0_LANGUAGES, SubmissionResult } from "@/lib/judge0";
+import { executeCodePiston } from "@/lib/piston";
+
+type ExecutorType = "piston" | "judge0";
 
 interface CodeExecutorProps {
   initialCode?: string;
@@ -32,6 +35,9 @@ export default function CodeExecutor({
   initialCode,
   defaultLanguageId = 63, // Default to Node.js
 }: CodeExecutorProps) {
+  const [executorType] = useState<ExecutorType>(
+    (process.env.NEXT_PUBLIC_EXECUTOR as ExecutorType) || "piston"
+  );
   const [languageId, setLanguageId] = useState(defaultLanguageId);
   const [theme, setTheme] = useState<"vs-dark" | "vs">("vs-dark");
   const [code, setCode] = useState(
@@ -115,11 +121,16 @@ export default function CodeExecutor({
     setActiveTab("output");
 
     try {
-      const res = await executeCode({
-        source_code: code,
-        language_id: languageId,
-        stdin: stdin,
-      });
+      let res: SubmissionResult;
+      if (executorType === "piston") {
+        res = await executeCodePiston(languageId, code, stdin);
+      } else {
+        res = await executeCode({
+          source_code: code,
+          language_id: languageId,
+          stdin: stdin,
+        });
+      }
       setResult(res);
     } catch (err: any) {
       if (err.message.includes("fetch") || err.message.includes("Failed to fetch") || err.message.includes("NetworkError")) {

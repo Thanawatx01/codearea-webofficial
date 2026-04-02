@@ -54,7 +54,7 @@ export const JUDGE0_LANGUAGES = [
   { id: 71, name: "Python (3.8.1)", label: "Python 3" },
 ];
 
-const JUDGE0_BASE_URL = process.env.NEXT_PUBLIC_JUDGE0_URL || "http://localhost:2358";
+const JUDGE0_BASE_URL = process.env.NEXT_PUBLIC_JUDGE0_URL || "http://localhost:5000/api/executor";
 
 /**
  * Submits code for execution to Judge0
@@ -73,7 +73,7 @@ export async function submitCode(request: SubmissionRequest): Promise<Submission
       enable_per_process_and_thread_memory_limit: false,
     };
 
-    const response = await fetch(`${JUDGE0_BASE_URL}/submissions?base64_encoded=false&wait=false`, {
+    const response = await fetch(`${JUDGE0_BASE_URL}/execute`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
