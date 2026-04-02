@@ -19,7 +19,6 @@ import {
   loadQuestionCategoryOptionsForForm,
   loadTagOptionsForForm,
 } from "@/lib/questionTaxonomyApi";
-import CodeEditor from "../editor/CodeEditor";
 
 type ProblemDetailResponse = {
   category_id?: string | number | null;
