@@ -1,18 +1,22 @@
 import {
+  ThemedAsyncMultiSelect2,
+  ThemedAsyncSelect2,
   ThemedInput,
-  ThemedMultiSelect2,
   ThemedSelect,
-  ThemedSelect2,
   type Select2Option,
 } from "@/components/FormControls";
+import {
+  loadQuestionCategoryOptionsForFilter,
+  loadTagOptionsForFilter,
+} from "@/lib/questionTaxonomyApi";
 
 type ProblemsFilterFormProps = {
-  categoryId: string;
+  category: Select2Option | null;
   search: string;
   difficulty: string;
   tag: string[];
   status: string;
-  onCategoryIdChange: (value: string) => void;
+  onCategoryChange: (option: Select2Option | null) => void;
   onSearchChange: (value: string) => void;
   onDifficultyChange: (value: string) => void;
   onTagChange: (value: string[]) => void;
@@ -21,43 +25,30 @@ type ProblemsFilterFormProps = {
 };
 
 export function ProblemsFilterForm({
-  categoryId,
+  category,
   search,
   difficulty,
   tag,
   status,
-  onCategoryIdChange,
+  onCategoryChange,
   onSearchChange,
   onDifficultyChange,
   onTagChange,
   onStatusChange,
   onSubmit,
 }: ProblemsFilterFormProps) {
-  const categoryOptions: Select2Option[] = [
-    { value: "1", label: "Array" },
-    { value: "2", label: "String" },
-    { value: "3", label: "Graph" },
-    { value: "4", label: "Dynamic Programming" },
-  ];
-  const tagOptions: Select2Option[] = [
-    { value: "array", label: "Array" },
-    { value: "math", label: "Math" },
-    { value: "graph", label: "Graph" },
-    { value: "dp", label: "DP" },
-  ];
-  const categoryValue =
-    categoryOptions.find((option) => option.value === categoryId) ?? null;
-  const tagValues = tagOptions.filter((option) => tag.includes(option.value));
+  const categoryValue = category;
+  const tagValues: Select2Option[] = tag.map((t) => ({ value: t, label: t }));
 
   return (
     <section className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur-xl">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <ThemedSelect2
+        <ThemedAsyncSelect2
           label="หมวดหมู่"
           value={categoryValue}
-          options={categoryOptions}
-          onChange={(option) => onCategoryIdChange(option?.value ?? "")}
-          placeholder="ทั้งหมด"
+          onChange={(option) => onCategoryChange(option)}
+          loadOptions={loadQuestionCategoryOptionsForFilter}
+          placeholder="ค้นหาหมวดหมู่..."
           size="sm"
         />
 
@@ -91,14 +82,14 @@ export function ProblemsFilterForm({
           </option>
         </ThemedSelect>
 
-        <ThemedMultiSelect2
+        <ThemedAsyncMultiSelect2
           label="แท็ก"
           value={tagValues}
-          options={tagOptions}
           onChange={(options) =>
             onTagChange(options.map((option) => option.value))
           }
-          placeholder="ทั้งหมด"
+          loadOptions={loadTagOptionsForFilter}
+          placeholder="ค้นหาแท็ก..."
           size="sm"
         />
 

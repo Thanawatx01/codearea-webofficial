@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import { Icon } from "@/components/icons/Icon";
 import { ProblemsFilterForm } from "@/components/problems/ProblemsFilterForm";
 import { ProblemsTable } from "@/components/problems/ProblemsTable";
+import type { Select2Option } from "@/components/FormControls";
 import type { ProblemRow } from "@/components/problems/types";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
@@ -21,7 +22,7 @@ type ProblemsListResponse = {
 
 export default function ProblemsPage() {
   const [rows, setRows] = useState<ProblemRow[]>([]);
-  const [categoryId, setCategoryId] = useState("");
+  const [category, setCategory] = useState<Select2Option | null>(null);
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [tag, setTag] = useState<string[]>([]);
@@ -39,7 +40,7 @@ export default function ProblemsPage() {
     const res = await api.get<ProblemsListResponse>("/questions", {
       useToken: true,
       params: {
-        category_id: categoryId || undefined,
+        category_id: category?.value || undefined,
         search: search.trim() || undefined,
         difficulty: difficulty || undefined,
         tag: tag.length > 0 ? tag.join(",") : undefined,
@@ -151,12 +152,12 @@ export default function ProblemsPage() {
       <main className="w-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-6 pb-8 pt-6">
         <div className="mx-auto flex w-full max-w-[1700px] flex-col gap-5">
           <ProblemsFilterForm
-            categoryId={categoryId}
+            category={category}
             search={search}
             difficulty={difficulty}
             tag={tag}
             status={status}
-            onCategoryIdChange={setCategoryId}
+            onCategoryChange={setCategory}
             onSearchChange={setSearch}
             onDifficultyChange={setDifficulty}
             onTagChange={setTag}
