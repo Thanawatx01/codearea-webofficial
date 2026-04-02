@@ -30,16 +30,6 @@ export function ProblemsTable({
   onDelete,
   onActivate,
 }: ProblemsTableProps) {
-  const uploadBaseUrl =
-    process.env.NEXT_PUBLIC_UPLOAD_BASE_URL ?? "localhost:3001";
-  const getUploadUrl = (uri?: string | null) => {
-    const value = (uri ?? "").trim();
-    if (!value) return "";
-    if (/^https?:\/\//i.test(value)) return value;
-    const normalized = value.replace(/^\/+/, "");
-    return `${uploadBaseUrl}/${normalized}`;
-  };
-
   const headers: DataTableHeader[] = [
     { key: "code", label: "รหัส" },
     { key: "category_name", label: "หมวดหมู่" },
@@ -68,6 +58,12 @@ export function ProblemsTable({
     {
       key: "memory_limit",
       label: "ขีดจำกัดความจำ (KB)",
+      align: "center",
+      className: "text-center",
+    },
+    {
+      key: "points",
+      label: "คะแนน",
       align: "center",
       className: "text-center",
     },
@@ -115,7 +111,7 @@ export function ProblemsTable({
     {
       key: "uri",
       render: (row) => {
-        const href = getUploadUrl(row.uri);
+        const href = row.uri;
         if (!href) return "-";
         return (
           <Link
@@ -170,6 +166,12 @@ export function ProblemsTable({
     {
       key: "memory_limit",
       render: (row) => row.memory_limit,
+    },
+    {
+      key: "points",
+      className: "text-center",
+      render: (row) =>
+        row.points !== null && row.points !== undefined ? row.points : "-",
     },
     {
       key: "expected_complexity",

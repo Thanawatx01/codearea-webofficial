@@ -18,6 +18,22 @@ const baseControlClassName =
 const labelClassName =
   "block px-1 text-xs font-semibold uppercase tracking-widest text-white/50";
 
+/** Portal เมนูไป body + fixed เพื่อไม่ถูกตัดโดย overflow / ถูกทับโดย layout ด้านล่าง */
+function resolveSelectMenuPortal(
+  menuPortalTarget: HTMLElement | null | undefined,
+): { target: HTMLElement | undefined; position: "fixed" | undefined } {
+  if (menuPortalTarget === null) {
+    return { target: undefined, position: undefined };
+  }
+  const target =
+    menuPortalTarget ??
+    (typeof document !== "undefined" ? document.body : undefined);
+  return {
+    target,
+    position: target ? "fixed" : undefined,
+  };
+}
+
 function renderLabel(label?: string, required?: boolean) {
   if (!label) return null;
   return (
@@ -198,6 +214,8 @@ type ThemedSelect2Props = {
   isClearable?: boolean;
   isDisabled?: boolean;
   size?: "default" | "sm";
+  /** ส่ง null เพื่อไม่ใช้ portal (เมนูอยู่ใน DOM เดิม) */
+  menuPortalTarget?: HTMLElement | null;
 };
 
 export function ThemedSelect2({
@@ -210,9 +228,12 @@ export function ThemedSelect2({
   isClearable = true,
   isDisabled = false,
   size = "default",
+  menuPortalTarget,
 }: ThemedSelect2Props) {
   const isSmall = size === "sm";
   const instanceId = useId();
+  const { target: portalTarget, position: menuPosition } =
+    resolveSelectMenuPortal(menuPortalTarget);
   const controlStyles: StylesConfig<
     Select2Option,
     false,
@@ -230,7 +251,7 @@ export function ThemedSelect2({
     }),
     menuPortal: (base) => ({
       ...base,
-      zIndex: 9999,
+      zIndex: 100_000,
     }),
   };
 
@@ -247,6 +268,8 @@ export function ThemedSelect2({
         isClearable={isClearable}
         isDisabled={isDisabled}
         styles={controlStyles}
+        menuPortalTarget={portalTarget}
+        menuPosition={menuPosition}
       />
     </div>
   );
@@ -261,6 +284,7 @@ type ThemedMultiSelect2Props = {
   placeholder?: string;
   isDisabled?: boolean;
   size?: "default" | "sm";
+  menuPortalTarget?: HTMLElement | null;
 };
 
 export function ThemedMultiSelect2({
@@ -272,9 +296,12 @@ export function ThemedMultiSelect2({
   placeholder = "Select...",
   isDisabled = false,
   size = "default",
+  menuPortalTarget,
 }: ThemedMultiSelect2Props) {
   const isSmall = size === "sm";
   const instanceId = useId();
+  const { target: portalTarget, position: menuPosition } =
+    resolveSelectMenuPortal(menuPortalTarget);
   const controlStyles: StylesConfig<
     Select2Option,
     true,
@@ -304,7 +331,7 @@ export function ThemedMultiSelect2({
     }),
     menuPortal: (base) => ({
       ...base,
-      zIndex: 9999,
+      zIndex: 100_000,
     }),
   };
 
@@ -321,6 +348,8 @@ export function ThemedMultiSelect2({
         placeholder={placeholder}
         isDisabled={isDisabled}
         styles={controlStyles}
+        menuPortalTarget={portalTarget}
+        menuPosition={menuPosition}
       />
     </div>
   );
@@ -336,6 +365,8 @@ type ThemedAsyncSelect2Props = {
   defaultOptions?: Select2Option[] | boolean;
   isClearable?: boolean;
   isDisabled?: boolean;
+  size?: "default" | "sm";
+  menuPortalTarget?: HTMLElement | null;
 };
 
 export function ThemedAsyncSelect2({
@@ -348,8 +379,33 @@ export function ThemedAsyncSelect2({
   defaultOptions = true,
   isClearable = true,
   isDisabled = false,
+  size = "default",
+  menuPortalTarget,
 }: ThemedAsyncSelect2Props) {
   const instanceId = useId();
+  const { target: portalTarget, position: menuPosition } =
+    resolveSelectMenuPortal(menuPortalTarget);
+  const isSmall = size === "sm";
+  const controlStyles: StylesConfig<
+    Select2Option,
+    false,
+    GroupBase<Select2Option>
+  > = {
+    ...select2Styles,
+    control: (base, state) => ({
+      ...select2Styles.control?.(base, state),
+      minHeight: isSmall ? "40px" : "56px",
+    }),
+    valueContainer: (base) => ({
+      ...base,
+      minHeight: isSmall ? "40px" : "56px",
+      padding: isSmall ? "0 8px" : base.padding,
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 100_000,
+    }),
+  };
 
   return (
     <div className="space-y-2">
@@ -365,7 +421,93 @@ export function ThemedAsyncSelect2({
         placeholder={placeholder}
         isClearable={isClearable}
         isDisabled={isDisabled}
-        styles={select2Styles}
+        styles={controlStyles}
+        menuPortalTarget={portalTarget}
+        menuPosition={menuPosition}
+      />
+    </div>
+  );
+}
+
+type ThemedAsyncMultiSelect2Props = {
+  label?: string;
+  required?: boolean;
+  value: Select2Option[];
+  onChange: (option: Select2Option[]) => void;
+  loadOptions: (inputValue: string) => Promise<Select2Option[]>;
+  placeholder?: string;
+  defaultOptions?: Select2Option[] | boolean;
+  isDisabled?: boolean;
+  size?: "default" | "sm";
+  menuPortalTarget?: HTMLElement | null;
+};
+
+export function ThemedAsyncMultiSelect2({
+  label,
+  required = false,
+  value,
+  onChange,
+  loadOptions,
+  placeholder = "Search...",
+  defaultOptions = true,
+  isDisabled = false,
+  size = "default",
+  menuPortalTarget,
+}: ThemedAsyncMultiSelect2Props) {
+  const instanceId = useId();
+  const { target: portalTarget, position: menuPosition } =
+    resolveSelectMenuPortal(menuPortalTarget);
+  const isSmall = size === "sm";
+  const controlStyles: StylesConfig<
+    Select2Option,
+    true,
+    GroupBase<Select2Option>
+  > = {
+    ...(select2Styles as unknown as StylesConfig<
+      Select2Option,
+      true,
+      GroupBase<Select2Option>
+    >),
+    control: (base, state) => ({
+      ...base,
+      borderRadius: ".5rem",
+      borderColor: state.isFocused ? "#8b5cf6" : "rgba(255,255,255,0.10)",
+      boxShadow: state.isFocused ? "0 0 0 1px #8b5cf6" : "none",
+      backgroundColor: "rgba(255,255,255,0.05)",
+      color: "#fff",
+      "&:hover": {
+        borderColor: "#8b5cf6",
+      },
+      minHeight: isSmall ? "40px" : "56px",
+    }),
+    valueContainer: (base) => ({
+      ...base,
+      minHeight: isSmall ? "40px" : "56px",
+      padding: isSmall ? "0 8px" : base.padding,
+    }),
+    menuPortal: (base) => ({
+      ...base,
+      zIndex: 100_000,
+    }),
+  };
+
+  return (
+    <div className="space-y-2">
+      {renderLabel(label, required)}
+      <AsyncSelect<Select2Option, true>
+        isMulti
+        instanceId={instanceId}
+        inputId={`${instanceId}-input`}
+        cacheOptions
+        defaultOptions={defaultOptions}
+        value={value}
+        loadOptions={loadOptions}
+        onChange={(option) => onChange([...(option ?? [])])}
+        placeholder={placeholder}
+        isDisabled={isDisabled}
+        styles={controlStyles}
+        menuPortalTarget={portalTarget}
+        menuPosition={menuPosition}
       />
     </div>
   );

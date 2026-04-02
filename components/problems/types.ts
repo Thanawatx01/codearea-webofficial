@@ -10,6 +10,7 @@ export type ProblemRow = {
   expected_complexity: string | null;
   time_limit: number | null;
   memory_limit: number | null;
+  points?: number | null;
   status: boolean;
   tags: string[];
 };

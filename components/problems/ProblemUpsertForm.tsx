@@ -1,10 +1,10 @@
 "use client";
 
 import {
+  ThemedAsyncMultiSelect2,
+  ThemedAsyncSelect2,
   ThemedInput,
-  ThemedMultiSelect2,
   ThemedSelect,
-  ThemedSelect2,
   ThemedTextarea,
   type Select2Option,
 } from "@/components/FormControls";
@@ -15,6 +15,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Swal from "sweetalert2";
+import {
+  loadQuestionCategoryOptionsForForm,
+  loadTagOptionsForForm,
+} from "@/lib/questionTaxonomyApi";
 
 type ProblemDetailResponse = {
   category_id?: string | number | null;
@@ -30,8 +34,9 @@ type ProblemDetailResponse = {
   expected_complexity?: string | null;
   time_limit?: number | null;
   memory_limit?: number | null;
+  points?: number | null;
   status?: boolean | null;
-  tags?: string[];
+  tags?: unknown[];
   test_cases?: {
     id?: number;
     input_data: string;
@@ -56,6 +61,7 @@ type ProblemFormState = {
   expected_complexity: string;
   time_limit: string;
   memory_limit: string;
+  points: string;
   status: "1" | "0";
   tag: string[];
   test_cases: {
@@ -78,6 +84,7 @@ const initialFormState: ProblemFormState = {
   expected_complexity: "",
   time_limit: "",
   memory_limit: "",
+  points: "",
   status: "1",
   tag: [],
   test_cases: [
@@ -91,21 +98,6 @@ const initialFormState: ProblemFormState = {
   ],
 };
 
-const categoryOptions: Select2Option[] = [
-  { value: "1", label: "Array" },
-  { value: "2", label: "String" },
-  { value: "3", label: "Graph" },
-  { value: "4", label: "Dynamic Programming" },
-];
-
-const tagOptions: Select2Option[] = [
-  { value: "array", label: "Array" },
-  { value: "math", label: "Math" },
-  { value: "graph", label: "Graph" },
-  { value: "dp", label: "DP" },
-  { value: "implement", label: "Implement" },
-];
-
 const expectedComplexityOptions = [
   "O(1)",
   "O(log N)",
@@ -118,24 +110,26 @@ const expectedComplexityOptions = [
   "O(N!)",
 ];
 
-function resolveCategoryIdForForm(
-  data: ProblemDetailResponse,
-  options: Select2Option[],
-): string {
+function categoryIdFromDetail(data: ProblemDetailResponse): string {
   const rawId = data.category_id ?? data.categoryId;
-  const idStr =
-    rawId === null || rawId === undefined ? "" : String(rawId).trim();
-  if (idStr && options.some((o) => o.value === idStr)) {
-    return idStr;
+  if (rawId === null || rawId === undefined) return "";
+  return String(rawId).trim();
+}
+
+function normalizeTagValue(item: unknown): string {
+  if (item === null || item === undefined) return "";
+  if (typeof item === "string" || typeof item === "number") {
+    return String(item).trim();
   }
-  const name = data.category_name?.trim();
-  if (name) {
-    const byLabel = options.find(
-      (o) => o.label.toLowerCase() === name.toLowerCase(),
-    );
-    if (byLabel) return byLabel.value;
+  if (typeof item === "object" && "name" in (item as object)) {
+    const n = (item as { name: unknown }).name;
+    if (n !== null && n !== undefined) return String(n).trim();
   }
-  return idStr;
+  if (typeof item === "object" && "slug" in (item as object)) {
+    const s = (item as { slug: unknown }).slug;
+    if (s !== null && s !== undefined) return String(s).trim();
+  }
+  return "";
 }
 
 export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
@@ -147,6 +141,9 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [existingUri, setExistingUri] = useState<string>("");
   const [formData, setFormData] = useState<ProblemFormState>(initialFormState);
+  const [categoryOption, setCategoryOption] = useState<Select2Option | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -170,13 +167,9 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
 
       const data = res.data;
       const mappedTagValues = (data.tags ?? [])
-        .map((item) => {
-          const match = tagOptions.find(
-            (option) => option.label.toLowerCase() === item.toLowerCase(),
-          );
-          return match?.value ?? item;
-        })
+        .map((item) => normalizeTagValue(item))
         .filter(Boolean);
+      const cid = categoryIdFromDetail(data);
       const mappedTestCases =
         data.test_cases?.map((item, index) => ({
           id: item.id,
@@ -189,8 +182,16 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
           is_simple: Boolean(item.is_simple),
           status: item.status !== false,
         })) ?? initialFormState.test_cases;
+      setCategoryOption(
+        cid
+          ? {
+              value: cid,
+              label: (data.category_name ?? cid).toString().trim() || cid,
+            }
+          : null,
+      );
       setFormData({
-        category_id: resolveCategoryIdForForm(data, categoryOptions),
+        category_id: cid,
         title: data.title ?? "",
         description: data.description ?? "",
         constraints: data.constraints ?? "",
@@ -208,6 +209,10 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
           data.memory_limit === null || data.memory_limit === undefined
             ? ""
             : String(data.memory_limit),
+        points:
+          data.points === null || data.points === undefined
+            ? ""
+            : String(data.points),
         status: data.status === false ? "0" : "1",
         tag: mappedTagValues,
         test_cases: mappedTestCases,
@@ -225,19 +230,9 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const selectedCategory =
-    categoryOptions.find((option) => option.value === formData.category_id) ??
-    null;
-
-  const mergedTagOptions = useMemo(() => {
-    const extras = formData.tag
-      .filter((value) => !tagOptions.some((option) => option.value === value))
-      .map((value) => ({ value, label: value }));
-    return [...tagOptions, ...extras];
-  }, [formData.tag]);
-
-  const selectedTags = mergedTagOptions.filter((option) =>
-    formData.tag.includes(option.value),
+  const tagSelections = useMemo(
+    () => formData.tag.map((t) => ({ value: t, label: t })),
+    [formData.tag],
   );
 
   const handlePickedFile = (file: File | null) => {
@@ -339,6 +334,12 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
         memory_limit: formData.memory_limit
           ? Number(formData.memory_limit)
           : null,
+        points: (() => {
+          const raw = formData.points.trim();
+          if (!raw) return null;
+          const n = Number(raw);
+          return Number.isFinite(n) ? n : null;
+        })(),
         status: formData.status === "1",
         tag: formData.tag,
         test_cases: formData.test_cases
@@ -474,18 +475,19 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <ThemedSelect2
+                <ThemedAsyncSelect2
                   label="CATEGORY"
-                  value={selectedCategory}
-                  options={categoryOptions}
+                  value={categoryOption}
                   required
-                  onChange={(option) =>
+                  loadOptions={loadQuestionCategoryOptionsForForm}
+                  onChange={(option) => {
+                    setCategoryOption(option);
                     setFormData((prev) => ({
                       ...prev,
                       category_id: option?.value ?? "",
-                    }))
-                  }
-                  placeholder="เลือกหมวดหมู่"
+                    }));
+                  }}
+                  placeholder="ค้นหาเลือกหมวดหมู่..."
                   size="sm"
                 />
                 <ThemedInput
@@ -550,7 +552,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                 </ThemedSelect>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <ThemedInput
                   label="TIME LIMIT (MS)"
                   name="time_limit"
@@ -568,6 +570,16 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                   onChange={handleChange}
                   className="h-12 rounded-xl px-4"
                   required
+                />
+                <ThemedInput
+                  label="POINTS (คะแนน)"
+                  name="points"
+                  type="number"
+                  min={0}
+                  value={formData.points}
+                  onChange={handleChange}
+                  placeholder="เช่น 100"
+                  className="h-12 rounded-xl px-4"
                 />
                 <ThemedSelect
                   label="STATUS"
@@ -590,17 +602,17 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                 </ThemedSelect>
               </div>
 
-              <ThemedMultiSelect2
+              <ThemedAsyncMultiSelect2
                 label="TAG"
-                value={selectedTags}
-                options={mergedTagOptions}
+                value={tagSelections}
+                loadOptions={loadTagOptionsForForm}
                 onChange={(options) =>
                   setFormData((prev) => ({
                     ...prev,
                     tag: options.map((item) => item.value),
                   }))
                 }
-                placeholder="เลือกแท็ก"
+                placeholder="ค้นหาเลือกแท็ก..."
                 size="sm"
               />
 
