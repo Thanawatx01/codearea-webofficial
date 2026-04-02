@@ -48,6 +48,18 @@ export default function CodeExecutor({
     FILTERED_LANGUAGES[0];
 
   const detectWrongLanguage = (result: SubmissionResult) => {
+    // If it's a runtime error with specific Node.js thread failure on Apple Silicon,
+    // it often contains C++ symbols in the trace. Don't trigger mismatch then.
+    const isNodeThreadError = result.stderr?.includes("uv_thread_create") || result.stderr?.includes("node::WorkerThreadsTaskRunner");
+
+    // NEW: Also check for compilation errors that look like thread failures (TypeScript)
+    const isTypeScriptThreadError = selectedLanguage.label.toLowerCase().includes("typescript") &&
+      (result.compile_output?.includes("Compilation time limit exceeded") || result.compile_output?.includes("uv_thread_create"));
+
+    if (isNodeThreadError || isTypeScriptThreadError) {
+      return "ARM_COMPATIBILITY_ISSUE";
+    }
+
     const combinedOutput = [
       result.stdout,
       result.stderr,
@@ -60,16 +72,11 @@ export default function CodeExecutor({
     // Helper to check for multiple patterns
     const containsAny = (patterns: string[]) => patterns.some(p => combinedOutput.includes(p.toLowerCase()));
 
-    // JavaScript environment checks
-    if (lang === "javascript") {
-      // TypeScript features in JS
-      if (combinedOutput.includes("unexpected token ':'") || combinedOutput.includes("unexpected token '?'")) {
-        return "It looks like you are trying to run TypeScript code in a JavaScript (Node.js) environment. Try switching the language to TypeScript.";
-      }
-    }
-
     // JS/TS environment checks
     if (lang.includes("javascript") || lang.includes("typescript")) {
+      // Ignore if it's a known system level error trace
+      if (isNodeThreadError) return null;
+
       if (containsAny(["#include", "std::", "iostream", "using namespace std"])) {
         return "It looks like you are trying to run C++ code in a JavaScript/TypeScript environment.";
       }
@@ -258,15 +265,31 @@ export default function CodeExecutor({
                   {error && <div className="text-red-400 p-2 bg-red-400/10 rounded border border-red-400/20">{error}</div>}
                   {result && (
                     <div className="space-y-4">
-                      {/* Wrong Language Suggestion */}
+                      {/* Wrong Language Suggestion / ARM Issue */}
                       {result.status.id !== 3 && detectWrongLanguage(result) && (
-                        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-start gap-3">
-                          <div className="mt-0.5 text-blue-400">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div className={`p-3 border rounded-lg flex items-start gap-3 ${
+                          detectWrongLanguage(result) === "ARM_COMPATIBILITY_ISSUE"
+                            ? "bg-amber-500/10 border-amber-500/20"
+                            : "bg-blue-500/10 border-blue-500/20"
+                        }`}>
+                          <div className={`mt-0.5 ${
+                            detectWrongLanguage(result) === "ARM_COMPATIBILITY_ISSUE" ? "text-amber-400" : "text-blue-400"
+                          }`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
                           </div>
-                          <div className="text-[11px] text-blue-300 leading-relaxed">
-                            <span className="font-bold block mb-0.5">Tip: Language Mismatch?</span>
-                            {detectWrongLanguage(result)}
+                          <div className={`text-[11px] leading-relaxed ${
+                            detectWrongLanguage(result) === "ARM_COMPATIBILITY_ISSUE" ? "text-amber-300" : "text-blue-300"
+                          }`}>
+                            <span className="font-bold block mb-0.5">
+                              {detectWrongLanguage(result) === "ARM_COMPATIBILITY_ISSUE"
+                                ? "Environment Compatibility Issue"
+                                : "Tip: Language Mismatch?"}
+                            </span>
+                            {detectWrongLanguage(result) === "ARM_COMPATIBILITY_ISSUE"
+                              ? "Node.js/TypeScript execution is currently unsupported on Apple Silicon (ARM) in this environment. Please use Python 3 or C++ instead."
+                              : detectWrongLanguage(result)}
                           </div>
                         </div>
                       )}
