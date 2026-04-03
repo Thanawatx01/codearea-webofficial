@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/Header";
-import DataTable from "@/components/DataTable";
-import type { DataTableColumn, DataTableHeader } from "@/components/DataTable";
-import { api } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 const SubmissionIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" /></svg>
@@ -24,117 +22,38 @@ type ProblemStatRow = {
 };
 
 export default function SubmissionsPage() {
-  const [stats, setStats] = useState<ProblemStatRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
-  // Mock function to fetch data - TODO: modify this when backend has real stats endpoint
-  const fetchStats = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      // In a real system, you would call something like `api.get("questions/stats")` 
-      // or aggregate `api.get("submissions")` if data isn't too large
-      // const res = await api.get<{ data: any[] }>("questions/stats", { params: { search: searchQuery } });
-
-      // For now, using mock data because backend is empty
-      setTimeout(() => {
-        const mockData: ProblemStatRow[] = [
-          { id: "1", problem_name: "Hello World", total_users: 120, solved_users: 105, working_users: 15 },
-          { id: "2", problem_name: "Array Sum", total_users: 85, solved_users: 50, working_users: 35 },
-          { id: "3", problem_name: "Binary Search", total_users: 60, solved_users: 20, working_users: 40 },
-          { id: "4", problem_name: "Graph Traversal", total_users: 45, solved_users: 10, working_users: 35 },
-          { id: "5", problem_name: "Dijkstra's Algorithm", total_users: 30, solved_users: 5, working_users: 25 },
-        ].filter(p => p.problem_name.toLowerCase().includes(searchQuery.toLowerCase()));
-
-        setStats(mockData);
-        setTotalPages(1);
-        setLoading(false);
-      }, 500);
-
-    } catch {
-      setError("เกิดข้อผิดพลาดในการโหลดข้อมูลสถิติ");
-      setLoading(false);
-    }
-  }, [searchQuery, page]);
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    void fetchStats();
-  }, [fetchStats]);
+    const userJson = localStorage.getItem("user");
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        if (user.role_id === 2) {
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+          router.replace("/dashboard/problems");
+        }
+      } catch (e) {
+        console.error("Error parsing user from localStorage:", e);
+        router.replace("/login");
+      }
+    } else {
+      router.replace("/login");
+    }
+  }, [router]);
 
-  const headers: DataTableHeader[] = [
-    { key: "no", label: "#", align: "center", className: "w-12" },
-    { key: "problem", label: "ชื่อโจทย์" },
-    { key: "total", label: "ผู้เข้าร่วมทั้งหมด", align: "center" },
-    { key: "solved", label: "ผ่านแล้ว (คน)", align: "center" },
-    { key: "working", label: "กำลังทำ (คน)", align: "center" },
-    { key: "progress", label: "อัตราความสำเร็จ", align: "center" },
-  ];
+  if (isAuthorized === null) {
+    return (
+      <div className="flex h-full w-full items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
 
-  const columns: DataTableColumn<ProblemStatRow>[] = [
-    {
-      key: "no",
-      className: "text-center text-white/30 text-xs font-mono",
-      render: (_row, index) => index + 1 + (page - 1) * 10,
-    },
-    {
-      key: "problem",
-      render: (row) => (
-        <span className="text-sm font-bold text-white hover:text-primary transition-colors cursor-pointer">
-          {row.problem_name}
-        </span>
-      ),
-    },
-    {
-      key: "total",
-      className: "text-center",
-      render: (row) => (
-        <span className="text-sm font-bold text-white/80">
-          {row.total_users.toLocaleString()}
-        </span>
-      ),
-    },
-    {
-      key: "solved",
-      className: "text-center",
-      render: (row) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-          {row.solved_users.toLocaleString()}
-        </span>
-      ),
-    },
-    {
-      key: "working",
-      className: "text-center",
-      render: (row) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/20">
-          {row.working_users.toLocaleString()}
-        </span>
-      ),
-    },
-    {
-      key: "progress",
-      className: "text-center w-48",
-      render: (row) => {
-        const percent = row.total_users > 0 ? Math.round((row.solved_users / row.total_users) * 100) : 0;
-        return (
-          <div className="flex flex-col items-center gap-1.5 w-full max-w-[120px] mx-auto">
-            <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-              <div 
-                className={`h-full rounded-full ${percent >= 70 ? 'bg-emerald-400' : percent >= 40 ? 'bg-amber-400' : 'bg-red-400'}`}
-                style={{ width: `${percent}%` }}
-              ></div>
-            </div>
-            <span className="text-[10px] font-bold text-white/50">{percent}% Success</span>
-          </div>
-        );
-      },
-    },
-  ];
-
+  if (isAuthorized === false) return null;
   return (
     <>
       <Header title="สถิติการส่งคำตอบ" icon={<SubmissionIcon />} />

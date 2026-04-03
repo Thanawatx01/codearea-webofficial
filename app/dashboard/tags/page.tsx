@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
-import { initialTags, type TagItem } from "./data";
-import { api } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { initialTags } from "./data";
 
 const TagIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>
@@ -49,50 +49,42 @@ type TagsResponse = {
 };
 
 export default function TagsPage() {
-  const [tags, setTags] = useState<TagItem[]>(initialTags);
+  const router = useRouter();
+  const [tags, setTags] = useState(initialTags);
   const [newTag, setNewTag] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-  const [selectedTag, setSelectedTag] = useState<string>("");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("popular");
-  const [isLoadingCounts, setIsLoadingCounts] = useState(true);
-
-  const fetchTagsWithCounts = useCallback(async () => {
-    setIsLoadingCounts(true);
-    try {
-      const res = await api.get<TagsResponse>("tags", {
-        useToken: true,
-        params: { page: 1, limit: 100 },
-      });
-
-      if (res.ok && res.data) {
-        const raw = res.data.data ?? res.data.rows ?? res.data.items ?? res.data.results;
-        if (Array.isArray(raw) && raw.length > 0) {
-          const mapped: TagItem[] = raw
-            .filter((r) => r && typeof r === "object")
-            .map((row) => {
-              const name =
-                String(row.name ?? row.tag_name ?? row.label ?? row.slug ?? "").trim() ||
-                String(row.id ?? "").trim();
-              const questionCount = Number(row.question_count ?? row.count ?? 0);
-              return { name, questionCount };
-            })
-            .filter((item) => item.name.length > 0);
-
-          if (mapped.length > 0) {
-            setTags(mapped);
-          }
-        }
-      }
-    } catch {
-      // Keep fallback data if API fails
-    }
-    setIsLoadingCounts(false);
-  }, []);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    void fetchTagsWithCounts();
-  }, [fetchTagsWithCounts]);
+    const userJson = localStorage.getItem("user");
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        if (user.role_id === 2) {
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+          router.replace("/dashboard/problems");
+        }
+      } catch (e) {
+        console.error("Error parsing user from localStorage:", e);
+        router.replace("/login");
+      }
+    } else {
+      router.replace("/login");
+    }
+  }, [router]);
+
+  if (isAuthorized === null) {
+    return (
+      <div className="flex h-full w-full items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (isAuthorized === false) return null;
 
   const handleAddTag = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +134,7 @@ export default function TagsPage() {
     <>
       <Header title="จัดการแท็ก" icon={<TagIcon />} />
       <main className="flex-1 p-6 space-y-6 overflow-y-auto w-full max-w-7xl mx-auto">
-        
+
         {/* Filter Bar */}
         <section className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur-xl">
           <div className="flex flex-col gap-4">
@@ -264,10 +256,10 @@ export default function TagsPage() {
               </h2>
               <p className="text-xs text-white/40 mt-1 font-medium italic">จัดการและสร้างป้ายกำกับสำหรับหมวดหมู่โจทย์</p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               {!isAdding ? (
-                <button 
+                <button
                   onClick={() => setIsAdding(true)}
                   className="px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-hover transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)] flex items-center gap-2 whitespace-nowrap"
                 >
@@ -276,21 +268,21 @@ export default function TagsPage() {
                 </button>
               ) : (
                 <form onSubmit={handleAddTag} className="flex items-center gap-2 animate-in slide-in-from-right-4 duration-300">
-                  <input 
+                  <input
                     autoFocus
-                    type="text" 
-                    placeholder="ชื่อแท็ก..." 
+                    type="text"
+                    placeholder="ชื่อแท็ก..."
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
                     className="bg-primary/10 border border-primary/30 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary w-32 md:w-48 transition-all"
                   />
-                  <button 
+                  <button
                     type="submit"
                     className="p-2.5 bg-primary text-white rounded-xl hover:bg-primary-hover shadow-lg"
                   >
                     <PlusIcon />
                   </button>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => { setIsAdding(false); setNewTag(""); }}
                     className="p-2.5 bg-white/5 text-white/40 rounded-xl hover:bg-white/10"
@@ -315,8 +307,8 @@ export default function TagsPage() {
                     const maxCount = Math.max(...tags.map((t) => t.questionCount), 1);
                     const percentage = (item.questionCount / maxCount) * 100;
                     return (
-                      <div 
-                        key={item.name} 
+                      <div
+                        key={item.name}
                         className="group relative flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:border-primary/50 hover:bg-primary/5 transition-all cursor-default overflow-hidden"
                       >
                         {/* Popularity bar */}
@@ -355,7 +347,7 @@ export default function TagsPage() {
               </div>
             )}
           </div>
-          
+
           <div className="px-8 py-4 bg-white/[0.02] border-t border-white/10">
             <p className="text-xs text-white/50 font-medium">เคล็ดลับ: ใช้แท็กที่สื่อความหมายชัดเจนเพื่อช่วยในการค้นหาโจทย์</p>
           </div>

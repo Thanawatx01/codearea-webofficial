@@ -14,6 +14,7 @@ type ProblemsTableProps = {
   errorMessage: string;
   page: number;
   totalPages: number;
+  isAdmin: boolean;
   onPageChangeAction: (page: number) => void;
   onDeleteAction: (code: string) => void;
   onActivateAction: (code: string) => void;
@@ -26,6 +27,7 @@ export function ProblemsTable({
   errorMessage,
   page,
   totalPages,
+  isAdmin,
   onPageChangeAction,
   onDeleteAction,
   onActivateAction,
@@ -79,12 +81,16 @@ export function ProblemsTable({
       align: "center",
       className: "text-center",
     },
-    {
-      key: "actions",
-      label: "จัดการ",
-      align: "right",
-      className: "text-right",
-    },
+    ...(isAdmin
+      ? [
+        {
+          key: "actions",
+          label: "จัดการ",
+          align: "right" as const,
+          className: "text-right",
+        },
+      ]
+      : []),
   ];
 
   const columns: DataTableColumn<ProblemRow>[] = [
@@ -187,49 +193,56 @@ export function ProblemsTable({
         </span>
       ),
     },
-    {
-      key: "actions",
-      className: "text-right",
-      render: (row) => (
-        <div className="inline-flex items-center gap-2">
-          <Link
-            href={`/dashboard/problems/update/${encodeURIComponent(row.code)}`}
-            className="rounded border border-blue-500/20 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-500 hover:bg-blue-500/20"
-          >
-            <Icon name="eye" className="h-4 w-4" />
-          </Link>
-          <button
-            type="button"
-            onClick={() =>
-              row.status ? onDeleteAction(row.code) : onActivateAction(row.code)
-            }
-            className={`rounded px-3 py-1.5 text-xs font-semibold ${
-              row.status
-                ? "border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                : "border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-            }`}
-            aria-label={row.status ? "ปิดการใช้งาน" : "เปิดการใช้งาน"}
-          >
-            {row.status ? (
-              <Icon name="trash" className="h-4 w-4" />
-            ) : (
-              <Icon name="check" className="h-4 w-4" />
-            )}
-          </button>
-        </div>
-      ),
-    },
+    ...(isAdmin
+      ? [
+        {
+          key: "actions",
+          className: "text-right",
+          render: (row: ProblemRow) => (
+            <div className="inline-flex items-center gap-2">
+              <Link
+                href={`/dashboard/problems/update/${encodeURIComponent(row.code)}`}
+                className="rounded border border-blue-500/20 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-500 hover:bg-blue-500/20"
+              >
+                <Icon name="eye" className="h-4 w-4" />
+              </Link>
+              <button
+                type="button"
+                onClick={() =>
+                  row.status ? onDeleteAction(row.code) : onActivateAction(row.code)
+                }
+                className={`rounded px-3 py-1.5 text-xs font-semibold ${row.status
+                  ? "border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                  : "border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                  }`}
+                aria-label={row.status ? "ปิดการใช้งาน" : "เปิดการใช้งาน"}
+              >
+                {row.status ? (
+                  <Icon name="trash" className="h-4 w-4" />
+                ) : (
+                  <Icon name="check" className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          ),
+        },
+      ]
+      : []),
   ];
 
   return (
     <section className="min-w-0 rounded-xl border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur-xl">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Link
-          href="/dashboard/problems/new"
-          className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-blue-800 px-6 text-sm font-bold text-white hover:bg-blue-900 sm:w-auto"
-        >
-          + สร้าง
-        </Link>
+        {isAdmin ? (
+          <Link
+            href="/dashboard/problems/new"
+            className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-blue-800 px-6 text-sm font-bold text-white hover:bg-blue-900 sm:w-auto"
+          >
+            + สร้าง
+          </Link>
+        ) : (
+          <div /> // Empty div to maintain spacing
+        )}
         <p className="text-base font-semibold text-white text-center sm:text-right sm:text-lg">
           จำนวนข้อมูล {total} รายการ
         </p>

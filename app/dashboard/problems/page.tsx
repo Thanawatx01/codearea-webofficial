@@ -32,7 +32,20 @@ export default function ProblemsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const pageSize = 10;
+
+  useEffect(() => {
+    const userJson = localStorage.getItem("user");
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        setIsAdmin(user.role_id === 2);
+      } catch (e) {
+        console.error("Error parsing user from localStorage:", e);
+      }
+    }
+  }, []);
 
   const fetchQuestions = async (targetPage = page) => {
     setIsLoading(true);
@@ -164,17 +177,18 @@ export default function ProblemsPage() {
             onStatusChangeAction={setStatus}
             onSubmitAction={() => void fetchQuestions(1)}
           />
-          <ProblemsTable
-            rows={rows}
-            total={total}
-            isLoading={isLoading}
-            errorMessage={errorMessage}
-            page={page}
-            totalPages={totalPages}
-            onPageChangeAction={(nextPage) => void fetchQuestions(nextPage)}
-            onDeleteAction={(code) => void handleDelete(code)}
-            onActivateAction={(code) => void handleActivate(code)}
-          />
+            <ProblemsTable
+              rows={rows}
+              total={total}
+              isLoading={isLoading}
+              errorMessage={errorMessage}
+              page={page}
+              totalPages={totalPages}
+              isAdmin={isAdmin}
+              onPageChangeAction={(nextPage) => void fetchQuestions(nextPage)}
+              onDeleteAction={(code) => void handleDelete(code)}
+              onActivateAction={(code) => void handleActivate(code)}
+            />
         </div>
       </main>
     </>

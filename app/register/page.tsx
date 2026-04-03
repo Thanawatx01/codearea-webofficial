@@ -66,11 +66,7 @@ export default function RegisterPage() {
       document.cookie = `role_id=${res.data.user.role_id}; path=/; samesite=lax`;
       document.cookie = `display_name=${encodeURIComponent(res.data.user.display_name)}; path=/; samesite=lax`;
       setIsLoading(false);
-      if (res.data.user.role_id === 2) {
-        router.push("/dashboard/problems");
-        return;
-      }
-      router.push("/");
+      router.push("/dashboard/problems");
       return;
     }
 
@@ -79,8 +75,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-1 items-center justify-center px-4 py-10 pt-20">
-      <div className="w-full max-w-md bg-white/5 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/10 p-8 sm:p-12 z-10">
+    <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-80px)] px-4 pt-32 pb-16 sm:pt-40 sm:pb-20">
+      <div className="w-full max-w-md bg-white/5 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/10 p-8 sm:p-12 z-10 transition-all">
         <h2 className="mb-2 text-center text-3xl font-bold text-white">
           Create Account
         </h2>
@@ -97,7 +93,6 @@ export default function RegisterPage() {
             onChangeAction={handleInputChange}
             required
             placeholder="admin@codearea.app"
-            className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
           />
 
           <ThemedInput
@@ -108,7 +103,6 @@ export default function RegisterPage() {
             onChangeAction={handleInputChange}
             required
             placeholder="pupha"
-            className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
           />
 
           <ThemedInput
@@ -120,7 +114,6 @@ export default function RegisterPage() {
             required
             minLength={8}
             placeholder="••••••••"
-            className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
             rightSlot={
               <button
                 type="button"
@@ -145,7 +138,6 @@ export default function RegisterPage() {
             required
             minLength={8}
             placeholder="••••••••"
-            className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
             rightSlot={
               <button
                 type="button"

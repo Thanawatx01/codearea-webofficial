@@ -56,15 +56,11 @@ export default function LoginPage() {
     document.cookie = `display_name=${encodeURIComponent(user.display_name)}; path=/; samesite=lax`;
 
     setIsLoading(false);
-    if (user.role_id === 2) {
-      router.push("/dashboard/problems");
-      return;
-    }
-    router.push("/");
+    router.push("/dashboard/problems");
   };
 
   return (
-    <div className="flex flex-1 items-center justify-center px-4 py-40 sm:py-10">
+    <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-80px)] px-4 pt-32 pb-16 sm:pt-40 sm:pb-20">
       <div className="w-full max-w-md bg-white/5 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/10 p-8 sm:p-12 z-10">
         <h2 className="text-3xl font-bold text-white text-center mb-2">
           Welcome Back

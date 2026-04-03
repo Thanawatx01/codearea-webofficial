@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
+import { useRouter } from "next/navigation";
 
 export default function DashboardLayout({
   children,
@@ -9,6 +10,18 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   const [collapsed, setCollapsed] = useState(false); // Consistent initial state for SSR/Client
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.replace("/login");
+      setIsAuthorized(false);
+    } else {
+      setIsAuthorized(true);
+    }
+  }, [router]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 1024px)");
@@ -20,6 +33,16 @@ export default function DashboardLayout({
     media.addEventListener("change", syncCollapsed);
     return () => media.removeEventListener("change", syncCollapsed);
   }, []);
+
+  if (isAuthorized === null) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#05070f]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (isAuthorized === false) return null;
 
   return (
     <div className="flex min-h-screen overflow-x-hidden bg-[#05070f] text-white">

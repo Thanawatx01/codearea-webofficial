@@ -185,7 +185,7 @@ export default function UsersPage() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuthorized]);
 
   const headers: DataTableHeader[] = [
     { key: "username", label: "ชื่อผู้ใช้" },

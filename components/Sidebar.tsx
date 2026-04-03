@@ -26,15 +26,28 @@ const menuGroups: MenuGroup[] = [
         label: "ประเภทโจทย์",
         href: "/dashboard/problem-types",
         iconName: "problem-type",
+        adminOnly: true,
       },
-      { label: "แท็ก", href: "/dashboard/tags", iconName: "tag" },
+      {
+        label: "แท็ก",
+        href: "/dashboard/tags",
+        iconName: "tag",
+        adminOnly: true,
+      },
       { label: "โจทย์", href: "/dashboard/problems", iconName: "problem" },
       { label: "IDE", href: "/dashboard/ide", iconName: "problem" },
     ],
   },
   {
     title: "ระบบ",
-    items: [{ label: "การจัดการผู้ใช้งาน", href: "/dashboard/users", iconName: "user" }],
+    items: [
+      {
+        label: "จัดการผู้ใช้",
+        href: "/dashboard/users",
+        iconName: "user",
+        adminOnly: true,
+      },
+    ],
   },
   {
     title: "รายงาน",
@@ -43,16 +56,29 @@ const menuGroups: MenuGroup[] = [
         label: "การส่งคำตอบ",
         href: "/dashboard/submissions",
         iconName: "submission",
+        adminOnly: true,
       },
       {
         label: "สถิติโจทย์",
         href: "/dashboard/problem-stats",
         iconName: "stats",
+        adminOnly: true,
       },
       {
         label: "กิจกรรมผู้ใช้",
         href: "/dashboard/user-activity",
         iconName: "activity",
+        adminOnly: true,
+      },
+    ],
+  },
+  {
+    title: "ตั้งค่าผู้ใช้",
+    items: [
+      {
+        label: "ตั้งค่าโปรไฟล์",
+        href: "/dashboard/settings",
+        iconName: "settings",
       },
     ],
   },

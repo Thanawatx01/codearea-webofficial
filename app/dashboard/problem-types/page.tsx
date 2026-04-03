@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
-import { initialProblemTypes, type ProblemTypeItem } from "./data";
-import { api } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { initialProblemTypes } from "./data";
 
 const ProblemTypeIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>
@@ -49,50 +49,42 @@ type CategoriesResponse = {
 };
 
 export default function ProblemTypesPage() {
-  const [types, setTypes] = useState<ProblemTypeItem[]>(initialProblemTypes);
+  const router = useRouter();
+  const [types, setTypes] = useState(initialProblemTypes);
   const [newType, setNewType] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-  const [selectedType, setSelectedType] = useState<string>("");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("popular");
-  const [isLoadingCounts, setIsLoadingCounts] = useState(true);
-
-  const fetchCategoriesWithCounts = useCallback(async () => {
-    setIsLoadingCounts(true);
-    try {
-      const res = await api.get<CategoriesResponse>("question-categories/list", {
-        useToken: true,
-        params: { page: 1, limit: 100 },
-      });
-
-      if (res.ok && res.data) {
-        const raw = res.data.data ?? res.data.rows ?? res.data.items ?? res.data.results;
-        if (Array.isArray(raw) && raw.length > 0) {
-          const mapped: ProblemTypeItem[] = raw
-            .filter((r) => r && typeof r === "object")
-            .map((row) => {
-              const name =
-                String(row.name ?? row.category_name ?? row.title ?? "").trim() ||
-                String(row.id ?? row.category_id ?? "").trim();
-              const questionCount = Number(row.question_count ?? row.count ?? 0);
-              return { name, questionCount };
-            })
-            .filter((item) => item.name.length > 0);
-
-          if (mapped.length > 0) {
-            setTypes(mapped);
-          }
-        }
-      }
-    } catch {
-      // Keep fallback data if API fails
-    }
-    setIsLoadingCounts(false);
-  }, []);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    void fetchCategoriesWithCounts();
-  }, [fetchCategoriesWithCounts]);
+    const userJson = localStorage.getItem("user");
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        if (user.role_id === 2) {
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+          router.replace("/dashboard/problems");
+        }
+      } catch (e) {
+        console.error("Error parsing user from localStorage:", e);
+        router.replace("/login");
+      }
+    } else {
+      router.replace("/login");
+    }
+  }, [router]);
+
+  if (isAuthorized === null) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (isAuthorized === false) return null;
 
   const handleAddType = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +134,7 @@ export default function ProblemTypesPage() {
     <>
       <Header title="จัดการประเภทโจทย์" icon={<ProblemTypeIcon />} />
       <main className="flex-1 p-6 space-y-6 overflow-y-auto w-full max-w-7xl mx-auto">
-        
+
         {/* Filter Bar */}
         <section className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur-xl">
           <div className="flex flex-col gap-4">
@@ -264,10 +256,10 @@ export default function ProblemTypesPage() {
               </h2>
               <p className="text-xs text-white/40 mt-1 font-medium italic">กำหนดหมวดหมู่หลักของโจทย์ปัญหาในระบบ</p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               {!isAdding ? (
-                <button 
+                <button
                   onClick={() => setIsAdding(true)}
                   className="px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-hover transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)] flex items-center gap-2 whitespace-nowrap"
                 >
@@ -276,21 +268,21 @@ export default function ProblemTypesPage() {
                 </button>
               ) : (
                 <form onSubmit={handleAddType} className="flex items-center gap-2 animate-in slide-in-from-right-4 duration-300">
-                  <input 
+                  <input
                     autoFocus
-                    type="text" 
-                    placeholder="ชื่อประเภท..." 
+                    type="text"
+                    placeholder="ชื่อประเภท..."
                     value={newType}
                     onChange={(e) => setNewType(e.target.value)}
                     className="bg-primary/10 border border-primary/30 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary w-32 md:w-48 transition-all"
                   />
-                  <button 
+                  <button
                     type="submit"
                     className="p-2.5 bg-primary text-white rounded-xl hover:bg-primary-hover shadow-lg"
                   >
                     <PlusIcon />
                   </button>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => { setIsAdding(false); setNewType(""); }}
                     className="p-2.5 bg-white/5 text-white/40 rounded-xl hover:bg-white/10"
@@ -315,8 +307,8 @@ export default function ProblemTypesPage() {
                     const maxCount = Math.max(...types.map((t) => t.questionCount), 1);
                     const percentage = (item.questionCount / maxCount) * 100;
                     return (
-                      <div 
-                        key={item.name} 
+                      <div
+                        key={item.name}
                         className="group relative flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:border-primary/50 hover:bg-primary/5 transition-all cursor-default overflow-hidden"
                       >
                         {/* Popularity bar */}
@@ -355,7 +347,7 @@ export default function ProblemTypesPage() {
               </div>
             )}
           </div>
-          
+
           <div className="px-8 py-4 bg-white/[0.02] border-t border-white/10">
             <p className="text-xs text-white/50 font-medium">เคล็ดลับ: การแยกประเภทที่ชัดเจนช่วยให้การประเมินสถิติแม่นยำขึ้น</p>
           </div>
