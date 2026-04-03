@@ -94,7 +94,7 @@ export default function RegisterPage() {
             name="email"
             label="Email"
             value={formData.email}
-            onChange={handleInputChange}
+            onChangeAction={handleInputChange}
             required
             placeholder="admin@codearea.app"
             className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
@@ -105,7 +105,7 @@ export default function RegisterPage() {
             name="display_name"
             label="Display Name"
             value={formData.display_name}
-            onChange={handleInputChange}
+            onChangeAction={handleInputChange}
             required
             placeholder="pupha"
             className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
@@ -116,7 +116,7 @@ export default function RegisterPage() {
             name="password"
             label="Password"
             value={formData.password}
-            onChange={handleInputChange}
+            onChangeAction={handleInputChange}
             required
             minLength={8}
             placeholder="••••••••"
@@ -141,7 +141,7 @@ export default function RegisterPage() {
             name="confirm_password"
             label="Confirm Password"
             value={formData.confirm_password}
-            onChange={handleInputChange}
+            onChangeAction={handleInputChange}
             required
             minLength={8}
             placeholder="••••••••"

@@ -145,13 +145,14 @@ const select2Styles: StylesConfig<
   }),
 };
 
-type ThemedInputProps = InputHTMLAttributes<HTMLInputElement> & {
+type ThemedInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> & {
   label?: string;
   rightSlot?: ReactNode;
+  onChangeAction?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 export const ThemedInput = forwardRef<HTMLInputElement, ThemedInputProps>(
-  ({ label, className = "", rightSlot, required, ...props }, ref) => {
+  ({ label, className = "", rightSlot, required, onChangeAction, ...props }, ref) => {
     return (
       <div className="space-y-2">
         {renderLabel(label, required)}
@@ -160,6 +161,7 @@ export const ThemedInput = forwardRef<HTMLInputElement, ThemedInputProps>(
             ref={ref}
             className={`${baseControlClassName} px-6 ${rightSlot ? "pr-14" : ""} ${className}`}
             required={required}
+            onChange={onChangeAction}
             {...props}
           />
           {rightSlot ? (
@@ -175,12 +177,13 @@ export const ThemedInput = forwardRef<HTMLInputElement, ThemedInputProps>(
 
 ThemedInput.displayName = "ThemedInput";
 
-type ThemedSelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
+type ThemedSelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange"> & {
   label?: string;
+  onChangeAction?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 };
 
 export const ThemedSelect = forwardRef<HTMLSelectElement, ThemedSelectProps>(
-  ({ label, className = "", children, required, ...props }, ref) => {
+  ({ label, className = "", children, required, onChangeAction, ...props }, ref) => {
     return (
       <div className="space-y-2">
         {renderLabel(label, required)}
@@ -189,6 +192,7 @@ export const ThemedSelect = forwardRef<HTMLSelectElement, ThemedSelectProps>(
             ref={ref}
             className={`${baseControlClassName} appearance-none px-6 pr-12 ${className}`}
             required={required}
+            onChange={onChangeAction}
             {...props}
           >
             {children}
@@ -513,14 +517,18 @@ export function ThemedAsyncMultiSelect2({
   );
 }
 
-type ThemedTextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
+type ThemedTextareaProps = Omit<
+  TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "onChange"
+> & {
   label?: string;
+  onChangeAction?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 };
 
 export const ThemedTextarea = forwardRef<
   HTMLTextAreaElement,
   ThemedTextareaProps
->(({ label, className = "", required, ...props }, ref) => {
+>(({ label, className = "", required, onChangeAction, ...props }, ref) => {
   return (
     <div className="space-y-2">
       {renderLabel(label, required)}
@@ -528,6 +536,7 @@ export const ThemedTextarea = forwardRef<
         ref={ref}
         className={`${baseControlClassName} min-h-32 resize-y px-6 py-4 ${className}`}
         required={required}
+        onChange={onChangeAction}
         {...props}
       />
     </div>

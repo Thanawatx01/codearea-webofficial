@@ -57,7 +57,7 @@ export function ProblemsFilterForm({
           type="text"
           placeholder="ค้นหาชื่อ ..."
           value={search}
-          onChange={(e) => onSearchChangeAction(e.target.value)}
+          onChangeAction={(e) => onSearchChangeAction(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onSubmitAction()}
           className="h-10 rounded-lg px-3"
         />
@@ -65,7 +65,7 @@ export function ProblemsFilterForm({
         <ThemedSelect
           label="ระดับ"
           value={difficulty}
-          onChange={(e) => onDifficultyChangeAction(e.target.value)}
+          onChangeAction={(e) => onDifficultyChangeAction(e.target.value)}
           className="h-10 rounded-lg px-3"
         >
           <option value="" className="text-black">
@@ -96,7 +96,7 @@ export function ProblemsFilterForm({
         <ThemedSelect
           label="สถานะ"
           value={status}
-          onChange={(e) => onStatusChangeAction(e.target.value)}
+          onChangeAction={(e) => onStatusChangeAction(e.target.value)}
           className="h-10 rounded-lg px-3"
         >
           <option value="" className="text-black">

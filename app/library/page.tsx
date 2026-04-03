@@ -182,14 +182,14 @@ export default function LibraryPage() {
                   label="Title"
                   name="title"
                   value={demoForm.title}
-                  onChange={handleDemoFormChange}
+                  onChangeAction={handleDemoFormChange}
                   placeholder="Enter title..."
                 />
                 <ThemedSelect
                   label="Category"
                   name="category"
                   value={demoForm.category}
-                  onChange={handleDemoFormChange}
+                  onChangeAction={handleDemoFormChange}
                 >
                   <option value="frontend" className="text-black">
                     Frontend
@@ -205,7 +205,7 @@ export default function LibraryPage() {
                   label="Description"
                   name="description"
                   value={demoForm.description}
-                  onChange={handleDemoFormChange}
+                  onChangeAction={handleDemoFormChange}
                   placeholder="Write description..."
                 />
                 <ThemedSelect2
@@ -240,7 +240,7 @@ export default function LibraryPage() {
   label="Title"
   name="title"
   value={form.title}
-  onChange={handleChange}
+  onChangeAction={handleChange}
   placeholder="Enter title..."
 />`}
                   </pre>
@@ -257,7 +257,7 @@ export default function LibraryPage() {
   label="Category"
   name="category"
   value={form.category}
-  onChange={handleChange}
+  onChangeAction={handleChange}
 >
   <option value="frontend">Frontend</option>
   <option value="backend">Backend</option>
@@ -276,7 +276,7 @@ export default function LibraryPage() {
   label="Description"
   name="description"
   value={form.description}
-  onChange={handleChange}
+  onChangeAction={handleChange}
   placeholder="Write description..."
 />`}
                   </pre>

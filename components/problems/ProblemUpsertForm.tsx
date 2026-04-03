@@ -495,7 +495,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                   label="TITLE"
                   name="title"
                   value={formData.title}
-                  onChange={handleChange}
+                  onChangeAction={handleChange}
                   placeholder="เช่น Two Sum"
                   className="h-12 rounded-xl px-4"
                   required
@@ -508,7 +508,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                   name="difficulty"
                   value={formData.difficulty}
                   required
-                  onChange={(e) =>
+                  onChangeAction={(e) =>
                     setFormData((prev) => ({
                       ...prev,
                       difficulty: e.target.value,
@@ -534,7 +534,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                   name="expected_complexity"
                   value={formData.expected_complexity}
                   required
-                  onChange={(e) =>
+                  onChangeAction={(e) =>
                     setFormData((prev) => ({
                       ...prev,
                       expected_complexity: e.target.value,
@@ -559,7 +559,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                   name="time_limit"
                   type="number"
                   value={formData.time_limit}
-                  onChange={handleChange}
+                  onChangeAction={handleChange}
                   className="h-12 rounded-xl px-4"
                   required
                 />
@@ -568,7 +568,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                   name="memory_limit"
                   type="number"
                   value={formData.memory_limit}
-                  onChange={handleChange}
+                  onChangeAction={handleChange}
                   className="h-12 rounded-xl px-4"
                   required
                 />
@@ -578,7 +578,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                   type="number"
                   min={0}
                   value={formData.points}
-                  onChange={handleChange}
+                  onChangeAction={handleChange}
                   placeholder="เช่น 100"
                   className="h-12 rounded-xl px-4"
                 />
@@ -586,7 +586,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                   label="STATUS"
                   name="status"
                   value={formData.status}
-                  onChange={(e) =>
+                  onChangeAction={(e) =>
                     setFormData((prev) => ({
                       ...prev,
                       status: e.target.value as "1" | "0",
@@ -621,7 +621,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                 label="DESCRIPTION"
                 name="description"
                 value={formData.description}
-                onChange={handleChange}
+                onChangeAction={handleChange}
                 placeholder="รายละเอียดโจทย์"
                 rows={5}
                 className="min-h-[130px] rounded-xl px-4 py-3"
@@ -631,7 +631,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                 label="CONSTRAINTS"
                 name="constraints"
                 value={formData.constraints}
-                onChange={handleChange}
+                onChangeAction={handleChange}
                 placeholder="เช่น 1 <= N <= 10^5"
                 className="h-12 rounded-xl px-4"
                 required
@@ -709,7 +709,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                           type="number"
                           min={1}
                           value={testCase.case_order}
-                          onChange={(e) =>
+                          onChangeAction={(e) =>
                             updateTestCase(index, "case_order", e.target.value)
                           }
                           className="h-10 rounded-xl px-3"
@@ -718,7 +718,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                         <ThemedSelect
                           label="IS SIMPLE"
                           value={testCase.is_simple ? "1" : "0"}
-                          onChange={(e) =>
+                          onChangeAction={(e) =>
                             updateTestCase(
                               index,
                               "is_simple",
@@ -738,7 +738,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                         <ThemedSelect
                           label="STATUS"
                           value={testCase.status ? "1" : "0"}
-                          onChange={(e) =>
+                          onChangeAction={(e) =>
                             updateTestCase(
                               index,
                               "status",

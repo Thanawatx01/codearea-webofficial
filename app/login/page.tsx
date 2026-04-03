@@ -79,7 +79,7 @@ export default function LoginPage() {
             name="email"
             label="Email"
             value={formData.email}
-            onChange={handleInputChange}
+            onChangeAction={handleInputChange}
             required
             className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
             placeholder="admin@codearea.app"
@@ -100,7 +100,7 @@ export default function LoginPage() {
               type={showPassword ? "text" : "password"}
               name="password"
               value={formData.password}
-              onChange={handleInputChange}
+              onChangeAction={handleInputChange}
               required
               placeholder="••••••••"
               className="text-white bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4"
