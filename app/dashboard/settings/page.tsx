@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
 import { Icon } from "@/components/icons/Icon";
 import Swal from "sweetalert2";
 import Cropper from "react-easy-crop";
@@ -146,49 +147,36 @@ export default function SettingsPage() {
         if (avatarPreview && avatarPreview.startsWith("data:")) {
           const userRaw = localStorage.getItem("user");
           const user = JSON.parse(userRaw!) as { id: string };
-          const token = localStorage.getItem("token");
 
           const blob = await base64ToBlob(avatarPreview);
           const formDataObj = new FormData();
           formDataObj.append("avatar", blob, "avatar.webp");
 
-          const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/avatar`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: formDataObj,
+          const uploadRes = await api.post<{ avatar_url: string }>(`/users/${user.id}/avatar`, formDataObj, {
+            useToken: true,
           });
 
-          if (!uploadRes.ok) {
-            const errorData = await uploadRes.json();
-            throw new Error(errorData.message || "Failed to upload avatar");
+          if (!uploadRes.ok || !uploadRes.data) {
+            throw new Error(uploadRes.error || "Failed to upload avatar");
           }
 
-          const uploadData = await uploadRes.json();
-          currentAvatarUrl = uploadData.avatar_url;
+          currentAvatarUrl = uploadRes.data.avatar_url;
         }
 
         // Save other profile data
         const userRaw = localStorage.getItem("user");
         const user = JSON.parse(userRaw!) as { id: string };
-        const token = localStorage.getItem("token");
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            display_name: formData.displayName,
-            avatar_url: currentAvatarUrl,
-          }),
+        const response = await api.put<{ id: string; email: string; display_name: string; avatar_url: string }>(`/users/${user.id}`, {
+          display_name: formData.displayName,
+          avatar_url: currentAvatarUrl,
+        }, {
+          useToken: true,
         });
 
-        if (!response.ok) throw new Error("Failed to update profile");
+        if (!response.ok || !response.data) throw new Error(response.error || "Failed to update profile");
 
-        const updatedUser = await response.json();
+        const updatedUser = response.data;
 
         // Update local storage
         const newUser = { ...JSON.parse(userRaw!), display_name: updatedUser.display_name, avatar_url: updatedUser.avatar_url };

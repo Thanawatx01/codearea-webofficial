@@ -14,6 +14,7 @@ interface UserRow {
   display_name: string;
   email: string;
   role_id: number;
+  avatar_url: string;
   updated_at: string;
 }
 
@@ -46,6 +47,10 @@ export default function UsersPage() {
 
   // State for revealed emails
   const [revealedEmails, setRevealedEmails] = useState<Set<string>>(new Set());
+
+  // State for actions dropdown
+  const [activeActionsId, setActiveActionsId] = useState<string | null>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   const fetchUsers = async (targetPage = page) => {
     setIsLoading(true);
@@ -147,6 +152,9 @@ export default function UsersPage() {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setActiveMenuId(null);
       }
+      if (actionsRef.current && !actionsRef.current.contains(event.target as Node)) {
+        setActiveActionsId(null);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -154,10 +162,10 @@ export default function UsersPage() {
   }, []);
 
   const headers: DataTableHeader[] = [
-    { key: "username", label: "Username" },
-    { key: "email", label: "Email" },
-    { key: "role", label: "Role" },
-    { key: "updated_at", label: "Latest Update" },
+    { key: "username", label: "ชื่อผู้ใช้" },
+    { key: "email", label: "อีเมล" },
+    { key: "role", label: "บทบาท" },
+    { key: "updated_at", label: "แก้ไขล่าสุดเมื่อ" },
     { key: "actions", label: "" },
   ];
 
@@ -165,9 +173,18 @@ export default function UsersPage() {
     {
       key: "username",
       render: (row) => (
-        <span className="font-medium text-white/90">
-          {row.display_name || row.email.split("@")[0]}
-        </span>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-linear-to-br from-primary to-blue-400 flex items-center justify-center text-white text-xs font-semibold overflow-hidden shrink-0">
+            {row.avatar_url ? (
+              <img src={row.avatar_url} alt={row.display_name} className="w-full h-full object-cover" />
+            ) : (
+              (row.display_name || row.email.split("@")[0]).charAt(0).toUpperCase()
+            )}
+          </div>
+          <span className="font-medium text-white/90 truncate">
+            {row.display_name || row.email.split("@")[0]}
+          </span>
+        </div>
       ),
     },
     {
@@ -229,9 +246,14 @@ export default function UsersPage() {
       key: "updated_at",
       render: (row) => {
         const date = new Date(row.updated_at);
+        const thaiDate = date.toLocaleDateString("th-TH", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
         return (
           <div className="flex flex-col">
-            <span className="text-sm text-white/80">{date.toLocaleDateString("th-TH")}</span>
+            <span className="text-sm text-white/80">{thaiDate}</span>
             <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">{date.toLocaleTimeString("th-TH", { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
         );
@@ -241,13 +263,49 @@ export default function UsersPage() {
       key: "actions",
       className: "text-right",
       render: (row) => (
-        <button
-          onClick={() => handleResetPassword(row.id)}
-          className="p-2 hover:bg-red-500/10 text-red-400/60 hover:text-red-400 rounded-xl transition-all"
-          title="Reset Password"
-        >
-          <Icon name="gear" className="h-4.5 w-4.5" />
-        </button>
+        <div className="relative inline-block text-left" ref={activeActionsId === row.id ? actionsRef : null}>
+          <button
+            onClick={() => setActiveActionsId(activeActionsId === row.id ? null : row.id)}
+            className="p-2 hover:bg-blue-500/10 text-blue-400/60 hover:text-blue-400 rounded-xl transition-all"
+            title="Account Actions"
+          >
+            <Icon name="gear" className="h-4.5 w-4.5" />
+          </button>
+
+          {activeActionsId === row.id && (
+            <div className="absolute right-0 mt-2 w-full min-w-[200px] max-w-[280px] rounded-xl bg-[#1a1c2e] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
+              <div className="py-1">
+                <div className="px-4 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest border-b border-white/5 mb-1">
+                  การจัดการบัญชี
+                </div>
+                <button
+                  disabled
+                  className="w-full text-left px-4 py-2.5 text-sm text-white/40 flex items-center gap-3 cursor-not-allowed group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                    <Icon name="key" className="h-4 w-4 opacity-50" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-white/20">เปลี่ยนรหัสผ่าน</span>
+                    <span className="text-[10px] text-red-400/50">ฟีเจอร์นี้ไม่พร้อมใช้งานในขณะนี้</span>
+                  </div>
+                </button>
+                <button
+                  disabled
+                  className="w-full text-left px-4 py-2.5 text-sm text-white/40 flex items-center gap-3 cursor-not-allowed group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-red-400/5 flex items-center justify-center shrink-0">
+                    <Icon name="trash" className="h-4 w-4 text-red-400/50" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-white/20 text-red-400/20">ลบบัญชีผู้ใช้</span>
+                    <span className="text-[10px] text-red-400/50">ฟีเจอร์นี้ไม่พร้อมใช้งานในขณะนี้</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       ),
     },
   ];

@@ -79,21 +79,18 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   return (
     <aside
-      className={`fixed bottom-0 left-0 top-0 z-40 flex flex-col overflow-y-auto border-r border-white/10 bg-linear-to-b from-[#05060d]/95 via-[#090b16]/95 to-[#081225]/95 backdrop-blur-md transition-[width] duration-200 ${
-        collapsed ? "w-[84px]" : "w-[260px]"
-      }`}
+      className={`fixed bottom-0 left-0 top-0 z-40 flex flex-col overflow-y-auto border-r border-white/10 bg-linear-to-b from-[#05060d]/95 via-[#090b16]/95 to-[#081225]/95 backdrop-blur-md transition-[width] duration-200 ${collapsed ? "w-[84px]" : "w-[260px]"
+        }`}
     >
       {/* Logo */}
       <div
-        className={`flex h-16 items-center border-b border-white/5 ${
-          collapsed ? "justify-between px-2" : "justify-between px-4"
-        }`}
+        className={`flex h-16 items-center border-b border-white/5 ${collapsed ? "justify-between px-2" : "justify-between px-4"
+          }`}
       >
         <Link
           href="/dashboard/problems"
-          className={`flex items-center hover:opacity-90 transition-opacity ${
-            collapsed ? "justify-center pl-1" : "gap-2.5"
-          }`}
+          className={`flex items-center hover:opacity-90 transition-opacity ${collapsed ? "justify-center pl-1" : "gap-2.5"
+            }`}
         >
           <CodeAreaLogo iconClassName="h-8 w-8" />
           {!collapsed ? (
@@ -105,9 +102,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <button
           type="button"
           onClick={onToggle}
-          className={`rounded-lg border border-white/10 bg-white/5 text-xs text-white/80 hover:bg-white/10 ${
-            collapsed ? "h-6 w-6" : "h-8 w-8"
-          }`}
+          className={`rounded-lg border border-white/10 bg-white/5 text-xs text-white/80 hover:bg-white/10 ${collapsed ? "h-6 w-6" : "h-8 w-8"
+            }`}
           aria-label={collapsed ? "ขยายเมนู" : "ย่อเมนู"}
         >
           {collapsed ? ">" : "<"}
@@ -133,15 +129,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     <Link
                       title={item.label}
                       href={item.href}
-                      className={`flex items-center rounded-lg text-sm font-medium transition-all duration-150 ${
-                        collapsed
-                          ? "justify-center px-2 py-2.5"
-                          : "gap-3 px-3 py-2.5"
-                      } ${
-                        isActive
+                      className={`flex items-center rounded-lg text-sm font-medium transition-all duration-150 ${collapsed
+                        ? "justify-center px-2 py-2.5"
+                        : "gap-3 px-3 py-2.5"
+                        } ${isActive
                           ? "bg-primary/20 text-primary border border-primary/20"
                           : "text-text-muted hover:bg-white/5 hover:text-foreground"
-                      }`}
+                        }`}
                     >
                       <span
                         className={
@@ -165,11 +159,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           type="button"
           onClick={handleLogout}
           title="ออกจากระบบ"
-          className={`w-full rounded-lg border border-red-500/20 bg-red-500/10 text-sm font-semibold text-red-400 transition-colors hover:bg-red-500/20 ${
-            collapsed
-              ? "flex items-center justify-center px-2 py-2.5"
-              : "px-3 py-2.5 text-left"
-          }`}
+          className={`w-full rounded-lg border border-red-500/20 bg-red-500/10 text-sm font-semibold text-red-400 transition-colors hover:bg-red-500/20 ${collapsed
+            ? "flex items-center justify-center px-2 py-2.5"
+            : "px-3 py-2.5 text-left"
+            }`}
         >
           {collapsed ? (
             <Icon name="logout" className="h-5 w-5" />

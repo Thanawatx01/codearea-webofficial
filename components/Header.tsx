@@ -15,16 +15,17 @@ export default function Header({ title, icon }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [userData, setUserData] = useState({ name: "ผู้ใช้งาน", role: "1" });
- 
+  const [userData, setUserData] = useState({ name: "ผู้ใช้งาน", role: "1", avatar_url: "" });
+
   useEffect(() => {
     try {
       const userRaw = window.localStorage.getItem("user");
       if (userRaw) {
-        const user = JSON.parse(userRaw) as { display_name?: string; role_id?: number | string };
-        setUserData({ 
-          name: user.display_name?.trim() || "ผู้ใช้งาน", 
-          role: String(user.role_id || "1") 
+        const user = JSON.parse(userRaw) as { display_name?: string; role_id?: number | string; avatar_url?: string };
+        setUserData({
+          name: user.display_name?.trim() || "ผู้ใช้งาน",
+          role: String(user.role_id || "1"),
+          avatar_url: user.avatar_url || ""
         });
       }
     } catch (e) {
@@ -34,6 +35,7 @@ export default function Header({ title, icon }: HeaderProps) {
 
   const displayName = userData.name;
   const roleId = userData.role;
+  const avatarUrl = userData.avatar_url;
 
   const roleLabel = useMemo(() => {
     return roleId === "2" ? "Admin" : "User";
@@ -85,8 +87,12 @@ export default function Header({ title, icon }: HeaderProps) {
             className="flex items-center gap-3 hover:bg-white/5 p-1.5 pr-3 rounded-2xl transition-all cursor-pointer group"
           >
             {/* Avatar */}
-            <div className="w-9 h-9 rounded-full bg-linear-to-br from-primary to-blue-400 flex items-center justify-center text-white text-sm font-semibold shadow-sm group-hover:scale-105 transition-transform">
-              {avatarText}
+            <div className="w-9 h-9 rounded-full bg-linear-to-br from-primary to-blue-400 flex items-center justify-center text-white text-sm font-semibold shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                avatarText
+              )}
             </div>
             <div className="hidden sm:block text-left">
               <p className="text-sm font-medium text-foreground leading-tight group-hover:text-white transition-colors">
@@ -98,7 +104,7 @@ export default function Header({ title, icon }: HeaderProps) {
               </div>
             </div>
           </button>
- 
+
           {/* Dropdown Menu */}
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 w-full min-w-[200px] max-w-[280px] rounded-2xl bg-[#0d101a] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200 backdrop-blur-2xl">
@@ -106,7 +112,7 @@ export default function Header({ title, icon }: HeaderProps) {
                 <div className="px-3 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest border-b border-white/5 mb-2">
                   บัญชีผู้ใช้งาน
                 </div>
-                
+
                 <Link
                   href="/dashboard/settings"
                   onClick={() => setIsDropdownOpen(false)}
