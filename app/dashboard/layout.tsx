@@ -14,8 +14,10 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // Only check auth after the component has mounted to prevent SSR/Hydration race conditions
     const token = localStorage.getItem("token");
     if (!token) {
+      console.warn("[DashboardLayout] No token detected, redirecting to /login");
       router.replace("/login");
       setIsAuthorized(false);
     } else {

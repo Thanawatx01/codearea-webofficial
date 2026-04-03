@@ -9,7 +9,7 @@ export function proxy(request: NextRequest) {
 
   const token = request.cookies.get("token")?.value;
   const roleId = request.cookies.get("role_id")?.value;
-  const isRoleAllowed = roleId === "2";
+  const isRoleAllowed = roleId === "1" || roleId === "2";
 
   if (!token || !isRoleAllowed) {
     const loginUrl = new URL("/login", request.url);

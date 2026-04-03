@@ -13,7 +13,7 @@ import Select, { type GroupBase, type StylesConfig } from "react-select";
 import AsyncSelect from "react-select/async";
 
 const baseControlClassName =
-  "w-full rounded-2xl border border-white/10 bg-white/5 text-sm text-white placeholder:text-white/20 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-2xl border border-white/10 bg-white/5 text-sm text-white placeholder:text-white/20 transition-all focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-white/[0.08]";
 
 const labelClassName =
   "block px-1 text-xs font-semibold uppercase tracking-widest text-white/50";
@@ -147,19 +147,43 @@ const select2Styles: StylesConfig<
 
 type ThemedInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> & {
   label?: string;
+  leftSlot?: ReactNode;
   rightSlot?: ReactNode;
   onChangeAction?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 export const ThemedInput = forwardRef<HTMLInputElement, ThemedInputProps>(
-  ({ label, className = "", rightSlot, required, onChangeAction, ...props }, ref) => {
+  (
+    {
+      label,
+      className = "",
+      leftSlot,
+      rightSlot,
+      required,
+      onChangeAction,
+      ...props
+    },
+    ref,
+  ) => {
     return (
       <div className="space-y-2">
         {renderLabel(label, required)}
         <div className="relative">
+          {leftSlot ? (
+            <div className="pointer-events-none absolute inset-y-0 left-5 flex items-center text-white/40">
+              {leftSlot}
+            </div>
+          ) : null}
           <input
             ref={ref}
-            className={`${baseControlClassName} px-6 ${rightSlot ? "pr-14" : ""} ${className}`}
+            className={[
+              baseControlClassName,
+              leftSlot ? "pl-12" : "px-6",
+              rightSlot ? "pr-14" : "",
+              className,
+            ]
+              .filter(Boolean)
+              .join(" ")}
             required={required}
             onChange={onChangeAction}
             {...props}
@@ -190,7 +214,13 @@ export const ThemedSelect = forwardRef<HTMLSelectElement, ThemedSelectProps>(
         <div className="relative">
           <select
             ref={ref}
-            className={`${baseControlClassName} appearance-none px-6 pr-12 ${className}`}
+            className={[
+              baseControlClassName,
+              "appearance-none px-6 pr-12",
+              className,
+            ]
+              .filter(Boolean)
+              .join(" ")}
             required={required}
             onChange={onChangeAction}
             {...props}
@@ -534,7 +564,9 @@ export const ThemedTextarea = forwardRef<
       {renderLabel(label, required)}
       <textarea
         ref={ref}
-        className={`${baseControlClassName} min-h-32 resize-y px-6 py-4 ${className}`}
+        className={[baseControlClassName, "min-h-32 resize-y px-6 py-4", className]
+          .filter(Boolean)
+          .join(" ")}
         required={required}
         onChange={onChangeAction}
         {...props}

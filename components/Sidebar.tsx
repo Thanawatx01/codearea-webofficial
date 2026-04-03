@@ -35,7 +35,7 @@ const menuGroups: MenuGroup[] = [
         adminOnly: true,
       },
       { label: "โจทย์", href: "/dashboard/problems", iconName: "problem" },
-      { label: "IDE", href: "/dashboard/ide", iconName: "problem" },
+      { label: "IDE", href: "/dashboard/ide", iconName: "code" },
     ],
   },
   {
@@ -130,7 +130,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           }`}
       >
         <Link
-          href="/dashboard/problems"
+          href="/"
           className={`flex items-center hover:opacity-90 transition-opacity ${collapsed ? "justify-center pl-1" : "gap-2.5"
             }`}
         >
