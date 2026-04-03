@@ -8,10 +8,7 @@ export default function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(max-width: 1024px)").matches;
-  });
+  const [collapsed, setCollapsed] = useState(false); // Consistent initial state for SSR/Client
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 1024px)");

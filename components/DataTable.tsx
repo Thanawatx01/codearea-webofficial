@@ -1,3 +1,4 @@
+import { Icon } from "@/components/icons/Icon";
 import type { ReactNode } from "react";
 
 type TableAlign = "left" | "center" | "right";
@@ -66,9 +67,8 @@ export default function DataTable<T>({
               {headers.map((header) => (
                 <th
                   key={header.key}
-                  className={`px-4 py-3 ${alignClass[header.align ?? "left"]} ${
-                    header.className ?? ""
-                  }`}
+                  className={`px-4 py-3 ${alignClass[header.align ?? "left"]} ${header.className ?? ""
+                    }`}
                 >
                   {header.label}
                 </th>
@@ -107,11 +107,10 @@ export default function DataTable<T>({
               rows.map((row, rowIndex) => (
                 <tr
                   key={rowKey(row, rowIndex)}
-                  className={`hover:bg-white/5 ${
-                    typeof rowClassName === "function"
+                  className={`hover:bg-white/5 ${typeof rowClassName === "function"
                       ? rowClassName(row, rowIndex)
                       : rowClassName
-                  }`}
+                    }`}
                 >
                   {columns.map((column) => (
                     <td
@@ -129,14 +128,15 @@ export default function DataTable<T>({
       </div>
 
       {pagination ? (
-        <div className="mt-4 flex items-center justify-center gap-2">
+        <div className="my-4 flex items-center justify-center gap-1 sm:gap-2.5">
           <button
             type="button"
             onClick={() => pagination.onPageChange(1)}
             disabled={!canPrev}
-            className="h-8 rounded-full bg-white/10 px-3 text-sm text-white/80 disabled:opacity-50"
+            className="h-8 w-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/60 transition-all hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+            title="First Page"
           >
-            {"<<"}
+            <Icon name="chevrons-left" className="h-4 w-4" />
           </button>
           <button
             type="button"
@@ -144,22 +144,28 @@ export default function DataTable<T>({
               canPrev && pagination.onPageChange(pagination.page - 1)
             }
             disabled={!canPrev}
-            className="h-8 rounded-full bg-white/10 px-3 text-sm text-white/80 disabled:opacity-50"
+            className="h-8 w-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/60 transition-all hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Previous Page"
           >
-            {"<"}
+            <Icon name="chevron-left" className="h-4 w-4" />
           </button>
-          <span className="px-3 text-sm text-white/80">
-            หน้า {pagination.page} / {Math.max(pagination.totalPages, 1)}
-          </span>
+
+          <div className="px-3 sm:px-6 py-1 mx-1 rounded-full bg-white/5 border border-white/5">
+            <span className="text-xs sm:text-sm font-medium text-white/70 whitespace-nowrap">
+              หน้า <span className="text-white">{pagination.page}</span> / {Math.max(pagination.totalPages, 1)}
+            </span>
+          </div>
+
           <button
             type="button"
             onClick={() =>
               canNext && pagination.onPageChange(pagination.page + 1)
             }
             disabled={!canNext}
-            className="h-8 rounded-full bg-white/10 px-3 text-sm text-white/80 disabled:opacity-50"
+            className="h-8 w-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/60 transition-all hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Next Page"
           >
-            {">"}
+            <Icon name="chevron-right" className="h-4 w-4" />
           </button>
           <button
             type="button"
@@ -167,9 +173,10 @@ export default function DataTable<T>({
               pagination.onPageChange(Math.max(pagination.totalPages, 1))
             }
             disabled={!canNext}
-            className="h-8 rounded-full bg-white/10 px-3 text-sm text-white/80 disabled:opacity-50"
+            className="h-8 w-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/60 transition-all hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Last Page"
           >
-            {">>"}
+            <Icon name="chevrons-right" className="h-4 w-4" />
           </button>
         </div>
       ) : null}

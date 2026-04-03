@@ -3,7 +3,7 @@
 import Header from "@/components/Header";
 import DataTable from "@/components/DataTable";
 import type { DataTableColumn, DataTableHeader } from "@/components/DataTable";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { api } from "@/lib/api";
 import { Icon } from "@/components/icons/Icon";
 import Swal from "sweetalert2";
@@ -13,7 +13,7 @@ const UserIcon = () => (
 );
 
 const UsersGroupIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
 );
 
 interface UserRow {
@@ -21,6 +21,7 @@ interface UserRow {
   display_name: string;
   email: string;
   role_id: number;
+  updated_at: string;
 }
 
 interface UserListResponse {
@@ -34,8 +35,18 @@ interface UserListResponse {
 }
 
 const roleNames: Record<number, string> = {
-  1: "นักศึกษา / student",
+  1: "ผู้ใช้ / user",
   2: "แอดมิน / admin",
+};
+
+/** Mask email logic: keep first 5, ***, last 3 before @, then domain */
+const maskEmail = (email: string) => {
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return email;
+  if (local.length <= 8) {
+    return `${local.slice(0, 2)}***${local.slice(-1)}@${domain}`;
+  }
+  return `${local.slice(0, 5)}***${local.slice(-3)}@${domain}`;
 };
 
 export default function UsersPage() {
@@ -45,10 +56,13 @@ export default function UsersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-  
+
   // State for dropdown on role cell
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // State for revealed emails
+  const [revealedEmails, setRevealedEmails] = useState<Set<string>>(new Set());
 
   const fetchUsers = async (targetPage = page) => {
     setIsLoading(true);
@@ -87,8 +101,8 @@ export default function UsersPage() {
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "ยืนยัน",
-      cancelButtonText: "ยกเลิก",
       confirmButtonColor: "#8b5cf6",
+      cancelButtonText: "ยกเลิก",
       background: "#1a1c2e",
       color: "#fff",
       reverseButtons: true,
@@ -121,9 +135,30 @@ export default function UsersPage() {
     }
   };
 
+  const toggleEmailReveal = (userId: string) => {
+    setRevealedEmails((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  };
+
+  const handleResetPassword = async (userId: string) => {
+    void Swal.fire({
+      title: "รีเซ็ตรหัสผ่าน",
+      text: "ระบบกำลังเตรียมส่งอีเมลรีเซ็ตรหัสผ่าน (ฟังก์ชันนี้ยังไม่เปิดใช้งานในระบบจริง)",
+      icon: "info",
+      confirmButtonText: "ตกลง",
+      confirmButtonColor: "#8b5cf6",
+      background: "#1a1c2e",
+      color: "#fff",
+    });
+  };
+
   useEffect(() => {
     void fetchUsers();
-    
+
     // Close menu when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -138,17 +173,37 @@ export default function UsersPage() {
   const headers: DataTableHeader[] = [
     { key: "username", label: "Username" },
     { key: "email", label: "Email" },
-    { key: "role", label: "roll" },
+    { key: "role", label: "Role" },
+    { key: "updated_at", label: "Latest Update" },
+    { key: "actions", label: "" },
   ];
 
   const columns: DataTableColumn<UserRow>[] = [
     {
       key: "username",
-      render: (row) => row.display_name || row.email.split("@")[0],
+      render: (row) => (
+        <span className="font-medium text-white/90">
+          {row.display_name || row.email.split("@")[0]}
+        </span>
+      ),
     },
     {
       key: "email",
-      render: (row) => row.email,
+      render: (row) => {
+        const isRevealed = revealedEmails.has(row.id);
+        return (
+          <button
+            onClick={() => toggleEmailReveal(row.id)}
+            className="group flex items-center gap-2 text-text-muted hover:text-white transition-colors text-left"
+            title={isRevealed ? "Hide Email" : "Click to Reveal Email"}
+          >
+            <Icon name={isRevealed ? "eye-off" : "eye"} className="h-3.5 w-3.5 opacity-0 group-hover:opacity-60 transition-opacity" />
+            <span className={isRevealed ? "" : "font-mono tracking-tighter"}>
+              {isRevealed ? row.email : maskEmail(row.email)}
+            </span>
+          </button>
+        );
+      },
     },
     {
       key: "role",
@@ -156,18 +211,17 @@ export default function UsersPage() {
         <div className="relative inline-block text-left" ref={activeMenuId === row.id ? menuRef : null}>
           <button
             onClick={() => setActiveMenuId(activeMenuId === row.id ? null : row.id)}
-            className={`group px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all duration-200 border ${
-              row.role_id === 2 
-                ? 'bg-violet-500/10 text-violet-300 border-violet-500/30 hover:bg-violet-500/20' 
-                : 'bg-blue-500/10 text-blue-300 border-blue-500/30 hover:bg-blue-500/20'
-            }`}
+            className={`group px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 transition-all duration-200 border ${row.role_id === 2
+                ? 'bg-violet-500/10 text-violet-300 border-violet-500/20 hover:bg-violet-500/20'
+                : 'bg-blue-500/10 text-blue-300 border-blue-500/20 hover:bg-blue-500/20'
+              }`}
           >
             {roleNames[row.role_id] || "ไม่ระบุ"}
             <Icon name="chevron-down" className={`h-3 w-3 transition-transform duration-200 ${activeMenuId === row.id ? 'rotate-180' : ''}`} />
           </button>
-          
+
           {activeMenuId === row.id && (
-            <div className="absolute left-0 mt-2 w-48 rounded-xl bg-[#1a1c2e] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="absolute left-0 mt-2 w-full min-w-[max(100%,160px)] max-w-[240px] rounded-xl bg-[#1a1c2e] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
               <div className="py-1">
                 <div className="px-4 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest border-b border-white/5 mb-1">
                   เลือกบทบาท
@@ -188,53 +242,82 @@ export default function UsersPage() {
         </div>
       ),
     },
+    {
+      key: "updated_at",
+      render: (row) => {
+        const date = new Date(row.updated_at);
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm text-white/80">{date.toLocaleDateString("th-TH")}</span>
+            <span className="text-[10px] text-white/30 font-medium uppercase tracking-wider">{date.toLocaleTimeString("th-TH", { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        );
+      },
+    },
+    {
+      key: "actions",
+      className: "text-right",
+      render: (row) => (
+        <button
+          onClick={() => handleResetPassword(row.id)}
+          className="p-2 hover:bg-red-500/10 text-red-400/60 hover:text-red-400 rounded-xl transition-all"
+          title="Reset Password"
+        >
+          <Icon name="gear" className="h-4.5 w-4.5" />
+        </button>
+      ),
+    },
   ];
 
   return (
     <>
       <Header title="ผู้ใช้งาน" icon={<UserIcon />} />
-      <main className="flex-1 p-6 space-y-8 overflow-y-auto w-full max-w-[1700px] mx-auto">
+      <main className="flex-1 p-4 sm:p-6 space-y-8 overflow-y-auto w-full max-w-screen-2xl mx-auto">
         {/* Stats Cards Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-          <div className="bg-white/5 backdrop-blur-xl p-8 rounded-3xl border border-white/5 shadow-2xl flex items-center gap-7 group transition-all duration-300 hover:bg-white/[0.08]">
-            <div className="w-16 h-16 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.15)] group-hover:scale-105 transition-transform">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-2">
+          <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-white/5 shadow-2xl flex items-center gap-5 sm:gap-7 group transition-all duration-300 hover:bg-white/[0.08]">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.15)] group-hover:scale-105 transition-transform flex-shrink-0">
               <UserIcon />
             </div>
-            <div>
-              <p className="text-xs font-bold text-white/40 uppercase tracking-widest">ผู้ใช้ที่ใช้งานวันนี้</p>
-              <p className="text-3xl font-black text-white mt-1.5 tabular-nums">{total.toLocaleString()}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-bold text-white/40 uppercase tracking-widest truncate">ผู้ใช้ที่ใช้งานวันนี้</p>
+              <p className="text-2xl sm:text-3xl font-black text-white mt-1 sm:mt-1.5 tabular-nums truncate">{total.toLocaleString()}</p>
             </div>
           </div>
-          <div className="bg-white/5 backdrop-blur-xl p-8 rounded-3xl border border-white/5 shadow-2xl flex items-center gap-7 group transition-all duration-300 hover:bg-white/[0.08]">
-            <div className="w-16 h-16 bg-violet-500/10 text-violet-400 rounded-2xl flex items-center justify-center border border-violet-500/20 shadow-[0_0_20px_rgba(139,92,246,0.15)] group-hover:scale-105 transition-transform">
+          <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-white/5 shadow-2xl flex items-center gap-5 sm:gap-7 group transition-all duration-300 hover:bg-white/[0.08]">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-violet-500/10 text-violet-400 rounded-2xl flex items-center justify-center border border-violet-500/20 shadow-[0_0_20px_rgba(139,92,246,0.15)] group-hover:scale-105 transition-transform flex-shrink-0">
               <UsersGroupIcon />
             </div>
-            <div>
-              <p className="text-xs font-bold text-white/40 uppercase tracking-widest">ผู้ใช้ทั้งหมดที่ลงทะเบียนแล้ว</p>
-              <p className="text-3xl font-black text-white mt-1.5 tabular-nums">{total.toLocaleString()}</p>
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-bold text-white/40 uppercase tracking-widest truncate">ผู้ใช้ทั้งหมดที่ลงทะเบียนแล้ว</p>
+              <p className="text-2xl sm:text-3xl font-black text-white mt-1 sm:mt-1.5 tabular-nums truncate">{total.toLocaleString()}</p>
             </div>
           </div>
         </div>
 
         {/* Data Table Section */}
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2 px-1">
-             ข้อมูลผู้ใช้งาน
-          </h2>
-          <DataTable
-            headers={headers}
-            columns={columns}
-            rows={rows}
-            rowKey={(row) => row.id}
-            loading={isLoading}
-            errorMessage={errorMessage}
-            emptyMessage="ยังไม่มีข้อมูลผู้ใช้งาน"
-            pagination={{
-              page,
-              totalPages,
-              onPageChange: (nextPage) => void fetchUsers(nextPage),
-            }}
-          />
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              ข้อมูลผู้ใช้งาน
+            </h2>
+          </div>
+          <div className="rounded-3xl border border-white/5 overflow-hidden bg-white/5 backdrop-blur-md shadow-2xl">
+            <DataTable
+              headers={headers}
+              columns={columns}
+              rows={rows}
+              rowKey={(row) => row.id}
+              loading={isLoading}
+              errorMessage={errorMessage}
+              emptyMessage="ยังไม่มีข้อมูลผู้ใช้งาน"
+              pagination={{
+                page,
+                totalPages,
+                onPageChange: (nextPage) => void fetchUsers(nextPage),
+              }}
+            />
+          </div>
         </div>
       </main>
     </>

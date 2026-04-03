@@ -481,6 +481,46 @@ export function SvgSprite() {
         />
       </symbol>
 
+      <symbol id="icon-chevron-left" viewBox="0 0 24 24">
+        <path
+          d="M15 18l-6-6 6-6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </symbol>
+      <symbol id="icon-chevron-right" viewBox="0 0 24 24">
+        <path
+          d="M9 18l6-6-6-6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </symbol>
+      <symbol id="icon-chevrons-left" viewBox="0 0 24 24">
+        <path
+          d="M11 17l-5-5 5-5M18 17l-5-5 5-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </symbol>
+      <symbol id="icon-chevrons-right" viewBox="0 0 24 24">
+        <path
+          d="M13 17l5-5-5-5M6 17l5-5-5-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </symbol>
       <symbol id="icon-dots-vertical" viewBox="0 0 24 24">
         <circle
           cx="12"
