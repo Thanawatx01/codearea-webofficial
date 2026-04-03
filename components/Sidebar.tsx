@@ -35,7 +35,7 @@ const menuGroups: MenuGroup[] = [
         adminOnly: true,
       },
       { label: "โจทย์", href: "/dashboard/problems", iconName: "problem" },
-      { label: "IDE", href: "/dashboard/ide", iconName: "code" },
+      { label: "IDE", href: "/dashboard/ide", iconName: "ide" },
     ],
   },
   {
@@ -211,22 +211,16 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <button
           type="button"
           onClick={handleLogout}
+          className={`flex w-full items-center rounded-lg text-sm font-medium transition-all duration-150 ${collapsed
+            ? "justify-center px-2 py-2.5"
+            : "gap-3 px-3 py-2.5"
+            } text-red-400/80 hover:bg-red-500/10 hover:text-red-400`}
           title="ออกจากระบบ"
-          className={`w-full rounded-lg border border-red-500/20 bg-red-500/10 text-sm font-semibold text-red-400 transition-colors hover:bg-red-500/20 ${collapsed
-            ? "flex items-center justify-center px-2 py-2.5"
-            : "px-3 py-2.5 text-left"
-            }`}
         >
-          {collapsed ? (
+          <span className="text-red-400">
             <Icon name="logout" className="h-5 w-5" />
-          ) : (
-            <div className="flex items-center gap-2">
-              <Icon name="logout" className="h-5 w-5" />
-              <span className="text-sm font-semibold text-red-400">
-                ออกจากระบบ
-              </span>
-            </div>
-          )}
+          </span>
+          {!collapsed && <span>ออกจากระบบ</span>}
         </button>
       </div>
     </aside>
