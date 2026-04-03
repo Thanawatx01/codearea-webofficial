@@ -14,9 +14,9 @@ type ProblemsTableProps = {
   errorMessage: string;
   page: number;
   totalPages: number;
-  onPageChange: (page: number) => void;
-  onDelete: (code: string) => void;
-  onActivate: (code: string) => void;
+  onPageChangeAction: (page: number) => void;
+  onDeleteAction: (code: string) => void;
+  onActivateAction: (code: string) => void;
 };
 
 export function ProblemsTable({
@@ -26,9 +26,9 @@ export function ProblemsTable({
   errorMessage,
   page,
   totalPages,
-  onPageChange,
-  onDelete,
-  onActivate,
+  onPageChangeAction,
+  onDeleteAction,
+  onActivateAction,
 }: ProblemsTableProps) {
   const headers: DataTableHeader[] = [
     { key: "code", label: "รหัส" },
@@ -201,7 +201,7 @@ export function ProblemsTable({
           <button
             type="button"
             onClick={() =>
-              row.status ? onDelete(row.code) : onActivate(row.code)
+              row.status ? onDeleteAction(row.code) : onActivateAction(row.code)
             }
             className={`rounded px-3 py-1.5 text-xs font-semibold ${
               row.status
@@ -249,7 +249,7 @@ export function ProblemsTable({
         pagination={{
           page,
           totalPages,
-          onPageChange,
+          onPageChangeAction: onPageChangeAction,
         }}
       />
     </section>

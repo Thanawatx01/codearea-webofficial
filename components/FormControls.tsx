@@ -209,7 +209,7 @@ type ThemedSelect2Props = {
   required?: boolean;
   value: Select2Option | null;
   options: Select2Option[];
-  onChange: (option: Select2Option | null) => void;
+  onChangeAction: (option: Select2Option | null) => void;
   placeholder?: string;
   isClearable?: boolean;
   isDisabled?: boolean;
@@ -223,7 +223,7 @@ export function ThemedSelect2({
   required = false,
   value,
   options,
-  onChange,
+  onChangeAction,
   placeholder = "Select...",
   isClearable = true,
   isDisabled = false,
@@ -263,7 +263,7 @@ export function ThemedSelect2({
         inputId={`${instanceId}-input`}
         value={value}
         options={options}
-        onChange={(option) => onChange(option)}
+        onChange={(option) => onChangeAction(option)}
         placeholder={placeholder}
         isClearable={isClearable}
         isDisabled={isDisabled}
@@ -280,7 +280,7 @@ type ThemedMultiSelect2Props = {
   required?: boolean;
   value: Select2Option[];
   options: Select2Option[];
-  onChange: (option: Select2Option[]) => void;
+  onChangeAction: (option: Select2Option[]) => void;
   placeholder?: string;
   isDisabled?: boolean;
   size?: "default" | "sm";
@@ -292,7 +292,7 @@ export function ThemedMultiSelect2({
   required = false,
   value,
   options,
-  onChange,
+  onChangeAction,
   placeholder = "Select...",
   isDisabled = false,
   size = "default",
@@ -344,7 +344,7 @@ export function ThemedMultiSelect2({
         inputId={`${instanceId}-input`}
         value={value}
         options={options}
-        onChange={(option) => onChange([...option])}
+        onChange={(option) => onChangeAction([...option])}
         placeholder={placeholder}
         isDisabled={isDisabled}
         styles={controlStyles}
@@ -359,7 +359,7 @@ type ThemedAsyncSelect2Props = {
   label?: string;
   required?: boolean;
   value: Select2Option | null;
-  onChange: (option: Select2Option | null) => void;
+  onChangeAction: (option: Select2Option | null) => void;
   loadOptions: (inputValue: string) => Promise<Select2Option[]>;
   placeholder?: string;
   defaultOptions?: Select2Option[] | boolean;
@@ -373,7 +373,7 @@ export function ThemedAsyncSelect2({
   label,
   required = false,
   value,
-  onChange,
+  onChangeAction,
   loadOptions,
   placeholder = "Search...",
   defaultOptions = true,
@@ -417,7 +417,7 @@ export function ThemedAsyncSelect2({
         defaultOptions={defaultOptions}
         value={value}
         loadOptions={loadOptions}
-        onChange={(option) => onChange(option)}
+        onChange={(option) => onChangeAction(option)}
         placeholder={placeholder}
         isClearable={isClearable}
         isDisabled={isDisabled}
@@ -433,7 +433,7 @@ type ThemedAsyncMultiSelect2Props = {
   label?: string;
   required?: boolean;
   value: Select2Option[];
-  onChange: (option: Select2Option[]) => void;
+  onChangeAction: (option: Select2Option[]) => void;
   loadOptions: (inputValue: string) => Promise<Select2Option[]>;
   placeholder?: string;
   defaultOptions?: Select2Option[] | boolean;
@@ -446,7 +446,7 @@ export function ThemedAsyncMultiSelect2({
   label,
   required = false,
   value,
-  onChange,
+  onChangeAction,
   loadOptions,
   placeholder = "Search...",
   defaultOptions = true,
@@ -502,7 +502,7 @@ export function ThemedAsyncMultiSelect2({
         defaultOptions={defaultOptions}
         value={value}
         loadOptions={loadOptions}
-        onChange={(option) => onChange([...(option ?? [])])}
+        onChange={(option) => onChangeAction([...(option ?? [])])}
         placeholder={placeholder}
         isDisabled={isDisabled}
         styles={controlStyles}

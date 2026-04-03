@@ -101,15 +101,14 @@ export async function getCroppedImg(
     pixelCrop.height
   );
 
-  // As Base64 string
-  return croppedCanvas.toDataURL("image/jpeg");
+  // As WebP base64 string
+  return croppedCanvas.toDataURL("image/webp");
+}
 
-  // As a blob
-  /*
-  return new Promise((resolve, reject) => {
-    croppedCanvas.toBlob((file) => {
-      resolve(URL.createObjectURL(file))
-    }, 'image/jpeg')
-  })
-  */
+/**
+ * Converts a base64 string to a Blob
+ */
+export async function base64ToBlob(base64: string): Promise<Blob> {
+  const res = await fetch(base64);
+  return await res.blob();
 }

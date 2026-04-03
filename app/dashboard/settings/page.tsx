@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons/Icon";
 import Swal from "sweetalert2";
 import Cropper from "react-easy-crop";
-import { getCroppedImg, type Area } from "@/lib/imageUtils";
+import { getCroppedImg, type Area, base64ToBlob } from "@/lib/imageUtils";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -23,6 +23,7 @@ export default function SettingsPage() {
     language: "Thai",
     theme: "System Default",
     twoFactor: false,
+    avatarUrl: null as string | null,
   });
 
   const [initialData, setInitialData] = useState({ ...formData });
@@ -50,22 +51,26 @@ export default function SettingsPage() {
       return;
     }
     try {
-      const user = JSON.parse(userRaw) as { display_name: string; email: string; id: string };
+      const user = JSON.parse(userRaw) as { display_name: string; email: string; id: string; avatar_url?: string };
       const loadedData = {
         ...formData,
         displayName: user.display_name,
         username: user.email,
         email: user.email,
+        avatarUrl: user.avatar_url || null,
       };
       setFormData(loadedData);
-      setInitialData(loadedData);
+      setInitialData({ ...loadedData });
+      if (user.avatar_url) {
+        setAvatarPreview(user.avatar_url);
+      }
     } catch (e) {
       router.replace("/login");
     }
   }, [router]);
 
   useEffect(() => {
-    const isChanged = JSON.stringify(formData) !== JSON.stringify(initialData) || avatarPreview !== null;
+    const isChanged = JSON.stringify(formData) !== JSON.stringify(initialData) || (avatarPreview !== null && avatarPreview !== initialData.avatarUrl);
     setHasChanges(isChanged);
   }, [formData, initialData, avatarPreview]);
 
@@ -124,15 +129,86 @@ export default function SettingsPage() {
     });
 
     if (result.isConfirmed) {
-      setInitialData(formData);
-      setHasChanges(false);
-      void Swal.fire({ icon: "success", title: "สำเร็จ", text: "บันทึกการตั้งค่าเรียบร้อยแล้ว", background: "#1a1c2e", color: "#fff", timer: 1500, showConfirmButton: false });
+      try {
+        Swal.fire({
+          title: "กำลังบันทึก...",
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+          background: "#1a1c2e",
+          color: "#fff",
+        });
+
+        let currentAvatarUrl = avatarPreview;
+
+        // If avatar is new (base64), upload via backend
+        if (avatarPreview && avatarPreview.startsWith("data:")) {
+          const userRaw = localStorage.getItem("user");
+          const user = JSON.parse(userRaw!) as { id: string };
+          const token = localStorage.getItem("token");
+
+          const blob = await base64ToBlob(avatarPreview);
+          const formDataObj = new FormData();
+          formDataObj.append("avatar", blob, "avatar.webp");
+
+          const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/avatar`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formDataObj,
+          });
+
+          if (!uploadRes.ok) {
+            const errorData = await uploadRes.json();
+            throw new Error(errorData.message || "Failed to upload avatar");
+          }
+
+          const uploadData = await uploadRes.json();
+          currentAvatarUrl = uploadData.avatar_url;
+        }
+
+        // Save other profile data
+        const userRaw = localStorage.getItem("user");
+        const user = JSON.parse(userRaw!) as { id: string };
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            display_name: formData.displayName,
+            avatar_url: currentAvatarUrl,
+          }),
+        });
+
+        if (!response.ok) throw new Error("Failed to update profile");
+
+        const updatedUser = await response.json();
+
+        // Update local storage
+        const newUser = { ...JSON.parse(userRaw!), display_name: updatedUser.display_name, avatar_url: updatedUser.avatar_url };
+        localStorage.setItem("user", JSON.stringify(newUser));
+
+        setInitialData({ ...formData, avatarUrl: updatedUser.avatar_url });
+        setAvatarPreview(updatedUser.avatar_url);
+        setHasChanges(false);
+
+        void Swal.fire({ icon: "success", title: "สำเร็จ", text: "บันทึกการตั้งค่าเรียบร้อยแล้ว", background: "#1a1c2e", color: "#fff", timer: 1500, showConfirmButton: false });
+      } catch (error: any) {
+        console.error("Save error:", error);
+        void Swal.fire({ icon: "error", title: "เกิดข้อผิดพลาด", text: error.message || "ไม่สามารถบันทึกข้อมูลได้", background: "#1a1c2e", color: "#fff" });
+      }
     }
   };
 
   const handleCancel = () => {
     setFormData(initialData);
-    setAvatarPreview(null);
+    setAvatarPreview(initialData.avatarUrl);
     setHasChanges(false);
     setShowEmailFields(false);
     setShowPasswordFields(false);
@@ -210,7 +286,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col text-white pb-20">
-      <Header title="Account Settings" />
+      <Header title="การตั้งค่าโปรไฟล์" />
 
       {/* Cropper Modal */}
       {isCropping && imageToCrop && (

@@ -33,7 +33,7 @@ type DataTableProps<T> = {
   pagination?: {
     page: number;
     totalPages: number;
-    onPageChange: (page: number) => void;
+    onPageChangeAction: (page: number) => void;
   };
   tableClassName?: string;
   headerClassName?: string;
@@ -131,7 +131,7 @@ export default function DataTable<T>({
         <div className="my-4 flex items-center justify-center gap-1 sm:gap-2.5">
           <button
             type="button"
-            onClick={() => pagination.onPageChange(1)}
+            onClick={() => pagination.onPageChangeAction(1)}
             disabled={!canPrev}
             className="h-8 w-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/60 transition-all hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
             title="First Page"
@@ -141,7 +141,7 @@ export default function DataTable<T>({
           <button
             type="button"
             onClick={() =>
-              canPrev && pagination.onPageChange(pagination.page - 1)
+              canPrev && pagination.onPageChangeAction(pagination.page - 1)
             }
             disabled={!canPrev}
             className="h-8 w-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/60 transition-all hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
@@ -159,7 +159,7 @@ export default function DataTable<T>({
           <button
             type="button"
             onClick={() =>
-              canNext && pagination.onPageChange(pagination.page + 1)
+              canNext && pagination.onPageChangeAction(pagination.page + 1)
             }
             disabled={!canNext}
             className="h-8 w-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/60 transition-all hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
@@ -170,7 +170,7 @@ export default function DataTable<T>({
           <button
             type="button"
             onClick={() =>
-              pagination.onPageChange(Math.max(pagination.totalPages, 1))
+              pagination.onPageChangeAction(Math.max(pagination.totalPages, 1))
             }
             disabled={!canNext}
             className="h-8 w-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/60 transition-all hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"

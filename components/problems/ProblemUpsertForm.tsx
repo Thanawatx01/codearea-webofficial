@@ -481,7 +481,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                   value={categoryOption}
                   required
                   loadOptions={loadQuestionCategoryOptionsForForm}
-                  onChange={(option) => {
+                  onChangeAction={(option) => {
                     setCategoryOption(option);
                     setFormData((prev) => ({
                       ...prev,
@@ -607,7 +607,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                 label="TAG"
                 value={tagSelections}
                 loadOptions={loadTagOptionsForForm}
-                onChange={(options) =>
+                onChangeAction={(options) =>
                   setFormData((prev) => ({
                     ...prev,
                     tag: options.map((item) => item.value),

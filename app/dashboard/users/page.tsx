@@ -297,7 +297,7 @@ export default function UsersPage() {
               pagination={{
                 page,
                 totalPages,
-                onPageChange: (nextPage) => void fetchUsers(nextPage),
+                onPageChangeAction: (nextPage) => void fetchUsers(nextPage),
               }}
             />
           </div>

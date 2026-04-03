@@ -212,13 +212,13 @@ export default function LibraryPage() {
                   label="Category (Select2 - Client Filter)"
                   value={clientSelect2Value}
                   options={select2ClientOptions}
-                  onChange={setClientSelect2Value}
+                  onChangeAction={setClientSelect2Value}
                   placeholder="Search category..."
                 />
                 <ThemedAsyncSelect2
                   label="GitHub User (Select2 - Server Side)"
                   value={serverSelect2Value}
-                  onChange={setServerSelect2Value}
+                  onChangeAction={setServerSelect2Value}
                   loadOptions={loadGithubUsers}
                   placeholder="Type to search user..."
                 />
@@ -299,7 +299,7 @@ const options: Select2Option[] = [
   label="Category"
   value={value}
   options={options}
-  onChange={setValue}
+  onChangeAction={setValue}
   placeholder="Search category..."
 />`}
                   </pre>
@@ -326,7 +326,7 @@ const loadOptions = async (input: string): Promise<Select2Option[]> => {
 <ThemedAsyncSelect2
   label="User"
   value={value}
-  onChange={setValue}
+  onChangeAction={setValue}
   loadOptions={loadOptions}
   placeholder="Type to search..."
 />`}
@@ -350,7 +350,7 @@ const loadOptions = async (input: string): Promise<Select2Option[]> => {
                 pagination={{
                   page: tablePage,
                   totalPages: 1,
-                  onPageChange: setTablePage,
+                  onPageChangeAction: setTablePage,
                 }}
               />
               <details className="rounded-lg border border-base-300 bg-base-100 text-sm">
@@ -381,7 +381,7 @@ const columns: DataTableColumn<RowType>[] = [
   pagination={{
     page,
     totalPages,
-    onPageChange: setPage,
+    onPageChangeAction: setPage,
   }}
 />`}
                 </pre>

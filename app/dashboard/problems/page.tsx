@@ -157,12 +157,12 @@ export default function ProblemsPage() {
             difficulty={difficulty}
             tag={tag}
             status={status}
-            onCategoryChange={setCategory}
-            onSearchChange={setSearch}
-            onDifficultyChange={setDifficulty}
-            onTagChange={setTag}
-            onStatusChange={setStatus}
-            onSubmit={() => void fetchQuestions(1)}
+            onCategoryChangeAction={setCategory}
+            onSearchChangeAction={setSearch}
+            onDifficultyChangeAction={setDifficulty}
+            onTagChangeAction={setTag}
+            onStatusChangeAction={setStatus}
+            onSubmitAction={() => void fetchQuestions(1)}
           />
           <ProblemsTable
             rows={rows}
@@ -171,9 +171,9 @@ export default function ProblemsPage() {
             errorMessage={errorMessage}
             page={page}
             totalPages={totalPages}
-            onPageChange={(nextPage) => void fetchQuestions(nextPage)}
-            onDelete={(code) => void handleDelete(code)}
-            onActivate={(code) => void handleActivate(code)}
+            onPageChangeAction={(nextPage) => void fetchQuestions(nextPage)}
+            onDeleteAction={(code) => void handleDelete(code)}
+            onActivateAction={(code) => void handleActivate(code)}
           />
         </div>
       </main>
