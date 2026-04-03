@@ -32,7 +32,7 @@ const menuGroups: MenuGroup[] = [
   },
   {
     title: "ระบบ",
-    items: [{ label: "ผู้ใช้งาน", href: "/dashboard/users", iconName: "user" }],
+    items: [{ label: "การจัดการผู้ใช้งาน", href: "/dashboard/users", iconName: "user" }],
   },
   {
     title: "รายงาน",
@@ -51,16 +51,6 @@ const menuGroups: MenuGroup[] = [
         label: "กิจกรรมผู้ใช้",
         href: "/dashboard/user-activity",
         iconName: "activity",
-      },
-    ],
-  },
-  {
-    title: "ตั้งค่าระบบ",
-    items: [
-      {
-        label: "การตั้งค่า",
-        href: "/dashboard/settings",
-        iconName: "settings",
       },
     ],
   },
