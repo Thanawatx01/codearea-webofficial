@@ -3,18 +3,11 @@
 import Header from "@/components/Header";
 import DataTable from "@/components/DataTable";
 import type { DataTableColumn, DataTableHeader } from "@/components/DataTable";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
 import { Icon } from "@/components/icons/Icon";
+import { maskEmail } from "@/lib/utils";
 import Swal from "sweetalert2";
-
-const UserIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-);
-
-const UsersGroupIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-);
 
 interface UserRow {
   id: string;
@@ -37,16 +30,6 @@ interface UserListResponse {
 const roleNames: Record<number, string> = {
   1: "ผู้ใช้ / user",
   2: "แอดมิน / admin",
-};
-
-/** Mask email logic: keep first 5, ***, last 3 before @, then domain */
-const maskEmail = (email: string) => {
-  const [local, domain] = email.split("@");
-  if (!local || !domain) return email;
-  if (local.length <= 8) {
-    return `${local.slice(0, 2)}***${local.slice(-1)}@${domain}`;
-  }
-  return `${local.slice(0, 5)}***${local.slice(-3)}@${domain}`;
 };
 
 export default function UsersPage() {
@@ -271,13 +254,13 @@ export default function UsersPage() {
 
   return (
     <>
-      <Header title="ผู้ใช้งาน" icon={<UserIcon />} />
+      <Header title="ผู้ใช้งาน" icon={<Icon name="user" className="h-5 w-5 text-primary" />} />
       <main className="flex-1 p-4 sm:p-6 space-y-8 overflow-y-auto w-full max-w-screen-2xl mx-auto">
         {/* Stats Cards Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-2">
           <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-white/5 shadow-2xl flex items-center gap-5 sm:gap-7 group transition-all duration-300 hover:bg-white/[0.08]">
             <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.15)] group-hover:scale-105 transition-transform flex-shrink-0">
-              <UserIcon />
+              <Icon name="user" className="h-5 w-5 text-violet-400 group-hover:scale-110 transition-transform" />
             </div>
             <div className="min-w-0">
               <p className="text-[10px] sm:text-xs font-bold text-white/40 uppercase tracking-widest truncate">ผู้ใช้ที่ใช้งานวันนี้</p>
@@ -286,7 +269,7 @@ export default function UsersPage() {
           </div>
           <div className="bg-white/5 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-white/5 shadow-2xl flex items-center gap-5 sm:gap-7 group transition-all duration-300 hover:bg-white/[0.08]">
             <div className="w-12 h-12 md:w-16 md:h-16 bg-violet-500/10 text-violet-400 rounded-2xl flex items-center justify-center border border-violet-500/20 shadow-[0_0_20px_rgba(139,92,246,0.15)] group-hover:scale-105 transition-transform flex-shrink-0">
-              <UsersGroupIcon />
+              <Icon name="users-group" className="h-6 w-6 text-violet-400 group-hover:scale-110 transition-transform" />
             </div>
             <div className="min-w-0">
               <p className="text-[10px] sm:text-xs font-bold text-white/40 uppercase tracking-widest truncate">ผู้ใช้ทั้งหมดที่ลงทะเบียนแล้ว</p>
