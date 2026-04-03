@@ -480,7 +480,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
                   label="CATEGORY"
                   value={categoryOption}
                   required
-                  loadOptions={loadQuestionCategoryOptionsForForm}
+                  loadOptionsAction={loadQuestionCategoryOptionsForForm}
                   onChangeAction={(option) => {
                     setCategoryOption(option);
                     setFormData((prev) => ({
@@ -606,7 +606,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
               <ThemedAsyncMultiSelect2
                 label="TAG"
                 value={tagSelections}
-                loadOptions={loadTagOptionsForForm}
+                loadOptionsAction={loadTagOptionsForForm}
                 onChangeAction={(options) =>
                   setFormData((prev) => ({
                     ...prev,

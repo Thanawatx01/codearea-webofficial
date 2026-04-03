@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import DataTable from "@/components/DataTable";
 import type { DataTableColumn, DataTableHeader } from "@/components/DataTable";
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Icon } from "@/components/icons/Icon";
 import { maskEmail } from "@/lib/utils";
@@ -34,12 +35,34 @@ const roleNames: Record<number, string> = {
 };
 
 export default function UsersPage() {
+  const router = useRouter();
   const [rows, setRows] = useState<UserRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const userJson = localStorage.getItem("user");
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        if (user.role_id === 2) {
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+          router.replace("/dashboard/problems");
+        }
+      } catch (e) {
+        console.error("Error parsing user from localStorage:", e);
+        router.replace("/login");
+      }
+    } else {
+      router.replace("/login");
+    }
+  }, [router]);
 
   // State for dropdown on role cell
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -53,6 +76,7 @@ export default function UsersPage() {
   const actionsRef = useRef<HTMLDivElement>(null);
 
   const fetchUsers = async (targetPage = page) => {
+    if (isAuthorized === false) return;
     setIsLoading(true);
     setErrorMessage("");
     const res = await api.get<UserListResponse>("/users", {
@@ -145,7 +169,9 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
-    void fetchUsers();
+    if (isAuthorized === true) {
+      void fetchUsers();
+    }
 
     // Close menu when clicking outside
     const handleClickOutside = (event: MouseEvent) => {

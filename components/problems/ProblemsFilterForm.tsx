@@ -47,7 +47,7 @@ export function ProblemsFilterForm({
           label="หมวดหมู่"
           value={categoryValue}
           onChangeAction={(option) => onCategoryChangeAction(option)}
-          loadOptions={loadQuestionCategoryOptionsForFilter}
+          loadOptionsAction={loadQuestionCategoryOptionsForFilter}
           placeholder="ค้นหาหมวดหมู่..."
           size="sm"
         />
@@ -88,7 +88,7 @@ export function ProblemsFilterForm({
           onChangeAction={(options) =>
             onTagChangeAction(options.map((option) => option.value))
           }
-          loadOptions={loadTagOptionsForFilter}
+          loadOptionsAction={loadTagOptionsForFilter}
           placeholder="ค้นหาแท็ก..."
           size="sm"
         />

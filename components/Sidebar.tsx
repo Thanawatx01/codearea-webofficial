@@ -4,11 +4,13 @@ import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface MenuItem {
   label: string;
   href: string;
   iconName: string;
+  adminOnly?: boolean;
 }
 
 interface MenuGroup {
@@ -65,6 +67,20 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
+  const [roleId, setRoleId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const userJson = localStorage.getItem("user");
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        setRoleId(user.role_id);
+      } catch (e) {
+        console.error("Error parsing user from localStorage:", e);
+      }
+    }
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -114,44 +130,55 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <nav
         className={`flex-1 py-4 ${collapsed ? "px-2 space-y-4" : "px-3 space-y-6"}`}
       >
-        {menuGroups.map((group) => (
-          <div key={group.title}>
-            {!collapsed ? (
-              <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-text-light">
-                {group.title}
-              </p>
-            ) : null}
-            <ul className="space-y-0.5">
-              {group.items.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <li key={item.href}>
-                    <Link
-                      title={item.label}
-                      href={item.href}
-                      className={`flex items-center rounded-lg text-sm font-medium transition-all duration-150 ${collapsed
-                        ? "justify-center px-2 py-2.5"
-                        : "gap-3 px-3 py-2.5"
-                        } ${isActive
-                          ? "bg-primary/20 text-primary border border-primary/20"
-                          : "text-text-muted hover:bg-white/5 hover:text-foreground"
-                        }`}
-                    >
-                      <span
-                        className={
-                          isActive ? "text-primary" : "text-text-light"
-                        }
+        {menuGroups.map((group) => {
+          const visibleItems = group.items.filter((item) => {
+            if (item.adminOnly) {
+              return roleId === 2;
+            }
+            return true;
+          });
+
+          if (visibleItems.length === 0) return null;
+
+          return (
+            <div key={group.title}>
+              {!collapsed ? (
+                <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-text-light">
+                  {group.title}
+                </p>
+              ) : null}
+              <ul className="space-y-0.5">
+                {visibleItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        title={item.label}
+                        href={item.href}
+                        className={`flex items-center rounded-lg text-sm font-medium transition-all duration-150 ${collapsed
+                          ? "justify-center px-2 py-2.5"
+                          : "gap-3 px-3 py-2.5"
+                          } ${isActive
+                            ? "bg-primary/20 text-primary border border-primary/20"
+                            : "text-text-muted hover:bg-white/5 hover:text-foreground"
+                          }`}
                       >
-                        <Icon name={item.iconName} className="h-5 w-5" />
-                      </span>
-                      {!collapsed ? item.label : null}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+                        <span
+                          className={
+                            isActive ? "text-primary" : "text-text-light"
+                          }
+                        >
+                          <Icon name={item.iconName} className="h-5 w-5" />
+                        </span>
+                        {!collapsed ? item.label : null}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
       </nav>
 
       <div className={`border-t border-white/10 ${collapsed ? "p-2" : "p-3"}`}>

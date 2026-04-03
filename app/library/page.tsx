@@ -219,7 +219,7 @@ export default function LibraryPage() {
                   label="GitHub User (Select2 - Server Side)"
                   value={serverSelect2Value}
                   onChangeAction={setServerSelect2Value}
-                  loadOptions={loadGithubUsers}
+                  loadOptionsAction={loadGithubUsers}
                   placeholder="Type to search user..."
                 />
               </div>
@@ -314,7 +314,7 @@ const options: Select2Option[] = [
 
 const [value, setValue] = useState<Select2Option | null>(null);
 
-const loadOptions = async (input: string): Promise<Select2Option[]> => {
+const loadOptionsAction = async (input: string): Promise<Select2Option[]> => {
   const res = await fetch("/api/search?q=" + encodeURIComponent(input));
   const data = await res.json();
   return data.items.map((item: { id: string; name: string }) => ({
@@ -327,9 +327,9 @@ const loadOptions = async (input: string): Promise<Select2Option[]> => {
   label="User"
   value={value}
   onChangeAction={setValue}
-  loadOptions={loadOptions}
+  loadOptionsAction={loadOptionsAction}
   placeholder="Type to search..."
-/>`}
+/>`},search:
                   </pre>
                 </details>
               </div>
