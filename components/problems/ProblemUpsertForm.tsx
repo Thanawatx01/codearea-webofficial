@@ -10,6 +10,7 @@ import {
 } from "@/components/FormControls";
 import { MarkdownCodeEditor } from "@/components/editor/MarkdownCodeEditor";
 import { Icon } from "@/components/icons/Icon";
+import { UnsavedChangesBar } from "@/components/UnsavedChangesBar";
 import { api } from "@/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -142,10 +143,25 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [existingUri, setExistingUri] = useState<string>("");
   const [formData, setFormData] = useState<ProblemFormState>(initialFormState);
+  const [lastSavedData, setLastSavedData] = useState<string>("");
   const [categoryOption, setCategoryOption] = useState<Select2Option | null>(
     null,
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isDirty = useMemo(() => {
+    return (
+      lastSavedData &&
+      (JSON.stringify(formData) !== lastSavedData || pdfFile !== null)
+    );
+  }, [formData, lastSavedData, pdfFile]);
+
+  useEffect(() => {
+    // Initial lastSavedData for "New" mode
+    if (!code) {
+      setLastSavedData(JSON.stringify(initialFormState));
+    }
+  }, [code]);
 
   useEffect(() => {
     if (!code) return;
@@ -219,6 +235,34 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
         test_cases: mappedTestCases,
       });
       setExistingUri(data.uri ?? "");
+      const stringified = JSON.stringify({
+        category_id: cid,
+        title: data.title ?? "",
+        description: data.description ?? "",
+        constraints: data.constraints ?? "",
+        solution: data.solution ?? "",
+        difficulty:
+          data.difficulty === null || data.difficulty === undefined
+            ? ""
+            : String(data.difficulty),
+        expected_complexity: data.expected_complexity ?? "",
+        time_limit:
+          data.time_limit === null || data.time_limit === undefined
+            ? ""
+            : String(data.time_limit),
+        memory_limit:
+          data.memory_limit === null || data.memory_limit === undefined
+            ? ""
+            : String(data.memory_limit),
+        points:
+          data.points === null || data.points === undefined
+            ? ""
+            : String(data.points),
+        status: data.status === false ? "0" : "1",
+        tag: mappedTagValues,
+        test_cases: mappedTestCases,
+      });
+      setLastSavedData(stringified);
       setIsLoading(false);
     };
     void run();
@@ -300,8 +344,8 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!formData.category_id.trim() || !formData.title.trim()) {
       await Swal.fire({
         icon: "warning",
@@ -382,6 +426,8 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
         timer: 1200,
         showConfirmButton: false,
       });
+      setLastSavedData(JSON.stringify(formData));
+      setPdfFile(null);
       router.push("/dashboard/problems");
     } catch (error) {
       await Swal.fire({
@@ -417,7 +463,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
               กำลังโหลดข้อมูล...
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form id="problem-upsert-form" onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <label className="block px-1 text-xs font-semibold uppercase tracking-widest text-white/50">
                   PDF Upload <span className="ml-1 text-red-500">*</span>
@@ -785,6 +831,12 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
           )}
         </div>
       </section>
+
+      <UnsavedChangesBar
+        show={isDirty}
+        isSubmitting={isSubmitting}
+        onSaveAction={() => handleSubmit()}
+      />
     </main>
   );
 }

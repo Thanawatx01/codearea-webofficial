@@ -278,12 +278,12 @@ export function ThemedSelect2({
     ...select2Styles,
     control: (base, state) => ({
       ...select2Styles.control?.(base, state),
-      minHeight: isSmall ? "40px" : "56px",
+      minHeight: isSmall ? "42px" : "56px",
     }),
     valueContainer: (base) => ({
       ...base,
-      minHeight: isSmall ? "40px" : "56px",
-      padding: isSmall ? "0 8px" : base.padding,
+      minHeight: isSmall ? "42px" : "56px",
+      padding: isSmall ? "0 12px" : base.padding,
     }),
     menuPortal: (base) => ({
       ...base,
@@ -358,12 +358,12 @@ export function ThemedMultiSelect2({
       "&:hover": {
         borderColor: "#8b5cf6",
       },
-      minHeight: isSmall ? "40px" : "56px",
+      minHeight: isSmall ? "42px" : "56px",
     }),
     valueContainer: (base) => ({
       ...base,
-      minHeight: isSmall ? "40px" : "56px",
-      padding: isSmall ? "0 8px" : base.padding,
+      minHeight: isSmall ? "42px" : "56px",
+      padding: isSmall ? "0 12px" : base.padding,
     }),
     menuPortal: (base) => ({
       ...base,
@@ -430,12 +430,12 @@ export function ThemedAsyncSelect2({
     ...select2Styles,
     control: (base, state) => ({
       ...select2Styles.control?.(base, state),
-      minHeight: isSmall ? "40px" : "56px",
+      minHeight: isSmall ? "42px" : "56px",
     }),
     valueContainer: (base) => ({
       ...base,
-      minHeight: isSmall ? "40px" : "56px",
-      padding: isSmall ? "0 8px" : base.padding,
+      minHeight: isSmall ? "42px" : "56px",
+      padding: isSmall ? "0 12px" : base.padding,
     }),
     menuPortal: (base) => ({
       ...base,
@@ -514,12 +514,12 @@ export function ThemedAsyncMultiSelect2({
       "&:hover": {
         borderColor: "#8b5cf6",
       },
-      minHeight: isSmall ? "40px" : "56px",
+      minHeight: isSmall ? "42px" : "56px",
     }),
     valueContainer: (base) => ({
       ...base,
-      minHeight: isSmall ? "40px" : "56px",
-      padding: isSmall ? "0 8px" : base.padding,
+      minHeight: isSmall ? "42px" : "56px",
+      padding: isSmall ? "0 12px" : base.padding,
     }),
     menuPortal: (base) => ({
       ...base,

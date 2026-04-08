@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Icon } from "@/components/icons/Icon";
+import { UnsavedChangesBar } from "@/components/UnsavedChangesBar";
 import Swal from "sweetalert2";
 import Cropper from "react-easy-crop";
 import { getCroppedImg, type Area, base64ToBlob } from "@/lib/imageUtils";
@@ -41,6 +42,7 @@ export default function SettingsPage() {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isCropping, setIsCropping] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 1. Initialize data from localStorage
   useEffect(() => {
@@ -130,6 +132,7 @@ export default function SettingsPage() {
     });
 
     if (result.isConfirmed) {
+      setIsSubmitting(true);
       try {
         Swal.fire({
           title: "กำลังบันทึก...",
@@ -190,6 +193,8 @@ export default function SettingsPage() {
       } catch (error: any) {
         console.error("Save error:", error);
         void Swal.fire({ icon: "error", title: "เกิดข้อผิดพลาด", text: error.message || "ไม่สามารถบันทึกข้อมูลได้", background: "#1a1c2e", color: "#fff" });
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -646,28 +651,13 @@ export default function SettingsPage() {
 
       </main>
 
-      {/* Floating Save Actions */}
-      <div className={`fixed bottom-0 left-0 right-0 sm:left-[260px] p-6 bg-[#05070f]/95 backdrop-blur-3xl border-t border-white/5 transform transition-all duration-500 z-50 ${hasChanges ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <p className="text-[10px] font-black text-white uppercase tracking-[0.3em]">มีบางอย่างเปลี่ยนแปลงรอการบันทึก</p>
-          </div>
-          <div className="flex gap-4 w-full sm:w-auto">
-            <button
-              onClick={handleCancel}
-              className="flex-1 sm:flex-none px-12 py-3.5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] font-black text-red-500 hover:bg-red-500/20 hover:text-red-400 transition-all uppercase tracking-widest"
-            >
-              ยกเลิก
-            </button>
-            <button
-              onClick={handleSave}
-              className="flex-1 sm:flex-none px-12 py-3.5 bg-emerald-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_10px_30px_rgba(16,185,129,0.3)] hover:bg-emerald-500"
-            >
-              บันทึก
-            </button>
-          </div>
-        </div>
-      </div>
+      <UnsavedChangesBar
+        show={hasChanges}
+        isSubmitting={isSubmitting}
+        onSaveAction={handleSave}
+        onCancelAction={handleCancel}
+        message="มีบางอย่างเปลี่ยนแปลงรอการบันทึก"
+      />
     </div>
   );
 }

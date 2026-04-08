@@ -37,7 +37,7 @@ function ProblemsPageContent() {
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [tag, setTag] = useState<Select2Option[]>([]);
-  const [status, setStatus] = useState("1");
+  const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -163,13 +163,14 @@ function ProblemsPageContent() {
     void fetchQuestions(page);
   };
 
-  const handleActivate = async (code: string) => {
+  const handleToggleStatus = async (code: string, currentStatus: boolean) => {
+    const actionText = currentStatus ? "ปิดใช้งาน" : "เปิดใช้งาน";
     const result = await Swal.fire({
       icon: "question",
-      title: "ยืนยันการเปิดใช้งาน",
-      text: `ต้องการเปิดใช้งานโจทย์ ${code} ใช่หรือไม่`,
+      title: `ยืนยันการ${actionText}`,
+      text: `ต้องการ${actionText}โจทย์ ${code} ใช่หรือไม่`,
       showCancelButton: true,
-      confirmButtonText: "เปิดใช้งาน",
+      confirmButtonText: actionText,
       cancelButtonText: "ยกเลิก",
       reverseButtons: true,
     });
@@ -177,14 +178,14 @@ function ProblemsPageContent() {
 
     const res = await api.put<{ message?: string }>(
       `/questions/${code}`,
-      { status: true },
+      { status: !currentStatus },
       { useToken: true },
     );
 
     if (!res.ok) {
       await Swal.fire({
         icon: "error",
-        title: "เปิดใช้งานไม่สำเร็จ",
+        title: `${actionText}ไม่สำเร็จ`,
         text: res.error ?? "เกิดข้อผิดพลาดจากระบบ",
       });
       return;
@@ -192,8 +193,8 @@ function ProblemsPageContent() {
 
     await Swal.fire({
       icon: "success",
-      title: "เปิดใช้งานสำเร็จ",
-      text: res.data?.message ?? `เปิดใช้งานโจทย์ ${code} สำเร็จ`,
+      title: `${actionText}สำเร็จ`,
+      text: res.data?.message ?? `${actionText}โจทย์ ${code} สำเร็จ`,
       timer: 1200,
       showConfirmButton: false,
     });
@@ -231,7 +232,7 @@ function ProblemsPageContent() {
               isAdmin={isAdmin}
               onPageChangeAction={(nextPage) => void fetchQuestions(nextPage)}
               onDeleteAction={(code) => void handleDelete(code)}
-              onActivateAction={(code) => void handleActivate(code)}
+              onToggleStatusAction={(code, currentStatus) => void handleToggleStatus(code, currentStatus)}
             />
         </div>
       </main>

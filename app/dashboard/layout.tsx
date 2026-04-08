@@ -71,6 +71,7 @@ export default function DashboardLayout({
         onToggle={() => setCollapsed((prev) => !prev)}
       />
       <div
+        style={{ "--sidebar-width": collapsed ? "84px" : "260px" } as React.CSSProperties}
         className={`relative isolate flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden bg-linear-to-br from-[#06080f] via-[#0a0b17] to-[#071226] transition-[margin-left] duration-200 ${
           collapsed ? "ml-[84px]" : "ml-[260px]"
         }`}

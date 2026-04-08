@@ -59,14 +59,14 @@ export function ProblemsFilterForm({
           value={search}
           onChangeAction={(e) => onSearchChangeAction(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onSubmitAction()}
-          className="h-10 rounded-lg px-3"
+          className="h-[42px] rounded-xl px-4"
         />
 
         <ThemedSelect
           label="ระดับ"
           value={difficulty}
           onChangeAction={(e) => onDifficultyChangeAction(e.target.value)}
-          className="h-10 rounded-lg px-3"
+          className="h-[42px] rounded-xl px-4"
         >
           <option value="" className="text-black">
             ทั้งหมด
@@ -97,7 +97,7 @@ export function ProblemsFilterForm({
           label="สถานะ"
           value={status}
           onChangeAction={(e) => onStatusChangeAction(e.target.value)}
-          className="h-10 rounded-lg px-3"
+          className="h-[42px] rounded-xl px-4"
         >
           <option value="" className="text-black">
             ทั้งหมด
@@ -114,7 +114,7 @@ export function ProblemsFilterForm({
           <button
             type="button"
             onClick={onSubmitAction}
-            className="h-10 w-full rounded-lg bg-blue-600 px-5 text-sm font-bold text-white hover:bg-blue-700"
+            className="h-[42px] w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 text-sm font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] hover:shadow-blue-500/40 active:scale-95"
           >
             ค้นหา
           </button>
