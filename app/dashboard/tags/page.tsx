@@ -75,10 +75,11 @@ export default function TagsPage() {
             .filter((r) => r && typeof r === "object")
             .map((row) => {
               const id = row.id ?? "";
+              const name = row.name ?? row.tag_name ?? row.label ?? JSON.stringify(row.id) ?? "Unknown Tag";
               const questionCount = Number(row.question_count ?? row.count ?? 0);
               return { id, name, questionCount };
             })
-            .filter((item) => item.name.length > 0);
+            .filter((item) => String(item.name).length > 0);
 
           if (mapped.length > 0) {
             setTags(mapped);
@@ -150,7 +151,7 @@ export default function TagsPage() {
     e.preventDefault();
     const trimmed = newTag.trim();
     if (trimmed && !tags.some((t) => t.name === trimmed)) {
-      setTags([{ name: trimmed, questionCount: 0 }, ...tags]);
+      setTags([{ id: `tag-${Date.now()}`, name: trimmed, questionCount: 0 }, ...tags]);
       setNewTag("");
       setIsAdding(false);
     }
@@ -312,7 +313,7 @@ export default function TagsPage() {
                       <TagIcon />
                     </div>
                     <div className="px-2.5 py-1 bg-white/5 border border-white/5 rounded-lg text-[10px] font-bold text-white/30 uppercase tracking-tighter">
-                      ID: {idx + 1}
+                      ID: {item.id}
                     </div>
                   </div>
 

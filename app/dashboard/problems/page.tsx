@@ -36,7 +36,7 @@ function ProblemsPageContent() {
   const [category, setCategory] = useState<Select2Option | null>(null);
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState("");
-  const [tag, setTag] = useState<string[]>([]);
+  const [tag, setTag] = useState<Select2Option[]>([]);
   const [status, setStatus] = useState("1");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -67,7 +67,7 @@ function ProblemsPageContent() {
         category_id: category?.value || undefined,
         search: search.trim() || undefined,
         difficulty: difficulty || undefined,
-        tag: tag.length > 0 ? tag.join(",") : undefined,
+        tag: tag.length > 0 ? tag.map(t => t.value).join(",") : undefined,
         limit: pageSize,
         page: targetPage,
         status: status || undefined,
@@ -107,17 +107,14 @@ function ProblemsPageContent() {
 
       const tagName = searchParams.get("tag");
       if (tagName) {
-        // Find tag label if it looks like an ID, or just use as name
-        if (/^\d+$/.test(tagName)) {
-          const options = await fetchTagOptions({ limit: 100 });
-          const found = options.find(o => o.value === tagName);
-          if (found) {
-            setTag([found.value]);
-          } else {
-            setTag([tagName]);
-          }
+        // Find tag label to display name instead of ID
+        const options = await fetchTagOptions({ limit: 100 });
+        const found = options.find(o => String(o.value) === String(tagName));
+        if (found) {
+          setTag([found]);
         } else {
-          setTag([tagName]);
+          // Fallback to ID if not found in first 100
+          setTag([{ value: tagName, label: tagName }]);
         }
         shouldFetch = true;
       }

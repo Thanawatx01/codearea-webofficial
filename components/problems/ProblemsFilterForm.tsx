@@ -14,12 +14,12 @@ type ProblemsFilterFormProps = {
   category: Select2Option | null;
   search: string;
   difficulty: string;
-  tag: string[];
+  tag: Select2Option[];
   status: string;
   onCategoryChangeAction: (option: Select2Option | null) => void;
   onSearchChangeAction: (value: string) => void;
   onDifficultyChangeAction: (value: string) => void;
-  onTagChangeAction: (value: string[]) => void;
+  onTagChangeAction: (value: Select2Option[]) => void;
   onStatusChangeAction: (value: string) => void;
   onSubmitAction: () => void;
 };
@@ -38,7 +38,7 @@ export function ProblemsFilterForm({
   onSubmitAction,
 }: ProblemsFilterFormProps) {
   const categoryValue = category;
-  const tagValues: Select2Option[] = tag.map((t) => ({ value: t, label: t }));
+  const tagValues = tag;
 
   return (
     <section className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur-xl">
@@ -86,7 +86,7 @@ export function ProblemsFilterForm({
           label="แท็ก"
           value={tagValues}
           onChangeAction={(options) =>
-            onTagChangeAction(options.map((option) => option.value))
+            onTagChangeAction(options)
           }
           loadOptionsAction={loadTagOptionsForFilter}
           placeholder="ค้นหาแท็ก..."

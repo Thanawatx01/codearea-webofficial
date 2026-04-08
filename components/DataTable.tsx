@@ -38,6 +38,7 @@ type DataTableProps<T> = {
   tableClassName?: string;
   headerClassName?: string;
   rowClassName?: string | ((row: T, index: number) => string);
+  onRowClickAction?: (row: T, index: number) => void;
 };
 
 export default function DataTable<T>({
@@ -52,6 +53,7 @@ export default function DataTable<T>({
   tableClassName = "w-full border-collapse",
   headerClassName = "",
   rowClassName = "",
+  onRowClickAction,
 }: DataTableProps<T>) {
   const canPrev = (pagination?.page ?? 1) > 1;
   const canNext = (pagination?.page ?? 1) < (pagination?.totalPages ?? 1);
@@ -107,7 +109,8 @@ export default function DataTable<T>({
               rows.map((row, rowIndex) => (
                 <tr
                   key={rowKey(row, rowIndex)}
-                  className={`hover:bg-white/5 ${typeof rowClassName === "function"
+                  onClick={() => onRowClickAction?.(row, rowIndex)}
+                  className={`hover:bg-white/5 transition-all duration-200 ${onRowClickAction ? "cursor-pointer active:scale-[0.998]" : ""} ${typeof rowClassName === "function"
                       ? rowClassName(row, rowIndex)
                       : rowClassName
                     }`}

@@ -75,10 +75,11 @@ export default function ProblemTypesPage() {
             .filter((r) => r && typeof r === "object")
             .map((row) => {
               const id = row.id ?? row.category_id ?? "";
+              const name = row.name ?? row.category_name ?? row.title ?? JSON.stringify(row.id) ?? "Unknown Type";
               const questionCount = Number(row.question_count ?? row.count ?? 0);
               return { id, name, questionCount };
             })
-            .filter((item) => item.name.length > 0);
+            .filter((item) => String(item.name).length > 0);
 
           if (mapped.length > 0) {
             // Merge with placeholders if necessary, or just replace
@@ -151,7 +152,7 @@ export default function ProblemTypesPage() {
     e.preventDefault();
     const trimmed = newType.trim();
     if (trimmed && !types.some((t) => t.name === trimmed)) {
-      setTypes([{ name: trimmed, questionCount: 0 }, ...types]);
+      setTypes([{ id: `new-${Date.now()}`, name: trimmed, questionCount: 0 }, ...types]);
       setNewType("");
       setIsAdding(false);
     }
@@ -313,7 +314,7 @@ export default function ProblemTypesPage() {
                       <ProblemTypeIcon />
                     </div>
                     <div className="px-2.5 py-1 bg-white/5 border border-white/5 rounded-lg text-[10px] font-bold text-white/30 uppercase tracking-tighter">
-                      ID: {idx + 1}
+                      ID: {item.id}
                     </div>
                   </div>
 
