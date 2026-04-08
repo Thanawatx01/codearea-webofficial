@@ -42,11 +42,18 @@ export type TaxonomyListParams = {
   status?: string;
 };
 
+export type TaxonomyRequestOptions = {
+  /** default: true — หน้า public ใช้ false ตาม Swagger list ที่ไม่บังคับล็อกอิน */
+  useToken?: boolean;
+};
+
 export async function fetchQuestionCategoryOptions(
   params: TaxonomyListParams,
+  requestOptions: TaxonomyRequestOptions = {},
 ): Promise<Select2Option[]> {
+  const useToken = requestOptions.useToken ?? true;
   const res = await api.get<unknown>("question-categories/list", {
-    useToken: true,
+    useToken,
     params: {
       page: params.page ?? 1,
       limit: params.limit ?? 50,
@@ -64,9 +71,13 @@ export async function fetchQuestionCategoryOptions(
     .filter((o) => o.value.length > 0);
 }
 
-export async function fetchTagOptions(params: TaxonomyListParams): Promise<Select2Option[]> {
+export async function fetchTagOptions(
+  params: TaxonomyListParams,
+  requestOptions: TaxonomyRequestOptions = {},
+): Promise<Select2Option[]> {
+  const useToken = requestOptions.useToken ?? true;
   const res = await api.get<unknown>("tags", {
-    useToken: true,
+    useToken,
     params: {
       page: params.page ?? 1,
       limit: params.limit ?? 50,
@@ -118,4 +129,19 @@ export function loadTagOptionsForForm(inputValue: string) {
     limit: 50,
     status: "1",
   });
+}
+
+/** หน้า public /questions — ไม่ส่ง token */
+export function loadQuestionCategoryOptionsPublic(inputValue: string) {
+  return fetchQuestionCategoryOptions(
+    { name: inputValue, page: 1, limit: 50, status: "1" },
+    { useToken: false },
+  );
+}
+
+export function loadTagOptionsPublic(inputValue: string) {
+  return fetchTagOptions(
+    { name: inputValue, page: 1, limit: 50, status: "1" },
+    { useToken: false },
+  );
 }

@@ -95,6 +95,7 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
     { label: "Home", href: "/" },
     { label: "Questions", href: "/questions" },
     { label: "Categories", href: "/categories" },
+    { label: "Leaderboard", href: "/leaderboard" },
   ];
 
   const navLinks = links.length > 0 ? links : defaultLinks;

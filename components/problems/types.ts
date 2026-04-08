@@ -1,3 +1,14 @@
+/** ความคืบหน้าของผู้ใช้ต่อโจทย์ (มาจาก API เมื่อล็อกอิน) */
+export type ProblemUserProgress = {
+  score_percent: number;
+  submission_id: number;
+  submission_status: number;
+  tests_passed: number;
+  tests_total: number;
+  /** โค้ดจาก submission ล่าสุด (ถ้า API รายละเอียดโจทย์ส่งมา — ใช้เปรียบเทียบกับโค้ดใน editor) */
+  last_code?: string | null;
+};
+
 export type ProblemRow = {
   code: string;
   category_name: string | null;
@@ -10,9 +21,11 @@ export type ProblemRow = {
   expected_complexity: string | null;
   time_limit: number | null;
   memory_limit: number | null;
+  /** คะแนนเต็มของโจทย์ (รางวัล) */
   points?: number | null;
   status: boolean;
   tags: string[];
+  user_progress?: ProblemUserProgress | null;
 };
 
 export const getDifficultyStyle = (difficulty: string | number | null) => {

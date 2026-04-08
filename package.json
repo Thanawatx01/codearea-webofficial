@@ -20,8 +20,10 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-easy-crop": "^5.5.7",
+    "react-markdown": "^10.1.0",
     "react-select": "^5.10.2",
     "recharts": "^3.8.0",
+    "remark-gfm": "^4.0.1",
     "sweetalert2": "^11.26.21"
   },
   "devDependencies": {

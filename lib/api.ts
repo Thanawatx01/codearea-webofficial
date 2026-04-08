@@ -15,8 +15,33 @@ function buildQuery(params: Record<string, string | number | boolean | undefined
   return q ? `?${q}` : "";
 }
 
+/** ถ้า env ใส่แค่ host:port ไม่มี http(s) — fetch จะถือเป็น path relative ผิดพลาด */
+function normalizeApiOrigin(raw: string): string {
+  const s = raw.trim().replace(/\/+$/, "");
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  return `http://${s}`;
+}
+
+function resolvedApiBase(isAI: boolean): string {
+  const main = normalizeApiOrigin(config.apiBaseUrl);
+  if (!isAI) return main;
+  const ai = normalizeApiOrigin(config.aiApiBaseUrl);
+  return ai || main;
+}
+
+/** URL เต็มสำหรับ fetch แบบ stream หรือกรณีที่ไม่ผ่าน callApi */
+export function buildApiUrl(path: string, options?: { isAI?: boolean }): string {
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const base = resolvedApiBase(options?.isAI ?? false);
+  const pathPart = path.replace(/^\//, "");
+  return base ? `${base}/${pathPart}` : pathPart;
+}
+
 /**
  * Helper เรียก API — รองรับ JSON, timeout, และ error handling
+ *
+ * `isAI: true` → ฐานจาก `NEXT_PUBLIC_AI_URL` (ไม่มีจะใช้ `NEXT_PUBLIC_API_URL`)
  *
  * @example
  * const res = await callApi<{ id: number }>('/questions/1');
@@ -34,13 +59,16 @@ export async function callApi<T = unknown>(
     timeout = config.apiTimeout,
     useToken = false,
     token: tokenOverride,
+    isAI = false,
     headers: customHeaders = {},
     ...rest
   } = options;
 
-  const base = (path.startsWith("http://") || path.startsWith("https://"))
+  const resolvedBase = path.startsWith("http://") || path.startsWith("https://")
     ? ""
-    : config.apiBaseUrl.replace(/\/$/, "");
+    : resolvedApiBase(isAI);
+
+  const base = resolvedBase;
   const pathPart = path.replace(/^\//, "");
   const url = base ? `${base}/${pathPart}` : pathPart;
   const fullUrl = `${url}${params ? buildQuery(params) : ""}`;
