@@ -21,6 +21,7 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   const [avatarText, setAvatarText] = useState("U");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -48,9 +49,17 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
 
     checkAuth();
 
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+
     // ฟังเหตุการณ์จาก storage
     window.addEventListener("storage", checkAuth);
-    return () => window.removeEventListener("storage", checkAuth);
+    return () => {
+      window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   // ปิด dropdown เมื่อคลิกนอก
@@ -91,7 +100,13 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   const navLinks = links.length > 0 ? links : defaultLinks;
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-50 w-full bg-black/0">
+    <nav
+      className={`fixed inset-x-0 top-0 z-50 w-full transition-all duration-500 ease-in-out ${
+        isScrolled
+          ? "bg-[#05060d]/60 border-b border-white/5 backdrop-blur-3xl py-0 shadow-2xl"
+          : "bg-transparent py-3"
+      }`}
+    >
       <div className="relative w-full max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="shrink-0">

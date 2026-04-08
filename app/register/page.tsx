@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 
 interface RegisterResponse {
   token?: string;
@@ -48,7 +49,7 @@ export default function RegisterPage() {
 
     if (formData.password !== formData.confirm_password) {
       setIsLoading(false);
-      setErrorMessage("Password and confirm password do not match");
+      setErrorMessage("รหัสผ่านไม่ตรงกัน");
       return;
     }
 
@@ -61,7 +62,7 @@ export default function RegisterPage() {
 
     if (!res.ok) {
       setIsLoading(false);
-      setErrorMessage(res.error ?? "Register failed");
+      setErrorMessage(res.error ?? "สมัครสมาชิกล้มเหลว");
       return;
     }
 
@@ -82,73 +83,46 @@ export default function RegisterPage() {
 
   if (!isMounted) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-[#0b0c10] p-4 font-sans text-white" />
+      <div className="flex min-h-screen w-full items-center justify-center p-6 pt-32 pb-12 font-sans text-white" />
     );
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#0b0c10] p-4 font-sans text-white">
+    <div className="flex min-h-screen w-full items-center justify-center p-6 pt-32 pb-12 font-sans text-white">
       {/* Main Container */}
-      <div className="relative flex w-full max-w-[1000px] flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#11121a] shadow-2xl lg:flex-row">
-        
+      <div className="relative flex w-full max-w-[1000px] flex-col overflow-hidden rounded-[3rem] border border-white/10 bg-[#05060d]/85 shadow-2xl backdrop-blur-[80px] lg:flex-row">
+
         {/* Left Side: Aesthetic Background */}
         <div className="relative hidden w-full lg:block lg:w-1/2">
           <div className="absolute inset-0 z-0 overflow-hidden">
             <Image
-              src="/images/login_bg.png"
-              alt="Background"
+              src="/asset/code.jpeg"
+              alt="Code Background"
               fill
-              className="object-cover opacity-60 brightness-75 transition-transform duration-1000 hover:scale-105"
+              className="object-cover opacity-30 blur-[2px] brightness-[0.4] transition-transform duration-1000 hover:scale-110"
               priority
             />
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#0b0c10] via-transparent to-transparent opacity-80" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0b0c10]/40" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-transparent to-transparent opacity-80" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
           </div>
 
           <div className="relative z-10 flex h-full flex-col items-center justify-center p-12 text-center">
-            {/* Branding Card */}
-            <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md outline outline-1 outline-white/20 transition-all hover:bg-white/20">
-              <Icon name="user-plus" className="h-8 w-8 text-violet-400" />
+            {/* Branding Logo */}
+            <div className="mb-10">
+              <CodeAreaLogo iconClassName="h-16 w-16" className="" />
             </div>
-            
-            <h1 className="mb-4 text-4xl font-black tracking-tighter text-white">
-              JOIN CODEAREA
+
+            <h1 className="mb-3 text-3xl font-black tracking-tighter text-white">
+              เข้าร่วม CODEAREA
             </h1>
-            <p className="mb-10 max-w-[280px] text-sm font-medium text-white/50">
-              Start your journey in the ultimate command center for developers.
+            <p className="mb-8 max-w-[280px] text-sm font-medium text-white/50">
+              เริ่มต้นการเดินทางของคุณสู่การเป็นสุดยอดนักพัฒนา
             </p>
 
             <div className="h-1 w-12 rounded-full bg-violet-500/50" />
 
-            {/* Code Snippet Card - Variation for Register */}
-            <div className="absolute bottom-10 left-10 right-10">
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-6 backdrop-blur-xl">
-                <div className="mb-4 flex gap-1.5">
-                  <div className="h-2 w-2 rounded-full bg-red-500/50" />
-                  <div className="h-2 w-2 rounded-full bg-yellow-500/50" />
-                  <div className="h-2 w-2 rounded-full bg-green-500/50" />
-                </div>
-                <pre className="text-left font-mono text-[11px] leading-relaxed text-white/40">
-                  <code className="block">
-                    <span className="text-violet-400">const</span> newUser = {"{"}
-                  </code>
-                  <code className="block pl-4">
-                    username: <span className="text-green-400">&apos;dev_visionary&apos;</span>,
-                  </code>
-                  <code className="block pl-4">
-                    role: <span className="text-green-400">&apos;DEVELOPER&apos;</span>,
-                  </code>
-                  <code className="block pl-4">
-                    access: <span className="text-violet-400">true</span>
-                  </code>
-                  <code>{"}"};</code>
-                  <code className="block mt-2 text-violet-300">
-                    // Welcome to the future of coding.
-                  </code>
-                </pre>
-              </div>
-            </div>
+
           </div>
         </div>
 
@@ -160,48 +134,52 @@ export default function RegisterPage() {
               href="/login"
               className="px-6 py-2 text-xs font-bold text-white/40 transition-all hover:text-white"
             >
-              Sign In
+              เข้าสู่ระบบ
             </Link>
             <button className="rounded-xl bg-violet-600 px-6 py-2 text-xs font-bold text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all">
-              Sign Up
+              สมัครสมาชิก
             </button>
           </div>
 
-          <div className="mb-10">
-            <h2 className="mb-2 text-3xl font-bold tracking-tight text-white">
-              Create Account
+          <div className="mb-6">
+            <h2 className="mb-1 text-2xl font-bold tracking-tight text-white">
+              สร้างบัญชี
             </h2>
             <p className="text-sm font-medium text-white/40">
-              Join our community of developers
+              เข้าร่วมชุมชนคอมมูนิตี้ของเรา
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div className="space-y-4">
-              <ThemedInput
-                label="Email Address"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChangeAction={handleInputChange}
-                required
-                placeholder="dev@codearea.tech"
-                leftSlot={<Icon name="mail" className="h-4 w-4" />}
-              />
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <ThemedInput
+                  label="อีเมล"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChangeAction={handleInputChange}
+                  required
+                  placeholder="dev@codearea.tech"
+                  leftSlot={<Icon name="mail" className="h-4 w-4" />}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <ThemedInput
+                  label="ชื่อที่แสดง"
+                  type="text"
+                  name="display_name"
+                  value={formData.display_name}
+                  onChangeAction={handleInputChange}
+                  required
+                  placeholder="pupha"
+                  leftSlot={<Icon name="user" className="h-4 w-4" />}
+                />
+              </div>
 
               <ThemedInput
-                label="Display Name"
-                type="text"
-                name="display_name"
-                value={formData.display_name}
-                onChangeAction={handleInputChange}
-                required
-                placeholder="pupha"
-                leftSlot={<Icon name="user" className="h-4 w-4" />}
-              />
-
-              <ThemedInput
-                label="Password"
+                label="รหัสผ่าน"
                 name="password"
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
@@ -225,7 +203,7 @@ export default function RegisterPage() {
               />
 
               <ThemedInput
-                label="Confirm Password"
+                label="ยืนยันรหัสผ่าน"
                 name="confirm_password"
                 type={showConfirmPassword ? "text" : "password"}
                 value={formData.confirm_password}
@@ -258,7 +236,7 @@ export default function RegisterPage() {
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
               ) : (
                 <>
-                  Initialize Account
+                  สร้างบัญชี
                   <Icon
                     name="arrow-right"
                     className="h-4 w-4 transition-transform group-hover:translate-x-1"
@@ -274,14 +252,14 @@ export default function RegisterPage() {
             ) : null}
           </form>
 
-          <p className="mt-8 text-center text-[10px] leading-relaxed text-white/30">
-            By joining, you agree to our{" "}
+          <p className="mt-6 text-center text-[10px] leading-relaxed text-white/30">
+            ในการสมัครสมาชิกถือว่าคุณยอมรับ{" "}
             <Link href="#" className="underline transition-all hover:text-white">
-              Terms of Service
+              ข้อตกลงในการให้บริการ
             </Link>{" "}
-            and{" "}
+            และ{" "}
             <Link href="#" className="underline transition-all hover:text-white">
-              Privacy Policy
+              นโยบายความเป็นส่วนตัว
             </Link>
             .
           </p>

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 
 interface LoginResponse {
   token: string;
@@ -32,6 +33,14 @@ export default function LoginPage() {
 
   useEffect(() => {
     setIsMounted(true);
+    // โหลดข้อมูลที่จดจำไว้
+    const savedEmail = localStorage.getItem("remember_email");
+    const savedChecked = localStorage.getItem("remember_me_checked") === "true";
+    
+    if (savedEmail) {
+      setFormData(prev => ({ ...prev, email: savedEmail }));
+      setRememberMe(savedChecked);
+    }
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,42 +71,55 @@ export default function LoginPage() {
     document.cookie = `role_id=${user.role_id}; path=/; samesite=lax`;
     document.cookie = `display_name=${encodeURIComponent(user.display_name)}; path=/; samesite=lax`;
 
+    // จัดการ Remember Me
+    if (rememberMe) {
+      localStorage.setItem("remember_email", formData.email);
+      localStorage.setItem("remember_me_checked", "true");
+    } else {
+      localStorage.removeItem("remember_email");
+      localStorage.removeItem("remember_me_checked");
+    }
+
     setIsLoading(false);
-    router.replace("/dashboard/problems");
+    if (user.role_id === 2) {
+      router.replace("/dashboard/problems");
+    } else {
+      router.replace("/");
+    }
   };
 
   if (!isMounted) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-[#0b0c10] p-4 font-sans text-white" />
+      <div className="flex min-h-screen w-full items-center justify-center p-6 pt-32 pb-12 font-sans text-white" />
     );
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#0b0c10] p-4 font-sans text-white">
+    <div className="flex min-h-screen w-full items-center justify-center p-6 pt-32 pb-12 font-sans text-white">
       {/* Main Container */}
-      <div className="relative flex w-full max-w-[1000px] flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#11121a] shadow-2xl lg:flex-row">
-        
+      <div className="relative flex w-full max-w-[1000px] flex-col overflow-hidden rounded-[3rem] border border-white/10 bg-[#05060d]/85 shadow-2xl backdrop-blur-[80px] lg:flex-row">
+
         {/* Left Side: Aesthetic Background */}
         <div className="relative hidden w-full lg:block lg:w-1/2">
           <div className="absolute inset-0 z-0 overflow-hidden">
             <Image
-              src="/images/login_bg.png"
-              alt="Background"
+              src="/asset/code.jpeg"
+              alt="Code Background"
               fill
-              className="object-cover opacity-60 brightness-75 transition-transform duration-1000 hover:scale-105"
+              className="object-cover opacity-30 blur-[2px] brightness-[0.4] transition-transform duration-1000 hover:scale-110"
               priority
             />
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#0b0c10] via-transparent to-transparent opacity-80" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0b0c10]/40" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-transparent to-transparent opacity-80" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
           </div>
 
           <div className="relative z-10 flex h-full flex-col items-center justify-center p-12 text-center">
-            {/* Branding Card */}
-            <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md outline outline-1 outline-white/20 transition-all hover:bg-white/20">
-              <Icon name="terminal" className="h-8 w-8 text-violet-400" />
+            {/* Branding Logo */}
+            <div className="mb-10">
+              <CodeAreaLogo iconClassName="h-16 w-16" className="" />
             </div>
-            
+
             <h1 className="mb-4 text-4xl font-black tracking-tighter text-white">
               CODEAREA
             </h1>
@@ -107,37 +129,7 @@ export default function LoginPage() {
 
             <div className="h-1 w-12 rounded-full bg-violet-500/50" />
 
-            {/* Code Snippet Card */}
-            <div className="absolute bottom-10 left-10 right-10">
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-6 backdrop-blur-xl">
-                <div className="mb-4 flex gap-1.5">
-                  <div className="h-2 w-2 rounded-full bg-red-500/50" />
-                  <div className="h-2 w-2 rounded-full bg-yellow-500/50" />
-                  <div className="h-2 w-2 rounded-full bg-green-500/50" />
-                </div>
-                <pre className="text-left font-mono text-[11px] leading-relaxed text-white/40">
-                  <code className="block">
-                    <span className="text-violet-400">function</span>{" "}
-                    <span className="text-blue-400">deployProject</span>(id) {"{"}
-                  </code>
-                  <code className="block pl-4">
-                    <span className="text-violet-400">const</span> nexus = Core.
-                    <span className="text-yellow-300">initialize</span>(
-                    <span className="text-green-400">&apos;nexus-7&apos;</span>
-                    );
-                  </code>
-                  <code className="block pl-4">
-                    nexus.<span className="text-yellow-300">push</span>
-                    (CODEAREA_CONFIG);
-                  </code>
-                  <code className="block pl-4">
-                    <span className="text-violet-400">return</span> nexus.status
-                    === <span className="text-green-400">&apos;ACTIVE&apos;</span>;
-                  </code>
-                  <code>{"}"}</code>
-                </pre>
-              </div>
-            </div>
+
           </div>
         </div>
 
@@ -146,48 +138,48 @@ export default function LoginPage() {
           {/* Sign In / Sign Up Toggle */}
           <div className="mb-10 flex w-fit self-center rounded-2xl bg-white/5 p-1 lg:self-end">
             <button className="rounded-xl bg-violet-600 px-6 py-2 text-xs font-bold text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all">
-              Sign In
+              เข้าสู่ระบบ
             </button>
             <Link
               href="/register"
               className="px-6 py-2 text-xs font-bold text-white/40 transition-all hover:text-white"
             >
-              Sign Up
+              สมัครสมาชิก
             </Link>
           </div>
 
           <div className="mb-10">
             <h2 className="mb-2 text-3xl font-bold tracking-tight text-white">
-              Welcome Back
+              ยินดีต้อนรับ
             </h2>
             <p className="text-sm font-medium text-white/40">
-              Access your secure workspace
+              เข้าสู่ระบบเพื่อใช้งาน
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <div className="space-y-4">
+            <div className="space-y-5">
               <ThemedInput
-                label="Email Address"
+                label="อีเมล"
                 type="email"
                 name="email"
                 value={formData.email}
                 onChangeAction={handleInputChange}
                 required
-                placeholder="dev@codearea.tech"
+                placeholder="อีเมล"
                 leftSlot={<Icon name="mail" className="h-4 w-4" />}
               />
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <label className="px-1 text-xs font-semibold uppercase tracking-widest text-white/50">
-                    Password
+                    รหัสผ่าน
                   </label>
                   <Link
-                    href="#"
+                    href="/forgot-password"
                     className="text-[10px] font-bold uppercase tracking-widest text-violet-400 hover:text-violet-300"
                   >
-                    Forgot Password?
+                    ลืมรหัสผ่าน?
                   </Link>
                 </div>
                 <ThemedInput
@@ -214,23 +206,21 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-center gap-3">
-              <div
-                className={`flex h-5 w-5 items-center justify-center rounded-md border border-white/10 transition-all ${
-                  rememberMe ? "bg-violet-600" : "bg-white/5"
-                }`}
-                onClick={() => setRememberMe((prev) => !prev)}
-              >
-                {rememberMe && <Icon name="check" className="h-3 w-3 text-white" />}
+            <label className="flex cursor-pointer items-center group select-none">
+              <div className="relative flex h-5 w-5 items-center justify-center">
+                <input
+                  type="checkbox"
+                  className="peer hidden"
+                  checked={rememberMe}
+                  onChange={() => setRememberMe((prev) => !prev)}
+                />
+                <div className="h-full w-full rounded-md border border-white/10 bg-white/5 transition-all peer-checked:bg-violet-600 peer-checked:border-violet-500 peer-hover:bg-white/10 group-active:scale-95 shadow-[0_2px_10px_rgba(0,0,0,0.2)]"></div>
+                <div className="absolute opacity-0 scale-50 transition-all peer-checked:opacity-100 peer-checked:scale-100">
+                  <Icon name="check" className="h-3 w-3 text-white" />
+                </div>
               </div>
-              <input
-                type="checkbox"
-                className="hidden"
-                checked={rememberMe}
-                onChange={() => setRememberMe((prev) => !prev)}
-              />
-              <span className="text-xs font-medium text-white/40">
-                Remember my session
+              <span className="ml-3 text-[11px] font-bold uppercase tracking-wider text-white/40 group-hover:text-white/60 transition-colors">
+                จดจำการเข้าสู่ระบบ
               </span>
             </label>
 
@@ -243,7 +233,7 @@ export default function LoginPage() {
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
               ) : (
                 <>
-                  Deploy Session
+                  เข้าสู่ระบบ
                   <Icon
                     name="arrow-right"
                     className="h-4 w-4 transition-transform group-hover:translate-x-1"
@@ -260,9 +250,9 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-12 text-center text-[10px] leading-relaxed text-white/30">
-            By deploying, you agree to our{" "}
+            ในการเข้าสู่ระบบถือว่าคุณยอมรับ{" "}
             <Link href="#" className="underline transition-all hover:text-white">
-              Terms of Service
+              ข้อตกลงและเงื่อนไข
             </Link>
             .
           </p>

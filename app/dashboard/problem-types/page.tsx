@@ -63,7 +63,7 @@ export default function ProblemTypesPage() {
   const fetchCategoriesWithCounts = useCallback(async () => {
     setIsLoadingCounts(true);
     try {
-      const res = await api.get<CategoriesResponse>("/question-categories", {
+      const res = await api.get<CategoriesResponse>("/question-categories/list", {
         useToken: true,
         params: { page: 1, limit: 100 },
       });
@@ -74,11 +74,9 @@ export default function ProblemTypesPage() {
           const mapped: ProblemTypeItem[] = raw
             .filter((r) => r && typeof r === "object")
             .map((row) => {
-              const name =
-                String(row.name ?? row.category_name ?? row.title ?? "").trim() ||
-                String(row.id ?? row.category_id ?? "").trim();
+              const id = row.id ?? row.category_id ?? "";
               const questionCount = Number(row.question_count ?? row.count ?? 0);
-              return { name, questionCount };
+              return { id, name, questionCount };
             })
             .filter((item) => item.name.length > 0);
 
@@ -332,7 +330,10 @@ export default function ProblemTypesPage() {
                   </div>
 
                   <div className="pt-2 flex items-center justify-between mt-auto border-t border-white/5">
-                    <button className="text-[11px] font-black text-white/30 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-1.5">
+                    <button 
+                      onClick={() => router.push(`/dashboard/problems?categoryId=${item.id}`)}
+                      className="text-[11px] font-black text-white/30 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-1.5"
+                    >
                       View details
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </button>

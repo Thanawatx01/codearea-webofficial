@@ -7,8 +7,10 @@ import { ProblemsTable } from "@/components/problems/ProblemsTable";
 import type { Select2Option } from "@/components/FormControls";
 import type { ProblemRow } from "@/components/problems/types";
 import { api } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Swal from "sweetalert2";
+import { useSearchParams } from "next/navigation";
+import { fetchQuestionCategoryOptions, fetchTagOptions } from "@/lib/questionTaxonomyApi";
 
 type ProblemsListResponse = {
   data: ProblemRow[];
@@ -21,6 +23,15 @@ type ProblemsListResponse = {
 };
 
 export default function ProblemsPage() {
+  return (
+    <Suspense fallback={<div className="flex h-full w-full items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div></div>}>
+      <ProblemsPageContent />
+    </Suspense>
+  );
+}
+
+function ProblemsPageContent() {
+  const searchParams = useSearchParams();
   const [rows, setRows] = useState<ProblemRow[]>([]);
   const [category, setCategory] = useState<Select2Option | null>(null);
   const [search, setSearch] = useState("");
@@ -80,7 +91,43 @@ export default function ProblemsPage() {
   };
 
   useEffect(() => {
-    void fetchQuestions();
+    const initFilters = async () => {
+      let shouldFetch = false;
+      
+      const catId = searchParams.get("categoryId");
+      if (catId) {
+        // Find category label
+        const options = await fetchQuestionCategoryOptions({ limit: 100 });
+        const found = options.find(o => o.value === catId);
+        if (found) {
+          setCategory(found);
+          shouldFetch = true;
+        }
+      }
+
+      const tagName = searchParams.get("tag");
+      if (tagName) {
+        // Find tag label if it looks like an ID, or just use as name
+        if (/^\d+$/.test(tagName)) {
+          const options = await fetchTagOptions({ limit: 100 });
+          const found = options.find(o => o.value === tagName);
+          if (found) {
+            setTag([found.value]);
+          } else {
+            setTag([tagName]);
+          }
+        } else {
+          setTag([tagName]);
+        }
+        shouldFetch = true;
+      }
+
+      // If we set filters, we should fetch with them immediately
+      // If not, we just fetch initial page
+      void fetchQuestions(1);
+    };
+
+    void initFilters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -29,7 +29,7 @@ export function mapCategoryRowToOption(row: Record<string, unknown>): Select2Opt
 export function mapTagRowToOption(row: Record<string, unknown>): Select2Option {
   const id = pickStr(row, ["id"]);
   const name = pickStr(row, ["name", "tag_name", "slug", "label"]);
-  const value = name || id;
+  const value = id || name;
   const label = pickStr(row, ["name", "tag_name", "label"]) || name || id;
   return { value, label: label || value };
 }
