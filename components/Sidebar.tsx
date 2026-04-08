@@ -10,7 +10,6 @@ interface MenuItem {
   label: string;
   href: string;
   iconName: string;
-  adminOnly?: boolean;
 }
 
 interface MenuGroup {
@@ -26,13 +25,11 @@ const menuGroups: MenuGroup[] = [
         label: "ประเภทโจทย์",
         href: "/dashboard/problem-types",
         iconName: "problem-type",
-        adminOnly: true,
       },
       {
         label: "แท็ก",
         href: "/dashboard/tags",
         iconName: "tag",
-        adminOnly: true,
       },
       { label: "โจทย์", href: "/dashboard/problems", iconName: "problem" },
       { label: "IDE", href: "/dashboard/ide", iconName: "ide" },
@@ -45,7 +42,6 @@ const menuGroups: MenuGroup[] = [
         label: "จัดการผู้ใช้",
         href: "/dashboard/users",
         iconName: "user",
-        adminOnly: true,
       },
     ],
   },
@@ -56,19 +52,16 @@ const menuGroups: MenuGroup[] = [
         label: "การส่งคำตอบ",
         href: "/dashboard/submissions",
         iconName: "submission",
-        adminOnly: true,
       },
       {
         label: "สถิติโจทย์",
         href: "/dashboard/problem-stats",
         iconName: "stats",
-        adminOnly: true,
       },
       {
         label: "กิจกรรมผู้ใช้",
         href: "/dashboard/user-activity",
         iconName: "activity",
-        adminOnly: true,
       },
     ],
   },
@@ -92,20 +85,6 @@ interface SidebarProps {
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-
-  const [roleId, setRoleId] = useState<number | null>(null);
-
-  useEffect(() => {
-    const userJson = localStorage.getItem("user");
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        setRoleId(user.role_id);
-      } catch (e) {
-        console.error("Error parsing user from localStorage:", e);
-      }
-    }
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -157,12 +136,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         className={`flex-1 py-4 ${collapsed ? "px-2 space-y-4" : "px-3 space-y-6"}`}
       >
         {menuGroups.map((group) => {
-          const visibleItems = group.items.filter((item) => {
-            if (item.adminOnly) {
-              return roleId === 2;
-            }
-            return true;
-          });
+          const visibleItems = group.items;
 
           if (visibleItems.length === 0) return null;
 

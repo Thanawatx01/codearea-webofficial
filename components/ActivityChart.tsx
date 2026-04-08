@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import {
   LineChart,
   Line,
@@ -20,6 +22,24 @@ const data = [
 ];
 
 export default function ActivityChart() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return (
+      <div className="bg-card-bg backdrop-blur-md rounded-xl border border-white/5 p-5 animate-pulse">
+        <div className="mb-5">
+          <div className="h-5 w-40 bg-white/10 rounded mb-2"></div>
+          <div className="h-3 w-64 bg-white/10 rounded"></div>
+        </div>
+        <div className="w-full bg-white/5 rounded-lg" style={{ height: 320 }}></div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-card-bg backdrop-blur-md rounded-xl border border-white/5 p-5">
       {/* Chart header */}
@@ -30,7 +50,7 @@ export default function ActivityChart() {
 
       {/* Chart */}
       <div className="w-full" style={{ height: 320 }}>
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <LineChart
             data={data}
             margin={{ top: 5, right: 20, left: 0, bottom: 5 }}

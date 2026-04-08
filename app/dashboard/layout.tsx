@@ -16,13 +16,31 @@ export default function DashboardLayout({
   useEffect(() => {
     // Only check auth after the component has mounted to prevent SSR/Hydration race conditions
     const token = localStorage.getItem("token");
+    const userJson = localStorage.getItem("user");
+
     if (!token) {
       console.warn("[DashboardLayout] No token detected, redirecting to /login");
       router.replace("/login");
       setIsAuthorized(false);
-    } else {
-      setIsAuthorized(true);
+      return;
     }
+
+    // Role-based access control: Block regular users (role_id: 1) from dashboard
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        if (user.role_id === 1) {
+          console.warn("[DashboardLayout] Regular user detected, redirecting to /unauthorized");
+          router.replace("/unauthorized");
+          setIsAuthorized(false);
+          return;
+        }
+      } catch (e) {
+        console.error("[DashboardLayout] Error parsing user from localStorage:", e);
+      }
+    }
+
+    setIsAuthorized(true);
   }, [router]);
 
   useEffect(() => {
