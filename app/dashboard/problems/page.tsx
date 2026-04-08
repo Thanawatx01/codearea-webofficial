@@ -7,8 +7,10 @@ import { ProblemsTable } from "@/components/problems/ProblemsTable";
 import type { Select2Option } from "@/components/FormControls";
 import type { ProblemRow } from "@/components/problems/types";
 import { api } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Swal from "sweetalert2";
+import { useSearchParams } from "next/navigation";
+import { fetchQuestionCategoryOptions, fetchTagOptions } from "@/lib/questionTaxonomyApi";
 
 type ProblemsListResponse = {
   data: ProblemRow[];
@@ -21,18 +23,40 @@ type ProblemsListResponse = {
 };
 
 export default function ProblemsPage() {
+  return (
+    <Suspense fallback={<div className="flex h-full w-full items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div></div>}>
+      <ProblemsPageContent />
+    </Suspense>
+  );
+}
+
+function ProblemsPageContent() {
+  const searchParams = useSearchParams();
   const [rows, setRows] = useState<ProblemRow[]>([]);
   const [category, setCategory] = useState<Select2Option | null>(null);
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState("");
-  const [tag, setTag] = useState<string[]>([]);
-  const [status, setStatus] = useState("1");
+  const [tag, setTag] = useState<Select2Option[]>([]);
+  const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const pageSize = 10;
+
+  useEffect(() => {
+    const userJson = localStorage.getItem("user");
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        setIsAdmin(user.role_id === 2);
+      } catch (e) {
+        console.error("Error parsing user from localStorage:", e);
+      }
+    }
+  }, []);
 
   const fetchQuestions = async (targetPage = page) => {
     setIsLoading(true);
@@ -43,7 +67,7 @@ export default function ProblemsPage() {
         category_id: category?.value || undefined,
         search: search.trim() || undefined,
         difficulty: difficulty || undefined,
-        tag: tag.length > 0 ? tag.join(",") : undefined,
+        tag: tag.length > 0 ? tag.map(t => t.value).join(",") : undefined,
         limit: pageSize,
         page: targetPage,
         status: status || undefined,
@@ -67,7 +91,40 @@ export default function ProblemsPage() {
   };
 
   useEffect(() => {
-    void fetchQuestions();
+    const initFilters = async () => {
+      let shouldFetch = false;
+      
+      const catId = searchParams.get("categoryId");
+      if (catId) {
+        // Find category label
+        const options = await fetchQuestionCategoryOptions({ limit: 100 });
+        const found = options.find(o => o.value === catId);
+        if (found) {
+          setCategory(found);
+          shouldFetch = true;
+        }
+      }
+
+      const tagName = searchParams.get("tag");
+      if (tagName) {
+        // Find tag label to display name instead of ID
+        const options = await fetchTagOptions({ limit: 100 });
+        const found = options.find(o => String(o.value) === String(tagName));
+        if (found) {
+          setTag([found]);
+        } else {
+          // Fallback to ID if not found in first 100
+          setTag([{ value: tagName, label: tagName }]);
+        }
+        shouldFetch = true;
+      }
+
+      // If we set filters, we should fetch with them immediately
+      // If not, we just fetch initial page
+      void fetchQuestions(1);
+    };
+
+    void initFilters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -106,13 +163,14 @@ export default function ProblemsPage() {
     void fetchQuestions(page);
   };
 
-  const handleActivate = async (code: string) => {
+  const handleToggleStatus = async (code: string, currentStatus: boolean) => {
+    const actionText = currentStatus ? "ปิดใช้งาน" : "เปิดใช้งาน";
     const result = await Swal.fire({
       icon: "question",
-      title: "ยืนยันการเปิดใช้งาน",
-      text: `ต้องการเปิดใช้งานโจทย์ ${code} ใช่หรือไม่`,
+      title: `ยืนยันการ${actionText}`,
+      text: `ต้องการ${actionText}โจทย์ ${code} ใช่หรือไม่`,
       showCancelButton: true,
-      confirmButtonText: "เปิดใช้งาน",
+      confirmButtonText: actionText,
       cancelButtonText: "ยกเลิก",
       reverseButtons: true,
     });
@@ -120,14 +178,14 @@ export default function ProblemsPage() {
 
     const res = await api.put<{ message?: string }>(
       `/questions/${code}`,
-      { status: true },
+      { status: !currentStatus },
       { useToken: true },
     );
 
     if (!res.ok) {
       await Swal.fire({
         icon: "error",
-        title: "เปิดใช้งานไม่สำเร็จ",
+        title: `${actionText}ไม่สำเร็จ`,
         text: res.error ?? "เกิดข้อผิดพลาดจากระบบ",
       });
       return;
@@ -135,8 +193,8 @@ export default function ProblemsPage() {
 
     await Swal.fire({
       icon: "success",
-      title: "เปิดใช้งานสำเร็จ",
-      text: res.data?.message ?? `เปิดใช้งานโจทย์ ${code} สำเร็จ`,
+      title: `${actionText}สำเร็จ`,
+      text: res.data?.message ?? `${actionText}โจทย์ ${code} สำเร็จ`,
       timer: 1200,
       showConfirmButton: false,
     });
@@ -157,24 +215,25 @@ export default function ProblemsPage() {
             difficulty={difficulty}
             tag={tag}
             status={status}
-            onCategoryChange={setCategory}
-            onSearchChange={setSearch}
-            onDifficultyChange={setDifficulty}
-            onTagChange={setTag}
-            onStatusChange={setStatus}
-            onSubmit={() => void fetchQuestions(1)}
+            onCategoryChangeAction={setCategory}
+            onSearchChangeAction={setSearch}
+            onDifficultyChangeAction={setDifficulty}
+            onTagChangeAction={setTag}
+            onStatusChangeAction={setStatus}
+            onSubmitAction={() => void fetchQuestions(1)}
           />
-          <ProblemsTable
-            rows={rows}
-            total={total}
-            isLoading={isLoading}
-            errorMessage={errorMessage}
-            page={page}
-            totalPages={totalPages}
-            onPageChange={(nextPage) => void fetchQuestions(nextPage)}
-            onDelete={(code) => void handleDelete(code)}
-            onActivate={(code) => void handleActivate(code)}
-          />
+            <ProblemsTable
+              rows={rows}
+              total={total}
+              isLoading={isLoading}
+              errorMessage={errorMessage}
+              page={page}
+              totalPages={totalPages}
+              isAdmin={isAdmin}
+              onPageChangeAction={(nextPage) => void fetchQuestions(nextPage)}
+              onDeleteAction={(code) => void handleDelete(code)}
+              onToggleStatusAction={(code, currentStatus) => void handleToggleStatus(code, currentStatus)}
+            />
         </div>
       </main>
     </>

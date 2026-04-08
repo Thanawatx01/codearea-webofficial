@@ -13,10 +13,10 @@ import Select, { type GroupBase, type StylesConfig } from "react-select";
 import AsyncSelect from "react-select/async";
 
 const baseControlClassName =
-  "w-full rounded-2xl border border-white/10 bg-white/5 text-sm text-white placeholder:text-white/20 transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-2xl border border-white/10 bg-white/5 text-sm text-white placeholder:text-white/20 transition-all focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus:bg-[#151620] focus:shadow-[0_0_20px_rgba(139,92,246,0.1)] disabled:cursor-not-allowed disabled:opacity-50 hover:bg-white/[0.08] hover:border-white/20";
 
 const labelClassName =
-  "block px-1 text-xs font-semibold uppercase tracking-widest text-white/50";
+  "block px-1 text-[10px] font-bold uppercase tracking-[0.15em] text-white/40 mb-1.5";
 
 /** Portal เมนูไป body + fixed เพื่อไม่ถูกตัดโดย overflow / ถูกทับโดย layout ด้านล่าง */
 function resolveSelectMenuPortal(
@@ -145,25 +145,52 @@ const select2Styles: StylesConfig<
   }),
 };
 
-type ThemedInputProps = InputHTMLAttributes<HTMLInputElement> & {
+type ThemedInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> & {
   label?: string;
+  leftSlot?: ReactNode;
   rightSlot?: ReactNode;
+  onChangeAction?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 export const ThemedInput = forwardRef<HTMLInputElement, ThemedInputProps>(
-  ({ label, className = "", rightSlot, required, ...props }, ref) => {
+  (
+    {
+      label,
+      className = "",
+      leftSlot,
+      rightSlot,
+      required,
+      onChangeAction,
+      ...props
+    },
+    ref,
+  ) => {
     return (
-      <div className="space-y-2">
+      <div className="flex flex-col gap-1.5">
         {renderLabel(label, required)}
-        <div className="relative">
+        <div className="relative group">
+          {leftSlot ? (
+            <div className="pointer-events-none absolute inset-y-0 left-5 flex items-center text-white/20 group-focus-within:text-violet-400 transition-colors">
+              {leftSlot}
+            </div>
+          ) : null}
           <input
             ref={ref}
-            className={`${baseControlClassName} px-6 ${rightSlot ? "pr-14" : ""} ${className}`}
+            className={[
+              baseControlClassName,
+              "h-14",
+              leftSlot ? "pl-13" : "px-6",
+              rightSlot ? "pr-13" : "",
+              className,
+            ]
+              .filter(Boolean)
+              .join(" ")}
             required={required}
+            onChange={onChangeAction}
             {...props}
           />
           {rightSlot ? (
-            <div className="absolute inset-y-0 right-4 flex items-center">
+            <div className="absolute inset-y-0 right-5 flex items-center group-focus-within:text-violet-400 transition-colors">
               {rightSlot}
             </div>
           ) : null}
@@ -175,20 +202,29 @@ export const ThemedInput = forwardRef<HTMLInputElement, ThemedInputProps>(
 
 ThemedInput.displayName = "ThemedInput";
 
-type ThemedSelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
+type ThemedSelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange"> & {
   label?: string;
+  onChangeAction?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 };
 
 export const ThemedSelect = forwardRef<HTMLSelectElement, ThemedSelectProps>(
-  ({ label, className = "", children, required, ...props }, ref) => {
+  ({ label, className = "", children, required, onChangeAction, ...props }, ref) => {
     return (
       <div className="space-y-2">
         {renderLabel(label, required)}
         <div className="relative">
           <select
             ref={ref}
-            className={`${baseControlClassName} appearance-none px-6 pr-12 ${className}`}
+            className={[
+              baseControlClassName,
+              "h-14",
+              "appearance-none px-6 pr-12",
+              className,
+            ]
+              .filter(Boolean)
+              .join(" ")}
             required={required}
+            onChange={onChangeAction}
             {...props}
           >
             {children}
@@ -209,7 +245,7 @@ type ThemedSelect2Props = {
   required?: boolean;
   value: Select2Option | null;
   options: Select2Option[];
-  onChange: (option: Select2Option | null) => void;
+  onChangeAction: (option: Select2Option | null) => void;
   placeholder?: string;
   isClearable?: boolean;
   isDisabled?: boolean;
@@ -223,7 +259,7 @@ export function ThemedSelect2({
   required = false,
   value,
   options,
-  onChange,
+  onChangeAction,
   placeholder = "Select...",
   isClearable = true,
   isDisabled = false,
@@ -242,12 +278,12 @@ export function ThemedSelect2({
     ...select2Styles,
     control: (base, state) => ({
       ...select2Styles.control?.(base, state),
-      minHeight: isSmall ? "40px" : "56px",
+      minHeight: isSmall ? "42px" : "56px",
     }),
     valueContainer: (base) => ({
       ...base,
-      minHeight: isSmall ? "40px" : "56px",
-      padding: isSmall ? "0 8px" : base.padding,
+      minHeight: isSmall ? "42px" : "56px",
+      padding: isSmall ? "0 12px" : base.padding,
     }),
     menuPortal: (base) => ({
       ...base,
@@ -263,7 +299,7 @@ export function ThemedSelect2({
         inputId={`${instanceId}-input`}
         value={value}
         options={options}
-        onChange={(option) => onChange(option)}
+        onChange={(option) => onChangeAction(option)}
         placeholder={placeholder}
         isClearable={isClearable}
         isDisabled={isDisabled}
@@ -280,7 +316,7 @@ type ThemedMultiSelect2Props = {
   required?: boolean;
   value: Select2Option[];
   options: Select2Option[];
-  onChange: (option: Select2Option[]) => void;
+  onChangeAction: (option: Select2Option[]) => void;
   placeholder?: string;
   isDisabled?: boolean;
   size?: "default" | "sm";
@@ -292,7 +328,7 @@ export function ThemedMultiSelect2({
   required = false,
   value,
   options,
-  onChange,
+  onChangeAction,
   placeholder = "Select...",
   isDisabled = false,
   size = "default",
@@ -322,12 +358,12 @@ export function ThemedMultiSelect2({
       "&:hover": {
         borderColor: "#8b5cf6",
       },
-      minHeight: isSmall ? "40px" : "56px",
+      minHeight: isSmall ? "42px" : "56px",
     }),
     valueContainer: (base) => ({
       ...base,
-      minHeight: isSmall ? "40px" : "56px",
-      padding: isSmall ? "0 8px" : base.padding,
+      minHeight: isSmall ? "42px" : "56px",
+      padding: isSmall ? "0 12px" : base.padding,
     }),
     menuPortal: (base) => ({
       ...base,
@@ -344,7 +380,7 @@ export function ThemedMultiSelect2({
         inputId={`${instanceId}-input`}
         value={value}
         options={options}
-        onChange={(option) => onChange([...option])}
+        onChange={(option) => onChangeAction([...option])}
         placeholder={placeholder}
         isDisabled={isDisabled}
         styles={controlStyles}
@@ -359,8 +395,8 @@ type ThemedAsyncSelect2Props = {
   label?: string;
   required?: boolean;
   value: Select2Option | null;
-  onChange: (option: Select2Option | null) => void;
-  loadOptions: (inputValue: string) => Promise<Select2Option[]>;
+  onChangeAction: (option: Select2Option | null) => void;
+  loadOptionsAction: (inputValue: string) => Promise<Select2Option[]>;
   placeholder?: string;
   defaultOptions?: Select2Option[] | boolean;
   isClearable?: boolean;
@@ -373,8 +409,8 @@ export function ThemedAsyncSelect2({
   label,
   required = false,
   value,
-  onChange,
-  loadOptions,
+  onChangeAction,
+  loadOptionsAction,
   placeholder = "Search...",
   defaultOptions = true,
   isClearable = true,
@@ -394,12 +430,12 @@ export function ThemedAsyncSelect2({
     ...select2Styles,
     control: (base, state) => ({
       ...select2Styles.control?.(base, state),
-      minHeight: isSmall ? "40px" : "56px",
+      minHeight: isSmall ? "42px" : "56px",
     }),
     valueContainer: (base) => ({
       ...base,
-      minHeight: isSmall ? "40px" : "56px",
-      padding: isSmall ? "0 8px" : base.padding,
+      minHeight: isSmall ? "42px" : "56px",
+      padding: isSmall ? "0 12px" : base.padding,
     }),
     menuPortal: (base) => ({
       ...base,
@@ -416,8 +452,8 @@ export function ThemedAsyncSelect2({
         cacheOptions
         defaultOptions={defaultOptions}
         value={value}
-        loadOptions={loadOptions}
-        onChange={(option) => onChange(option)}
+        loadOptions={loadOptionsAction}
+        onChange={(option) => onChangeAction(option)}
         placeholder={placeholder}
         isClearable={isClearable}
         isDisabled={isDisabled}
@@ -433,8 +469,8 @@ type ThemedAsyncMultiSelect2Props = {
   label?: string;
   required?: boolean;
   value: Select2Option[];
-  onChange: (option: Select2Option[]) => void;
-  loadOptions: (inputValue: string) => Promise<Select2Option[]>;
+  onChangeAction: (option: Select2Option[]) => void;
+  loadOptionsAction: (inputValue: string) => Promise<Select2Option[]>;
   placeholder?: string;
   defaultOptions?: Select2Option[] | boolean;
   isDisabled?: boolean;
@@ -446,8 +482,8 @@ export function ThemedAsyncMultiSelect2({
   label,
   required = false,
   value,
-  onChange,
-  loadOptions,
+  onChangeAction,
+  loadOptionsAction,
   placeholder = "Search...",
   defaultOptions = true,
   isDisabled = false,
@@ -478,12 +514,12 @@ export function ThemedAsyncMultiSelect2({
       "&:hover": {
         borderColor: "#8b5cf6",
       },
-      minHeight: isSmall ? "40px" : "56px",
+      minHeight: isSmall ? "42px" : "56px",
     }),
     valueContainer: (base) => ({
       ...base,
-      minHeight: isSmall ? "40px" : "56px",
-      padding: isSmall ? "0 8px" : base.padding,
+      minHeight: isSmall ? "42px" : "56px",
+      padding: isSmall ? "0 12px" : base.padding,
     }),
     menuPortal: (base) => ({
       ...base,
@@ -501,8 +537,8 @@ export function ThemedAsyncMultiSelect2({
         cacheOptions
         defaultOptions={defaultOptions}
         value={value}
-        loadOptions={loadOptions}
-        onChange={(option) => onChange([...(option ?? [])])}
+        loadOptions={loadOptionsAction}
+        onChange={(option) => onChangeAction([...(option ?? [])])}
         placeholder={placeholder}
         isDisabled={isDisabled}
         styles={controlStyles}
@@ -513,21 +549,28 @@ export function ThemedAsyncMultiSelect2({
   );
 }
 
-type ThemedTextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
+type ThemedTextareaProps = Omit<
+  TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "onChange"
+> & {
   label?: string;
+  onChangeAction?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 };
 
 export const ThemedTextarea = forwardRef<
   HTMLTextAreaElement,
   ThemedTextareaProps
->(({ label, className = "", required, ...props }, ref) => {
+>(({ label, className = "", required, onChangeAction, ...props }, ref) => {
   return (
     <div className="space-y-2">
       {renderLabel(label, required)}
       <textarea
         ref={ref}
-        className={`${baseControlClassName} min-h-32 resize-y px-6 py-4 ${className}`}
+        className={[baseControlClassName, "min-h-32 resize-y px-6 py-4", className]
+          .filter(Boolean)
+          .join(" ")}
         required={required}
+        onChange={onChangeAction}
         {...props}
       />
     </div>

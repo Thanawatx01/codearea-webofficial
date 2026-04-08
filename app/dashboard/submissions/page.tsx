@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
+import { useRouter } from "next/navigation";
 import DataTable from "@/components/DataTable";
 import type { DataTableColumn, DataTableHeader } from "@/components/DataTable";
 import { api } from "@/lib/api";
@@ -24,22 +25,20 @@ type ProblemStatRow = {
 };
 
 export default function SubmissionsPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<ProblemStatRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   // Mock function to fetch data - TODO: modify this when backend has real stats endpoint
   const fetchStats = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      // In a real system, you would call something like `api.get("questions/stats")` 
-      // or aggregate `api.get("submissions")` if data isn't too large
-      // const res = await api.get<{ data: any[] }>("questions/stats", { params: { search: searchQuery } });
-
       // For now, using mock data because backend is empty
       setTimeout(() => {
         const mockData: ProblemStatRow[] = [
@@ -55,15 +54,18 @@ export default function SubmissionsPage() {
         setLoading(false);
       }, 500);
 
-    } catch {
+    } catch (e) {
+      console.error("Error fetching stats:", e);
       setError("เกิดข้อผิดพลาดในการโหลดข้อมูลสถิติ");
       setLoading(false);
     }
   }, [searchQuery, page]);
 
   useEffect(() => {
-    void fetchStats();
-  }, [fetchStats]);
+    if (isAuthorized) {
+      void fetchStats();
+    }
+  }, [isAuthorized, fetchStats]);
 
   const headers: DataTableHeader[] = [
     { key: "no", label: "#", align: "center", className: "w-12" },
@@ -135,6 +137,35 @@ export default function SubmissionsPage() {
     },
   ];
 
+  useEffect(() => {
+    const userJson = localStorage.getItem("user");
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        if (user.role_id === 2) {
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+          router.replace("/dashboard/problems");
+        }
+      } catch (e) {
+        console.error("Error parsing user from localStorage:", e);
+        router.replace("/login");
+      }
+    } else {
+      router.replace("/login");
+    }
+  }, [router]);
+
+  if (isAuthorized === null) {
+    return (
+      <div className="flex h-full w-full items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (isAuthorized === false) return null;
   return (
     <>
       <Header title="สถิติการส่งคำตอบ" icon={<SubmissionIcon />} />
@@ -177,7 +208,7 @@ export default function SubmissionsPage() {
               pagination={{
                 page,
                 totalPages,
-                onPageChange: setPage,
+                onPageChangeAction: setPage,
               }}
             />
           </div>

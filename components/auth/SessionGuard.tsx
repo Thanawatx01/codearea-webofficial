@@ -64,11 +64,15 @@ export function SessionGuard() {
         meRes.status === 403 ||
         !serverUser ||
         serverUser.id !== localUser.id ||
-        serverUser.email !== localUser.email ||
-        serverUser.display_name !== localUser.display_name ||
-        serverUser.role_id !== localUser.role_id;
+        serverUser.email !== localUser.email;
 
       if (!isMismatch) return;
+      if (!active) return;
+
+      console.warn("[SessionGuard] Session mismatch or 401 detected, clearing storage and redirecting to /login", {
+        status: meRes.status,
+        mismatch: isMismatch
+      });
 
       clearAuthStorage();
 
