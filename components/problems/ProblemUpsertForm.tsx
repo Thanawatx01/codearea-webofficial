@@ -150,7 +150,7 @@ export function ProblemUpsertForm({ code }: ProblemUpsertFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isDirty = useMemo(() => {
-    return (
+    return Boolean(
       lastSavedData &&
       (JSON.stringify(formData) !== lastSavedData || pdfFile !== null)
     );

@@ -10,6 +10,8 @@ type ExecutorType = "piston" | "judge0";
 interface CodeExecutorProps {
   initialCode?: string;
   defaultLanguageId?: number;
+  executorType?: ExecutorType;
+  executorUrl?: string;
 }
 
 const LANGUAGE_BOILERPLATES: Record<number, string> = {
@@ -34,10 +36,15 @@ const FILTERED_LANGUAGES = JUDGE0_LANGUAGES;
 export default function CodeExecutor({
   initialCode,
   defaultLanguageId = 63, // Default to Node.js
+  executorType,
+  executorUrl,
 }: CodeExecutorProps) {
-  const [executorType] = useState<ExecutorType>(
+  const [internalExecutorType] = useState<ExecutorType>(
     (process.env.NEXT_PUBLIC_EXECUTOR as ExecutorType) || "piston"
   );
+  
+  const currentExecutorType = executorType || internalExecutorType;
+
   const [languageId, setLanguageId] = useState(defaultLanguageId);
   const [theme, setTheme] = useState<"vs-dark" | "vs">("vs-dark");
   const [code, setCode] = useState(
@@ -122,14 +129,14 @@ export default function CodeExecutor({
 
     try {
       let res: SubmissionResult;
-      if (executorType === "piston") {
-        res = await executeCodePiston(languageId, code, stdin);
+      if (currentExecutorType === "piston") {
+        res = await executeCodePiston(languageId, code, stdin, executorUrl);
       } else {
         res = await executeCode({
           source_code: code,
           language_id: languageId,
           stdin: stdin,
-        });
+        }, executorUrl);
       }
       setResult(res);
     } catch (err: any) {

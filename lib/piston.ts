@@ -1,4 +1,5 @@
 import { SubmissionResult, SubmissionStatus } from "./judge0";
+import { api } from "@/lib/api";
 
 export interface PistonFile {
   name?: string;
@@ -42,8 +43,6 @@ export interface PistonExecuteResponse {
   };
 }
 
-const PISTON_BASE_URL = process.env.NEXT_PUBLIC_PISTON_URL || "http://localhost:5000/api/executor";
-
 // Map our internal IDs (from judge0.ts for compatibility) to Piston language/version
 export const PISTON_LANGUAGE_MAP: Record<number, { language: string; version: string }> = {
   63: { language: "javascript", version: "20.11.1" },
@@ -80,14 +79,12 @@ function mapPistonToSubmissionResult(pistonRes: PistonExecuteResponse): Submissi
 export async function executeCodePiston(
   languageId: number,
   sourceCode: string,
-  stdin?: string
+  stdin?: string,
+  baseUrl?: string
 ): Promise<SubmissionResult> {
   const config = PISTON_LANGUAGE_MAP[languageId];
-  if (!config) {
-    throw new Error(`Unsupported language ID for Piston: ${languageId}`);
-  }
 
-  const payload: PistonExecuteRequest = {
+  const payload: PistonExecuteRequest & { executor_url?: string } = {
     language: config.language,
     version: config.version,
     files: [
@@ -96,28 +93,18 @@ export async function executeCodePiston(
       },
     ],
     stdin: stdin,
+    executor_url: baseUrl, // The backend proxy reads this to redirect the execution
   };
 
   try {
-    const response = await fetch(`${PISTON_BASE_URL}/execute`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    const response = await api.post<PistonExecuteResponse>("/executor/execute", payload as any);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Piston execution failed: ${errorText}`);
+    if (!response.ok || !response.data) {
+      throw new Error(`Piston execution failed: ${response.error || "Unknown error"}`);
     }
 
-    const data: PistonExecuteResponse = await response.json();
-    return mapPistonToSubmissionResult(data);
+    return mapPistonToSubmissionResult(response.data);
   } catch (error: any) {
-    if (error.name === "TypeError" && error.message.includes("fetch")) {
-      throw new Error("cannot access executor check your connection");
-    }
-    throw error;
+    throw new Error(error.message || "cannot access executor check your connection");
   }
 }
