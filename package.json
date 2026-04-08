@@ -13,11 +13,13 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@supabase/supabase-js": "^2.101.1",
     "@uiw/react-md-editor": "^4.0.11",
     "monaco-editor": "^0.55.1",
-    "next": "16.1.6",
+    "next": "16.2.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-easy-crop": "^5.5.7",
     "react-select": "^5.10.2",
     "recharts": "^3.8.0",
     "sweetalert2": "^11.26.21"
@@ -29,7 +31,7 @@
     "@types/react-dom": "^19",
     "daisyui": "^5.5.19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "16.2.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -2,16 +2,46 @@
 
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
+import { useRouter } from "next/navigation";
 
 export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(max-width: 1024px)").matches;
-  });
+  const [collapsed, setCollapsed] = useState(false); // Consistent initial state for SSR/Client
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Only check auth after the component has mounted to prevent SSR/Hydration race conditions
+    const token = localStorage.getItem("token");
+    const userJson = localStorage.getItem("user");
+
+    if (!token) {
+      console.warn("[DashboardLayout] No token detected, redirecting to /login");
+      router.replace("/login");
+      setIsAuthorized(false);
+      return;
+    }
+
+    // Role-based access control: Block regular users (role_id: 1) from dashboard
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        if (user.role_id === 1) {
+          console.warn("[DashboardLayout] Regular user detected, redirecting to /unauthorized");
+          router.replace("/unauthorized");
+          setIsAuthorized(false);
+          return;
+        }
+      } catch (e) {
+        console.error("[DashboardLayout] Error parsing user from localStorage:", e);
+      }
+    }
+
+    setIsAuthorized(true);
+  }, [router]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 1024px)");
@@ -24,6 +54,16 @@ export default function DashboardLayout({
     return () => media.removeEventListener("change", syncCollapsed);
   }, []);
 
+  if (isAuthorized === null) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#05070f]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (isAuthorized === false) return null;
+
   return (
     <div className="flex min-h-screen overflow-x-hidden bg-[#05070f] text-white">
       <Sidebar
@@ -31,6 +71,7 @@ export default function DashboardLayout({
         onToggle={() => setCollapsed((prev) => !prev)}
       />
       <div
+        style={{ "--sidebar-width": collapsed ? "84px" : "260px" } as React.CSSProperties}
         className={`relative isolate flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden bg-linear-to-br from-[#06080f] via-[#0a0b17] to-[#071226] transition-[margin-left] duration-200 ${
           collapsed ? "ml-[84px]" : "ml-[260px]"
         }`}

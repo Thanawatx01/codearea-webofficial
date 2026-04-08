@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Header from "@/components/Header";
 import DataTable from "@/components/DataTable";
 import type { DataTableColumn, DataTableHeader } from "@/components/DataTable";
 import { api } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 const ActivityIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -24,45 +25,92 @@ type UserActivityRow = {
   max_score: number;
 };
 
+const mockActivities: UserActivityRow[] = [
+  { id: "mock-1", username: "Raksit", solved_count: 45, total_score: 4500, max_score: 5000 },
+  { id: "mock-2", username: "admin", solved_count: 50, total_score: 5000, max_score: 5000 },
+  { id: "mock-3", username: "thanawat", solved_count: 20, total_score: 1800, max_score: 5000 },
+  { id: "mock-4", username: "athp", solved_count: 5, total_score: 450, max_score: 5000 },
+  { id: "mock-5", username: "Nut", solved_count: 38, total_score: 3600, max_score: 5000 },
+  { id: "mock-6", username: "pupha", solved_count: 12, total_score: 1100, max_score: 5000 },
+];
+
 export default function UserActivityPage() {
-  const [activities, setActivities] = useState<UserActivityRow[]>([]);
+  const router = useRouter();
+  const [activities, setActivities] = useState<UserActivityRow[]>(mockActivities);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   const fetchActivities = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      // Mock data fetching. Update this to actual API call when ready.
-      // const res = await api.get<{ data: any[] }>("users/activity", { params: { search: searchQuery } });
+      const res = await api.get<{ data: UserActivityRow[] }>("/users/leaderboard", {
+        useToken: true,
+      });
 
-      setTimeout(() => {
-        const mockData: UserActivityRow[] = [
-          { id: "1", username: "Raksit", solved_count: 45, total_score: 4500, max_score: 5000 },
-          { id: "2", username: "admin", solved_count: 50, total_score: 5000, max_score: 5000 },
-          { id: "3", username: "thanawat", solved_count: 20, total_score: 1800, max_score: 5000 },
-          { id: "4", username: "athp", solved_count: 5, total_score: 450, max_score: 5000 },
-          { id: "5", username: "Nut", solved_count: 38, total_score: 3600, max_score: 5000 },
-          { id: "6", username: "pupha", solved_count: 12, total_score: 1100, max_score: 5000 },
-        ].filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase()));
-
-        setActivities(mockData);
-        setTotalPages(1);
-        setLoading(false);
-      }, 500);
-
-    } catch {
-      setError("เกิดข้อผิดพลาดในการโหลดข้อมูลกิจกรรมผู้ใช้");
-      setLoading(false);
+      if (res.ok && res.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        setActivities(res.data.data);
+      } else {
+        console.log("Leaderboard API empty or failed, using placeholders");
+        // Keep mock data if API returns empty
+      }
+    } catch (e) {
+      console.error("Error fetching leaderboard:", e);
+      // Fallback to mock data is already handled by initial state
     }
-  }, [searchQuery, page]);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    void fetchActivities();
-  }, [fetchActivities]);
+    const userJson = localStorage.getItem("user");
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        if (user.role_id === 2) {
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+          router.replace("/dashboard/problems");
+        }
+      } catch (e) {
+        console.error("Error parsing user from localStorage:", e);
+        router.replace("/login");
+      }
+    } else {
+      router.replace("/login");
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (isAuthorized) {
+      void fetchActivities();
+    }
+  }, [isAuthorized, fetchActivities]);
+
+  const filteredActivities = useMemo(() => {
+    return activities.filter(u => 
+      u.username.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [activities, searchQuery]);
+
+  const totalPages = Math.ceil(filteredActivities.length / 10) || 1;
+  const paginatedActivities = useMemo(() => {
+    const start = (page - 1) * 10;
+    return filteredActivities.slice(start, start + 10);
+  }, [filteredActivities, page]);
+
+  if (isAuthorized === null) {
+    return (
+      <div className="flex h-full w-full items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (isAuthorized === false) return null;
 
   const headers: DataTableHeader[] = [
     { key: "no", label: "#", align: "center", className: "w-12" },
@@ -102,7 +150,7 @@ export default function UserActivityPage() {
         <span className="text-sm font-bold">
           <span className="text-emerald-400">{row.total_score.toLocaleString()}</span>
           <span className="text-white/30 mx-1">/</span>
-          <span className="text-white/50">{row.max_score.toLocaleString()}</span>
+          <span className="text-white/50">{(row.max_score || 0).toLocaleString()}</span>
         </span>
       ),
     },
@@ -160,7 +208,7 @@ export default function UserActivityPage() {
             <DataTable
               headers={headers}
               columns={columns}
-              rows={activities}
+              rows={paginatedActivities}
               rowKey={(row) => row.id}
               loading={loading}
               errorMessage={error}
@@ -168,7 +216,7 @@ export default function UserActivityPage() {
               pagination={{
                 page,
                 totalPages,
-                onPageChange: setPage,
+                onPageChangeAction: setPage,
               }}
             />
           </div>

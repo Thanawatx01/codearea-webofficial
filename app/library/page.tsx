@@ -182,14 +182,14 @@ export default function LibraryPage() {
                   label="Title"
                   name="title"
                   value={demoForm.title}
-                  onChange={handleDemoFormChange}
+                  onChangeAction={handleDemoFormChange}
                   placeholder="Enter title..."
                 />
                 <ThemedSelect
                   label="Category"
                   name="category"
                   value={demoForm.category}
-                  onChange={handleDemoFormChange}
+                  onChangeAction={handleDemoFormChange}
                 >
                   <option value="frontend" className="text-black">
                     Frontend
@@ -205,21 +205,21 @@ export default function LibraryPage() {
                   label="Description"
                   name="description"
                   value={demoForm.description}
-                  onChange={handleDemoFormChange}
+                  onChangeAction={handleDemoFormChange}
                   placeholder="Write description..."
                 />
                 <ThemedSelect2
                   label="Category (Select2 - Client Filter)"
                   value={clientSelect2Value}
                   options={select2ClientOptions}
-                  onChange={setClientSelect2Value}
+                  onChangeAction={setClientSelect2Value}
                   placeholder="Search category..."
                 />
                 <ThemedAsyncSelect2
                   label="GitHub User (Select2 - Server Side)"
                   value={serverSelect2Value}
-                  onChange={setServerSelect2Value}
-                  loadOptions={loadGithubUsers}
+                  onChangeAction={setServerSelect2Value}
+                  loadOptionsAction={loadGithubUsers}
                   placeholder="Type to search user..."
                 />
               </div>
@@ -240,7 +240,7 @@ export default function LibraryPage() {
   label="Title"
   name="title"
   value={form.title}
-  onChange={handleChange}
+  onChangeAction={handleChange}
   placeholder="Enter title..."
 />`}
                   </pre>
@@ -257,7 +257,7 @@ export default function LibraryPage() {
   label="Category"
   name="category"
   value={form.category}
-  onChange={handleChange}
+  onChangeAction={handleChange}
 >
   <option value="frontend">Frontend</option>
   <option value="backend">Backend</option>
@@ -276,7 +276,7 @@ export default function LibraryPage() {
   label="Description"
   name="description"
   value={form.description}
-  onChange={handleChange}
+  onChangeAction={handleChange}
   placeholder="Write description..."
 />`}
                   </pre>
@@ -299,7 +299,7 @@ const options: Select2Option[] = [
   label="Category"
   value={value}
   options={options}
-  onChange={setValue}
+  onChangeAction={setValue}
   placeholder="Search category..."
 />`}
                   </pre>
@@ -314,7 +314,7 @@ const options: Select2Option[] = [
 
 const [value, setValue] = useState<Select2Option | null>(null);
 
-const loadOptions = async (input: string): Promise<Select2Option[]> => {
+const loadOptionsAction = async (input: string): Promise<Select2Option[]> => {
   const res = await fetch("/api/search?q=" + encodeURIComponent(input));
   const data = await res.json();
   return data.items.map((item: { id: string; name: string }) => ({
@@ -326,10 +326,10 @@ const loadOptions = async (input: string): Promise<Select2Option[]> => {
 <ThemedAsyncSelect2
   label="User"
   value={value}
-  onChange={setValue}
-  loadOptions={loadOptions}
+  onChangeAction={setValue}
+  loadOptionsAction={loadOptionsAction}
   placeholder="Type to search..."
-/>`}
+/>`},search:
                   </pre>
                 </details>
               </div>
@@ -350,7 +350,7 @@ const loadOptions = async (input: string): Promise<Select2Option[]> => {
                 pagination={{
                   page: tablePage,
                   totalPages: 1,
-                  onPageChange: setTablePage,
+                  onPageChangeAction: setTablePage,
                 }}
               />
               <details className="rounded-lg border border-base-300 bg-base-100 text-sm">
@@ -381,7 +381,7 @@ const columns: DataTableColumn<RowType>[] = [
   pagination={{
     page,
     totalPages,
-    onPageChange: setPage,
+    onPageChangeAction: setPage,
   }}
 />`}
                 </pre>
