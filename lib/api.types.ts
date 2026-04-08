@@ -10,6 +10,8 @@ export interface ApiRequestOptions extends Omit<RequestInit, "method" | "body"> 
   timeout?: number;
   useToken?: boolean;
   token?: string;
+  /** true = ใช้ NEXT_PUBLIC_AI_URL เป็นฐานแทน NEXT_PUBLIC_API_URL (ค่าเริ่มต้น false) */
+  isAI?: boolean;
 }
 
 export interface ApiResponse<T = unknown> {
