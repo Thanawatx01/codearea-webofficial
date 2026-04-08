@@ -83,8 +83,12 @@ export default function ProblemTypesPage() {
             .filter((item) => item.name.length > 0);
 
           if (mapped.length > 0) {
+            // Merge with placeholders if necessary, or just replace
             setTypes(mapped);
           }
+        } else {
+          // If API returns successfully but empty, we keep initial types (the placeholders)
+          console.log("Categories API returned empty, keeping placeholders");
         }
       }
     } catch (e) {

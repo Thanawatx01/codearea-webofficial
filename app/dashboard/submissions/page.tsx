@@ -208,7 +208,7 @@ export default function SubmissionsPage() {
               pagination={{
                 page,
                 totalPages,
-                onPageChange: setPage,
+                onPageChangeAction: setPage,
               }}
             />
           </div>

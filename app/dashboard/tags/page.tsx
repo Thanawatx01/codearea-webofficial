@@ -85,6 +85,9 @@ export default function TagsPage() {
           if (mapped.length > 0) {
             setTags(mapped);
           }
+        } else {
+          // If API returns successfully but empty, we keep initial tags (the placeholders)
+          console.log("Tags API returned empty, keeping placeholders");
         }
       }
     } catch (e) {
