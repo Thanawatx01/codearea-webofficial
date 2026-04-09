@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function CategoriesPage() {
   return (
     <div className="min-h-screen bg-[#0B0B0F] text-white">
@@ -9,29 +11,29 @@ export default function CategoriesPage() {
           </p>
         </div>
 
-        {/* Placeholder for categories list */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
           {[
-            { name: "Arrays", count: 45 },
-            { name: "Linked Lists", count: 32 },
-            { name: "Trees", count: 38 },
-            { name: "Graphs", count: 28 },
-            { name: "Dynamic Programming", count: 55 },
-            { name: "Strings", count: 42 },
-            { name: "Sorting", count: 25 },
-            { name: "Recursion", count: 20 },
+            { id: 1, name: "Arrays", count: 45 },
+            { id: 2, name: "Linked Lists", count: 32 },
+            { id: 3, name: "Trees", count: 38 },
+            { id: 4, name: "Graphs", count: 28 },
+            { id: 5, name: "Dynamic Programming", count: 55 },
+            { id: 6, name: "Strings", count: 42 },
+            { id: 7, name: "Sorting", count: 25 },
+            { id: 8, name: "Recursion", count: 20 },
           ].map((category) => (
-            <div
+            <Link
               key={category.name}
-              className="p-6 rounded-xl bg-white/5 border border-white/10 hover:border-primary/50 transition-all hover:bg-white/10 cursor-pointer group"
+              href={`/categories/${category.id}`}
+              className="p-6 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/50 transition-all hover:bg-white/10 cursor-pointer group"
             >
-              <h3 className="text-lg font-semibold text-white group-hover:text-primary transition-colors">
+              <h3 className="text-lg font-semibold text-white group-hover:text-purple-400 transition-colors">
                 {category.name}
               </h3>
               <p className="text-white/60 text-sm mt-2">
                 {category.count} problems
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </main>
