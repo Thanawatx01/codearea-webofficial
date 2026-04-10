@@ -82,7 +82,16 @@ export default function LoginPage() {
 
     setIsLoading(false);
     if (user.role_id === 2) {
-      router.replace("/dashboard/problems");
+      const params = new URLSearchParams(window.location.search);
+      const from = params.get("from");
+      const safeFrom =
+        from &&
+        from.startsWith("/dashboard") &&
+        !from.includes("//") &&
+        !from.includes("\\")
+          ? from
+          : null;
+      router.replace(safeFrom ?? "/dashboard");
     } else {
       router.replace("/");
     }

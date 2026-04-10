@@ -4,7 +4,6 @@ import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 
 interface MenuItem {
   label: string;
@@ -13,11 +12,20 @@ interface MenuItem {
 }
 
 interface MenuGroup {
-  title: string;
+  title?: string;
   items: MenuItem[];
 }
 
 const menuGroups: MenuGroup[] = [
+  {
+    items: [
+      {
+        label: "ภาพรวม",
+        href: "/dashboard",
+        iconName: "stats",
+      },
+    ],
+  },
   {
     title: "ทั่วไป",
     items: [
@@ -100,18 +108,21 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   return (
     <aside
-      className={`fixed bottom-0 left-0 top-0 z-40 flex flex-col overflow-y-auto border-r border-white/10 bg-linear-to-b from-[#05060d]/95 via-[#090b16]/95 to-[#081225]/95 backdrop-blur-md transition-[width] duration-200 ${collapsed ? "w-[84px]" : "w-[260px]"
-        }`}
+      className={`fixed bottom-0 left-0 top-0 z-40 flex flex-col overflow-y-auto border-r border-white/10 bg-linear-to-b from-[#05060d]/95 via-[#090b16]/95 to-[#081225]/95 backdrop-blur-md transition-[width] duration-200 ${
+        collapsed ? "w-[84px]" : "w-[260px]"
+      }`}
     >
       {/* Logo */}
       <div
-        className={`flex h-16 items-center border-b border-white/5 ${collapsed ? "justify-between px-2" : "justify-between px-4"
-          }`}
+        className={`flex h-16 items-center border-b border-white/5 ${
+          collapsed ? "justify-between px-2" : "justify-between px-4"
+        }`}
       >
         <Link
           href="/"
-          className={`flex items-center hover:opacity-90 transition-opacity ${collapsed ? "justify-center pl-1" : "gap-2.5"
-            }`}
+          className={`flex items-center hover:opacity-90 transition-opacity ${
+            collapsed ? "justify-center pl-1" : "gap-2.5"
+          }`}
         >
           <CodeAreaLogo iconClassName="h-8 w-8" />
           {!collapsed ? (
@@ -123,8 +134,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <button
           type="button"
           onClick={onToggle}
-          className={`rounded-lg border border-white/10 bg-white/5 text-xs text-white/80 hover:bg-white/10 ${collapsed ? "h-6 w-6" : "h-8 w-8"
-            }`}
+          className={`rounded-lg border border-white/10 bg-white/5 text-xs text-white/80 hover:bg-white/10 ${
+            collapsed ? "h-6 w-6" : "h-8 w-8"
+          }`}
           aria-label={collapsed ? "ขยายเมนู" : "ย่อเมนู"}
         >
           {collapsed ? ">" : "<"}
@@ -135,14 +147,14 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <nav
         className={`flex-1 py-4 ${collapsed ? "px-2 space-y-4" : "px-3 space-y-6"}`}
       >
-        {menuGroups.map((group) => {
+        {menuGroups.map((group, groupIndex) => {
           const visibleItems = group.items;
 
           if (visibleItems.length === 0) return null;
 
           return (
-            <div key={group.title}>
-              {!collapsed ? (
+            <div key={group.title ?? `nav-${groupIndex}`}>
+              {!collapsed && group.title ? (
                 <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-text-light">
                   {group.title}
                 </p>
@@ -155,13 +167,15 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       <Link
                         title={item.label}
                         href={item.href}
-                        className={`flex items-center rounded-lg text-sm font-medium transition-all duration-150 ${collapsed
-                          ? "justify-center px-2 py-2.5"
-                          : "gap-3 px-3 py-2.5"
-                          } ${isActive
+                        className={`flex items-center rounded-lg text-sm font-medium transition-all duration-150 ${
+                          collapsed
+                            ? "justify-center px-2 py-2.5"
+                            : "gap-3 px-3 py-2.5"
+                        } ${
+                          isActive
                             ? "bg-primary/20 text-primary border border-primary/20"
                             : "text-text-muted hover:bg-white/5 hover:text-foreground"
-                          }`}
+                        }`}
                       >
                         <span
                           className={
@@ -185,10 +199,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <button
           type="button"
           onClick={handleLogout}
-          className={`flex w-full items-center rounded-lg text-sm font-medium transition-all duration-150 ${collapsed
-            ? "justify-center px-2 py-2.5"
-            : "gap-3 px-3 py-2.5"
-            } text-red-400/80 hover:bg-red-500/10 hover:text-red-400`}
+          className={`flex w-full items-center rounded-lg text-sm font-medium transition-all duration-150 ${
+            collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5"
+          } text-red-400/80 hover:bg-red-500/10 hover:text-red-400`}
           title="ออกจากระบบ"
         >
           <span className="text-red-400">

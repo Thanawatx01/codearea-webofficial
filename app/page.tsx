@@ -64,7 +64,7 @@ export default function Home() {
               Get Started Now
             </Link>
             <Link
-              href="/dashboard/problems"
+              href="/dashboard"
               className="rounded-full border border-white/20 bg-white/10 px-8 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
             >
               Enter Dashboard

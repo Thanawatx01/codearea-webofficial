@@ -12,7 +12,7 @@ export default function NotFoundPage() {
       router.back();
       return;
     }
-    router.replace("/dashboard/problems");
+    router.replace("/dashboard");
   };
 
   return (

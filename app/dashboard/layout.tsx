@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function DashboardLayout({
   children,
@@ -19,7 +19,9 @@ export default function DashboardLayout({
     const userJson = localStorage.getItem("user");
 
     if (!token) {
-      console.warn("[DashboardLayout] No token detected, redirecting to /login");
+      console.warn(
+        "[DashboardLayout] No token detected, redirecting to /login",
+      );
       router.replace("/login");
       setIsAuthorized(false);
       return;
@@ -30,13 +32,18 @@ export default function DashboardLayout({
       try {
         const user = JSON.parse(userJson);
         if (user.role_id === 1) {
-          console.warn("[DashboardLayout] Regular user detected, redirecting to /unauthorized");
+          console.warn(
+            "[DashboardLayout] Regular user detected, redirecting to /unauthorized",
+          );
           router.replace("/unauthorized");
           setIsAuthorized(false);
           return;
         }
       } catch (e) {
-        console.error("[DashboardLayout] Error parsing user from localStorage:", e);
+        console.error(
+          "[DashboardLayout] Error parsing user from localStorage:",
+          e,
+        );
       }
     }
 
@@ -71,7 +78,11 @@ export default function DashboardLayout({
         onToggle={() => setCollapsed((prev) => !prev)}
       />
       <div
-        style={{ "--sidebar-width": collapsed ? "84px" : "260px" } as React.CSSProperties}
+        style={
+          {
+            "--sidebar-width": collapsed ? "84px" : "260px",
+          } as React.CSSProperties
+        }
         className={`relative isolate flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden bg-linear-to-br from-[#06080f] via-[#0a0b17] to-[#071226] transition-[margin-left] duration-200 ${
           collapsed ? "ml-[84px]" : "ml-[260px]"
         }`}
@@ -82,7 +93,7 @@ export default function DashboardLayout({
           <div className="absolute bottom-[-180px] left-1/3 h-[320px] w-[320px] rounded-full bg-indigo-700/15 blur-3xl" />
         </div>
         <div className="relative z-10 flex min-h-screen min-w-0 flex-1 flex-col">
-        {children}
+          {children}
         </div>
       </div>
     </div>

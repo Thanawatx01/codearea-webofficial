@@ -1,0 +1,22 @@
+type DashboardErrorStateProps = {
+  message: string;
+  onRetry: () => void;
+};
+
+export function DashboardErrorState({
+  message,
+  onRetry,
+}: DashboardErrorStateProps) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-10 text-center shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+      <p className="text-sm text-red-300/95">{message}</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-5 rounded-2xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-[0_0_28px_rgba(139,92,246,0.35)] transition hover:bg-primary-hover"
+      >
+        ลองอีกครั้ง
+      </button>
+    </div>
+  );
+}

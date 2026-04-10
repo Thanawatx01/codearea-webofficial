@@ -73,7 +73,11 @@ export default function RegisterPage() {
       document.cookie = `role_id=${res.data.user.role_id}; path=/; samesite=lax`;
       document.cookie = `display_name=${encodeURIComponent(res.data.user.display_name)}; path=/; samesite=lax`;
       setIsLoading(false);
-      router.replace("/dashboard/problems");
+      if (res.data.user.role_id === 2) {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/");
+      }
       return;
     }
 

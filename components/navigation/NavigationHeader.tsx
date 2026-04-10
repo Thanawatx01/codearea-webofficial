@@ -211,11 +211,11 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <Link
-                    href="/dashboard/problems"
+                    href="/dashboard"
                     onClick={() => setIsDropdownOpen(false)}
                     className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-blue-400 transition-colors flex items-center gap-2 border-b border-white/5"
                   >
-                    <Icon name="problem" className="w-4 h-4" /> Dashboard
+                    <Icon name="stats" className="w-4 h-4" /> Dashboard
                   </Link>
                   <Link
                     href="/dashboard/settings"
