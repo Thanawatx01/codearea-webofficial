@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import { api } from "@/lib/api";
 
@@ -31,6 +31,7 @@ function clearAuthStorage() {
 
 export function SessionGuard() {
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     let active = true;
@@ -83,7 +84,10 @@ export function SessionGuard() {
         confirmButtonText: "ตกลง",
       });
 
-      router.replace("/login");
+      const loginHref = pathname.startsWith("/dashboard")
+        ? `/login?from=${encodeURIComponent(pathname)}`
+        : "/login";
+      router.replace(loginHref);
     };
 
     validateSession();
@@ -91,7 +95,7 @@ export function SessionGuard() {
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [router, pathname]);
 
   return null;
 }
