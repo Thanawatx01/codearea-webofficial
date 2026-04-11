@@ -16,6 +16,8 @@ export function LogoutProvider({ children }: { children: ReactNode }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
 
+  const pathname = usePathname();
+
   const logout = useCallback(async (redirectTo: string = "/") => {
     setIsLoggingOut(true);
     
@@ -27,10 +29,15 @@ export function LogoutProvider({ children }: { children: ReactNode }) {
     
     // Redirect
     router.replace(redirectTo);
-  }, [router]);
+
+    // If we're already on the same page, reset manually 
+    // because the useEffect won't trigger from a pathname change
+    if (pathname === redirectTo) {
+      setTimeout(() => setIsLoggingOut(false), 100);
+    }
+  }, [router, pathname]);
 
   // Reset logging out state when route changes
-  const pathname = usePathname();
   useEffect(() => {
     if (isLoggingOut) {
       setIsLoggingOut(false);
