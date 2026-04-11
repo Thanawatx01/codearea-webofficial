@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import { Icon } from "@/components/icons/Icon";
 import { maskEmail } from "@/lib/utils";
 import Swal from "sweetalert2";
+import { useLogout } from "@/components/auth/LogoutProvider";
 
 interface UserRow {
   id: string;
@@ -43,12 +44,15 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { logout } = useLogout();
 
   useEffect(() => {
     const userJson = localStorage.getItem("user");
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
+        setCurrentUserId(user.id);
         if (user.role_id === 2) {
           setIsAuthorized(true);
         } else {
@@ -128,12 +132,21 @@ export default function UsersPage() {
       await Swal.fire({
         icon: "success",
         title: "สำเร็จ",
-        text: "เปลี่ยนบทบาทเรียบร้อยแล้ว",
-        timer: 1500,
+        text: userId === currentUserId && newRoleId !== 2 
+          ? "เปลี่ยนบทบาทสำเร็จ ระบบกำลังนำคุณออกจากหน้าจัดการ..." 
+          : "เปลี่ยนบทบาทเรียบร้อยแล้ว",
+        timer: 2000,
         showConfirmButton: false,
         background: "#1a1c2e",
         color: "#fff",
       });
+
+      // If user demotes themselves, force logout to prevent unauthorized access
+      if (userId === currentUserId && newRoleId !== 2) {
+        await logout("/");
+        return;
+      }
+
       void fetchUsers(page);
     } else {
       setIsLoading(false);
