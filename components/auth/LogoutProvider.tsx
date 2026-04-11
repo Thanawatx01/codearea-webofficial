@@ -17,21 +17,22 @@ export function LogoutProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const pathname = usePathname();
+  const pathname = usePathname();
 
   const logout = useCallback(async (redirectTo: string = "/") => {
     setIsLoggingOut(true);
-    
+
     // Perform technical logout
     await performLogout();
-    
+
     // Delay to let the overlay and message be seen
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    
+
     // Redirect
     router.replace(redirectTo);
 
-    // If we're already on the same page, reset manually 
-    // because the useEffect won't trigger from a pathname change
+    // If we are already on the same page, the useEffect won't trigger from a pathname change.
+    // Reset manually after a short tick to ensure UI consistency.
     if (pathname === redirectTo) {
       setTimeout(() => setIsLoggingOut(false), 100);
     }

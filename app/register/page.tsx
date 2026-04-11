@@ -69,6 +69,10 @@ export default function RegisterPage() {
     if (res.data?.token && res.data.user) {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
+      
+      // Notify other components (like NavigationHeader) in same-tab
+      window.dispatchEvent(new Event("storage"));
+      
       document.cookie = `token=${encodeURIComponent(res.data.token)}; path=/; samesite=lax`;
       document.cookie = `role_id=${res.data.user.role_id}; path=/; samesite=lax`;
       document.cookie = `display_name=${encodeURIComponent(res.data.user.display_name)}; path=/; samesite=lax`;
