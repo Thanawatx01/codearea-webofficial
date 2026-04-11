@@ -66,7 +66,7 @@ export async function submitCode(request: SubmissionRequest, baseUrl?: string): 
 
     return response.data;
   } catch (error: any) {
-    throw new Error(error.message || "cannot access executor check your connection");
+    throw error;
   }
 }
 
@@ -88,7 +88,7 @@ export async function getSubmissionResult(token: string, baseUrl?: string): Prom
 
     return response.data;
   } catch (error: any) {
-    throw new Error(error.message || "cannot access executor check your connection");
+    throw error;
   }
 }
 

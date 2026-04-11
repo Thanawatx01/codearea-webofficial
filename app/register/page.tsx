@@ -62,7 +62,7 @@ export default function RegisterPage() {
 
     if (!res.ok) {
       setIsLoading(false);
-      setErrorMessage(res.error ?? "สมัครสมาชิกล้มเหลว");
+      setErrorMessage(res.error || "สมัครสมาชิกล้มเหลว");
       return;
     }
 

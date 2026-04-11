@@ -139,7 +139,7 @@ export default function IDEPage() {
       Swal.fire({
         icon: "error",
         title: "บันทึกการตั้งค่าล้มเหลว",
-        text: e.message === "Failed to fetch" ? "ไม่สามารถติดต่อ Server ได้ (CORS หรือ Network)" : e.message,
+        text: e.message,
         background: "#1a1c2e",
         color: "#fff",
       });

@@ -96,11 +96,7 @@ export default function CodeExecutor({
       setResult(res);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("fetch") || msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-        setError("cannot access executor check your connection");
-      } else {
-        setError(msg || "Something went wrong during execution");
-      }
+      setError(msg || "Something went wrong during execution");
     } finally {
       setIsRunning(false);
     }
