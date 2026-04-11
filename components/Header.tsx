@@ -19,19 +19,27 @@ export default function Header({ title, icon }: HeaderProps) {
   const [userData, setUserData] = useState({ name: "ผู้ใช้งาน", role: "1", avatar_url: "" });
 
   useEffect(() => {
-    try {
-      const userRaw = window.localStorage.getItem("user");
-      if (userRaw) {
-        const user = JSON.parse(userRaw) as { display_name?: string; role_id?: number | string; avatar_url?: string };
-        setUserData({
-          name: user.display_name?.trim() || "ผู้ใช้งาน",
-          role: String(user.role_id || "1"),
-          avatar_url: user.avatar_url || ""
-        });
+    const checkAuth = () => {
+      try {
+        const userRaw = window.localStorage.getItem("user");
+        if (userRaw) {
+          const user = JSON.parse(userRaw) as { display_name?: string; role_id?: number | string; avatar_url?: string };
+          setUserData({
+            name: user.display_name?.trim() || "ผู้ใช้งาน",
+            role: String(user.role_id || "1"),
+            avatar_url: user.avatar_url || ""
+          });
+        }
+      } catch (e) {
+        console.error("Failed to parse user data", e);
       }
-    } catch (e) {
-      console.error("Failed to parse user data", e);
-    }
+    };
+
+    checkAuth();
+
+    // Listen for storage changes (for same-tab sync and other tabs)
+    window.addEventListener("storage", checkAuth);
+    return () => window.removeEventListener("storage", checkAuth);
   }, []);
 
   const displayName = userData.name;
