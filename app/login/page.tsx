@@ -115,6 +115,7 @@ export default function LoginPage() {
               src="/asset/code.jpeg"
               alt="Code Background"
               fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover opacity-30 blur-[2px] brightness-[0.4] transition-transform duration-1000 hover:scale-110"
               priority
             />
