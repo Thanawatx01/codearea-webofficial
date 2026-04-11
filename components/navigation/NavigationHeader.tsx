@@ -19,6 +19,7 @@ interface NavigationHeaderProps {
 export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [roleId, setRoleId] = useState(1);
   const [avatarText, setAvatarText] = useState("U");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -35,10 +36,11 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
 
       if (token && userRaw) {
         try {
-          const user = JSON.parse(userRaw) as { display_name?: string };
+          const user = JSON.parse(userRaw) as { display_name?: string; role_id?: number };
           const name = user.display_name?.trim() || "ผู้ใช้งาน";
           setDisplayName(name);
           setAvatarText(name.charAt(0).toUpperCase());
+          setRoleId(user.role_id ?? 1);
           setIsLoggedIn(true);
         } catch {
           setIsLoggedIn(false);
@@ -211,15 +213,9 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
               {/* Dropdown Menu */}
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+
                   <Link
-                    href="/dashboard"
-                    onClick={() => setIsDropdownOpen(false)}
-                    className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-blue-400 transition-colors flex items-center gap-2 border-b border-white/5"
-                  >
-                    <Icon name="stats" className="w-4 h-4" /> Dashboard
-                  </Link>
-                  <Link
-                    href="/dashboard/settings"
+                    href={roleId === 2 ? "/dashboard/settings" : "/profile"}
                     className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
                     onClick={() => setIsDropdownOpen(false)}
                   >
@@ -292,7 +288,7 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                   Signed in as {displayName}
                 </p>
                 <Link
-                  href="/dashboard/settings"
+                  href={roleId === 2 ? "/dashboard/settings" : "/profile"}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="h-10 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10"
                 >

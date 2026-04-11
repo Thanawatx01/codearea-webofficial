@@ -10,6 +10,7 @@ interface LayoutWrapperProps {
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const pathname = usePathname();
   const isDashboard = pathname.startsWith("/dashboard");
+  const isProfile = pathname.startsWith("/profile");
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
   return (
