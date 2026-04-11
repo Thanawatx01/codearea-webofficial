@@ -60,7 +60,7 @@ export default function LoginPage() {
 
     if (!res.ok || !res.data?.token || !res.data.user) {
       setIsLoading(false);
-      setErrorMessage(res.error ?? "Login failed");
+      setErrorMessage(res.error || "Login failed");
       return;
     }
 

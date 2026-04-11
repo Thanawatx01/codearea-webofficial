@@ -64,9 +64,10 @@ export async function callApi<T = unknown>(
     ...rest
   } = options;
 
-  const resolvedBase = path.startsWith("http://") || path.startsWith("https://")
-    ? ""
-    : resolvedApiBase(isAI);
+  const resolvedBase =
+    path.startsWith("http://") || path.startsWith("https://")
+      ? ""
+      : resolvedApiBase(isAI);
 
   const base = resolvedBase;
   const pathPart = path.replace(/^\//, "");
@@ -80,12 +81,11 @@ export async function callApi<T = unknown>(
 
   if (useToken) {
     const tokenFromStorage =
-      typeof window !== "undefined" ? window.localStorage.getItem("token") : null;
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("token")
+        : null;
     const authToken = tokenOverride ?? tokenFromStorage;
-    if (
-      authToken &&
-      !(headers as Record<string, string>).Authorization
-    ) {
+    if (authToken && !(headers as Record<string, string>).Authorization) {
       (headers as Record<string, string>).Authorization = `Bearer ${authToken}`;
     }
   }
@@ -132,7 +132,7 @@ export async function callApi<T = unknown>(
       ok: res.ok,
       status: res.status,
       data,
-      error: res.ok ? null : (data && typeof data === "object" && "message" in data ? String((data as { message: string }).message) : res.statusText) || "Request failed",
+      error: res.ok ? null : formatErrorMessage(res, data),
       headers: res.headers,
     };
 
@@ -143,7 +143,7 @@ export async function callApi<T = unknown>(
     return result;
   } catch (err) {
     clearTimeout(timeoutId);
-    const message = err instanceof Error ? err.message : "Network error";
+    const message = formatNetworkError(err);
     if (config.apiDebug) {
       console.warn("[callApi] exception", message);
     }
@@ -155,6 +155,87 @@ export async function callApi<T = unknown>(
       headers: new Headers(),
     };
   }
+}
+
+/**
+ * Format error message from API response
+ */
+function formatErrorMessage(res: Response, data: any): string {
+  // 1. ลองหา message จาก JSON response ของ backend ก่อน
+  if (data && typeof data === "object" && "message" in data && data.message) {
+    return String(data.message);
+  }
+
+  // 2. ถ้าไม่มี จัดการตาม HTTP Status Code
+  const status = res.status;
+  const statusText = res.statusText || getStandardStatusText(status);
+
+  switch (status) {
+    case 400:
+      return `[400] Bad Request: ข้อมูลไม่ถูกต้อง`;
+    case 401:
+      return `[401] Unauthorized: เซสชันหมดอายุหรือรหัสผ่านไม่ถูกต้อง`;
+    case 403:
+      return `[403] Forbidden: คุณไม่มีสิทธิ์เข้าถึงส่วนนี้`;
+    case 404:
+      return `[404] Not Found: ไม่พบข้อมูลที่ต้องการ`;
+    case 500:
+      return `[500] Internal Server Error: เกิดข้อผิดพลาดที่เซิร์ฟเวอร์`;
+    case 502:
+      return `[502] Server Error: เซิร์ฟเวอร์ขัดข้องชั่วคราว (Bad Gateway)`;
+    case 503:
+      return `[503] Service Unavailable: บริการไม่พร้อมใช้งาน`;
+    case 504:
+      return `[504] Gateway Timeout: การเชื่อมต่อใช้เวลานานเกินไป`;
+    default:
+      return `ERROR ${status}: ${statusText}`;
+  }
+}
+
+/**
+ * Format network level errors (Fetch failure, Timeout, etc.)
+ */
+function formatNetworkError(err: unknown): string {
+  if (err instanceof Error) {
+    if (err.name === "AbortError") {
+      return "Request timeout: การเชื่อมต่อใช้เวลานานเกินไป (หมดเวลา)";
+    }
+    
+    const msg = err.message.toLowerCase();
+    const isNetworkError = msg.includes("fetch") || msg.includes("network") || msg.includes("load failed");
+    
+    if (isNetworkError) {
+      // ตรวจสอบว่า Browser มีเน็ตไหม (ถ้าทำได้)
+      const isOnline = typeof window !== "undefined" ? window.navigator.onLine : true;
+      
+      if (!isOnline) {
+        return "Offline: ไม่มีสัญญาณอินเทอร์เน็ต กรุณาตรวจสอบการเชื่อมต่อของคุณ";
+      }
+      
+      // ถ้ามีเน็ตแต่ fetch พัง มักจะเป็นเพราะ Server ปิดอยู่ (Connection Refused) หรือ CORS พัง
+      return "Server Connection Error: ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ (เซิร์ฟเวอร์อาจปิดอยู่ หรือ URL ไม่ถูกต้อง)";
+    }
+    
+    return err.message;
+  }
+  return "Unknown Error: เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
+}
+
+/**
+ * Fallback status texts if statusText is empty
+ */
+function getStandardStatusText(status: number): string {
+  const map: Record<number, string> = {
+    400: "Bad Request",
+    401: "Unauthorized",
+    403: "Forbidden",
+    404: "Not Found",
+    500: "Internal Server Error",
+    502: "Bad Gateway",
+    503: "Service Unavailable",
+    504: "Gateway Timeout",
+  };
+  return map[status] || "Request failed";
 }
 
 /** Shortcuts */

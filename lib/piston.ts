@@ -105,6 +105,6 @@ export async function executeCodePiston(
 
     return mapPistonToSubmissionResult(response.data);
   } catch (error: any) {
-    throw new Error(error.message || "cannot access executor check your connection");
+    throw error;
   }
 }
