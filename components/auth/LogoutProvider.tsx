@@ -17,7 +17,6 @@ export function LogoutProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const pathname = usePathname();
-  const pathname = usePathname();
 
   const logout = useCallback(async (redirectTo: string = "/") => {
     setIsLoggingOut(true);
