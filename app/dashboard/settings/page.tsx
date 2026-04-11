@@ -9,6 +9,7 @@ import { UnsavedChangesBar } from "@/components/UnsavedChangesBar";
 import Swal from "sweetalert2";
 import Cropper from "react-easy-crop";
 import { getCroppedImg, type Area, base64ToBlob } from "@/lib/imageUtils";
+import { useLogout } from "@/components/auth/LogoutProvider";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -242,11 +243,10 @@ export default function SettingsPage() {
     setPasswordForm({ old: "", new: "", confirm: "" });
   };
 
+  const { logout, isLoggingOut } = useLogout();
+
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
-    router.replace("/login");
+    logout("/");
   };
 
   const handleExportData = () => {
@@ -641,10 +641,15 @@ export default function SettingsPage() {
             </button>
             <button
               onClick={handleLogout}
-              className="px-6 py-3.5 bg-white text-black rounded-2xl text-[11px] font-black hover:bg-white/90 transition-all uppercase tracking-widest flex items-center gap-3 group/btn shadow-[0_10px_20px_rgba(255,255,255,0.1)]"
+              disabled={isLoggingOut}
+              className="px-6 py-3.5 bg-white text-black rounded-2xl text-[11px] font-black hover:bg-white/90 transition-all uppercase tracking-widest flex items-center gap-3 group/btn shadow-[0_10px_20px_rgba(255,255,255,0.1)] disabled:opacity-50"
             >
-              <Icon name="logout" className="w-4 h-4" />
-              ออกจากระบบทุกอุปกรณ์
+              {isLoggingOut ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+              ) : (
+                <Icon name="logout" className="w-4 h-4" />
+              )}
+              {isLoggingOut ? "กำลังสำรวจความปลอดภัย..." : "ออกจากระบบทุกอุปกรณ์"}
             </button>
           </div>
         </section>

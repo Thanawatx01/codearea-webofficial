@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import { api } from "@/lib/api";
+import { clearAuthSession } from "@/lib/authUtils";
 
 type AuthMeResponse = {
   user: {
@@ -21,13 +22,6 @@ type AuthUser = {
   role_id: number;
 };
 
-function clearAuthStorage() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
-  document.cookie = "role_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
-  document.cookie = "display_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
-}
 
 export function SessionGuard() {
   const router = useRouter();
@@ -47,7 +41,7 @@ export function SessionGuard() {
       try {
         localUser = JSON.parse(localUserRaw) as AuthUser;
       } catch {
-        clearAuthStorage();
+        clearAuthSession();
         return;
       }
 
@@ -75,7 +69,7 @@ export function SessionGuard() {
         mismatch: isMismatch
       });
 
-      clearAuthStorage();
+      clearAuthSession();
 
       await Swal.fire({
         icon: "warning",

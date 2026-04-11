@@ -5,6 +5,7 @@ import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useLogout } from "@/components/auth/LogoutProvider";
 
 interface NavLink {
   label: string;
@@ -82,13 +83,13 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
     };
   }, [isDropdownOpen]);
 
+  const { logout, isLoggingOut } = useLogout();
+
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     setIsLoggedIn(false);
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    router.push("/");
+    logout("/");
   };
 
   const defaultLinks: NavLink[] = [
@@ -226,10 +227,15 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-red-400 transition-colors flex items-center gap-2"
+                    disabled={isLoggingOut}
+                    className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-red-400 transition-colors flex items-center gap-2 disabled:opacity-50"
                   >
-                    <Icon name="logout" className="w-4 h-4" />
-                    Logout
+                    {isLoggingOut ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
+                    ) : (
+                      <Icon name="logout" className="w-4 h-4" />
+                    )}
+                    {isLoggingOut ? "Logging out..." : "Logout"}
                   </button>
                 </div>
               )}
@@ -294,9 +300,13 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="h-10 rounded-full border border-red-400/30 bg-red-500/10 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/20"
+                  disabled={isLoggingOut}
+                  className="h-10 rounded-full border border-red-400/30 bg-red-500/10 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Logout
+                  {isLoggingOut && (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-300 border-t-transparent" />
+                  )}
+                  {isLoggingOut ? "Logging out..." : "Logout"}
                 </button>
               </div>
             )}

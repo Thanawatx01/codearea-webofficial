@@ -4,6 +4,7 @@ import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useLogout } from "@/components/auth/LogoutProvider";
 
 interface MenuItem {
   label: string;
@@ -94,16 +95,10 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
+  const { logout, isLoggingOut } = useLogout();
+
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    document.cookie =
-      "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
-    document.cookie =
-      "role_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
-    document.cookie =
-      "display_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
-    router.replace("/login");
+    logout("/");
   };
 
   return (
@@ -199,15 +194,20 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <button
           type="button"
           onClick={handleLogout}
+          disabled={isLoggingOut}
           className={`flex w-full items-center rounded-lg text-sm font-medium transition-all duration-150 ${
             collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5"
-          } text-red-400/80 hover:bg-red-500/10 hover:text-red-400`}
-          title="ออกจากระบบ"
+          } text-red-400/80 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50`}
+          title={isLoggingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}
         >
           <span className="text-red-400">
-            <Icon name="logout" className="h-5 w-5" />
+            {isLoggingOut ? (
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
+            ) : (
+              <Icon name="logout" className="h-5 w-5" />
+            )}
           </span>
-          {!collapsed && <span>ออกจากระบบ</span>}
+          {!collapsed && <span>{isLoggingOut ? "กำลังออก..." : "ออกจากระบบ"}</span>}
         </button>
       </div>
     </aside>

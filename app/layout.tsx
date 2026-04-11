@@ -1,5 +1,6 @@
 import { LayoutWrapper } from "@/components/LayoutWrapper";
 import { SessionGuard } from "@/components/auth/SessionGuard";
+import { LogoutProvider } from "@/components/auth/LogoutProvider";
 import { SvgSprite } from "@/components/icons/SvgSprite";
 import type { Metadata } from "next";
 import { Inter, Noto_Sans_Thai } from "next/font/google";
@@ -119,7 +120,9 @@ export default function RootLayout({
             <div className="absolute -left-24 bottom-[-8%] h-[280px] w-[280px] rounded-full bg-indigo-700/20 blur-3xl sm:-left-28 sm:h-[340px] sm:w-[340px] lg:-left-44 lg:h-[560px] lg:w-[560px]" />
           </div>
           <div className="relative z-10">
-            <LayoutWrapper>{children}</LayoutWrapper>
+            <LogoutProvider>
+              <LayoutWrapper>{children}</LayoutWrapper>
+            </LogoutProvider>
           </div>
         </div>
       </body>

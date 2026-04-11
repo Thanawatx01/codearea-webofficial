@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons/Icon";
+import { useLogout } from "@/components/auth/LogoutProvider";
 
 interface HeaderProps {
   title: string;
@@ -46,14 +47,11 @@ export default function Header({ title, icon }: HeaderProps) {
     return trimmed ? trimmed.charAt(0).toUpperCase() : "U";
   }, [displayName]);
 
+  const { logout, isLoggingOut } = useLogout();
+
   const handleLogout = useCallback(() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
-    document.cookie = "role_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
-    document.cookie = "display_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax";
-    router.replace("/login");
-  }, [router]);
+    logout("/");
+  }, [logout]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -126,12 +124,17 @@ export default function Header({ title, icon }: HeaderProps) {
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition-colors rounded-xl text-left"
+                  disabled={isLoggingOut}
+                  className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition-colors rounded-xl text-left disabled:opacity-50"
                 >
                   <div className="w-8 h-8 rounded-lg bg-red-400/5 flex items-center justify-center">
-                    <Icon name="logout" className="h-4 w-4" />
+                    {isLoggingOut ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
+                    ) : (
+                      <Icon name="logout" className="h-4 w-4" />
+                    )}
                   </div>
-                  <span>ออกจากระบบ</span>
+                  <span>{isLoggingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}</span>
                 </button>
               </div>
             </div>
