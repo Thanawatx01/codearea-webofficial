@@ -9,9 +9,10 @@ import { useLogout } from "@/components/auth/LogoutProvider";
 interface HeaderProps {
   title: string;
   icon?: React.ReactNode;
+  showUserDropdown?: boolean;
 }
 
-export default function Header({ title, icon }: HeaderProps) {
+export default function Header({ title, icon, showUserDropdown = true }: HeaderProps) {
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -83,71 +84,104 @@ export default function Header({ title, icon }: HeaderProps) {
 
       {/* Right side: notification + user */}
       <div className="flex items-center gap-4">
-        {/* Divider */}
-        <div className="w-px h-8 bg-white/10"></div>
+        {showUserDropdown && (
+          <>
+            {/* Divider */}
+            <div className="w-px h-8 bg-white/10"></div>
 
-        {/* User Profile Dropdown */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setIsDropdownOpen((prev) => !prev)}
-            className="flex items-center gap-3 hover:bg-white/5 p-1.5 pr-3 rounded-2xl transition-all cursor-pointer group"
-          >
-            {/* Avatar */}
-            <div className="w-9 h-9 rounded-full bg-linear-to-br from-primary to-blue-400 flex items-center justify-center text-white text-sm font-semibold shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
-              ) : (
-                avatarText
+            {/* User Profile Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-3 hover:bg-white/5 p-1.5 pr-3 rounded-2xl transition-all cursor-pointer group"
+              >
+                {/* Avatar */}
+                <div className="w-9 h-9 rounded-full bg-linear-to-br from-primary to-blue-400 flex items-center justify-center text-white text-sm font-semibold shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                  ) : (
+                    avatarText
+                  )}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-sm font-medium text-foreground leading-tight group-hover:text-white transition-colors">
+                    {displayName}
+                  </p>
+                  <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-text-muted">{roleLabel}</span>
+                    <Icon name="chevron-down" className={`h-3 w-3 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                </div>
+              </button>
+
+              {/* Dropdown Menu */}
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-full min-w-[240px] rounded-2xl bg-[#0d101a] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200 backdrop-blur-2xl px-2 py-2">
+                  <div className="space-y-1">
+                    <div className="px-3 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest border-b border-white/5 mb-2 flex items-center justify-between">
+                      <span>บัญชีผู้ใช้งาน</span>
+                      {roleId === "2" && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[8px] font-black uppercase tracking-widest text-amber-500">Admin</span>
+                      )}
+                    </div>
+
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsDropdownOpen(false)}
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                        <Icon name="user" className="h-4 w-4" />
+                      </div>
+                      <span>โปรไฟล์ของฉัน</span>
+                    </Link>
+
+                    {roleId === "2" && (
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                          <Icon name="stats" className="h-4 w-4" />
+                        </div>
+                        <span>หน้าจัดการระบบ</span>
+                      </Link>
+                    )}
+
+                    <Link
+                      href="/profile/settings"
+                      onClick={() => setIsDropdownOpen(false)}
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                        <Icon name="gear" className="h-4 w-4" />
+                      </div>
+                      <span>ตั้งค่าโปรไฟล์</span>
+                    </Link>
+
+                    <div className="h-px bg-white/5 my-1" />
+
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition-colors rounded-xl text-left disabled:opacity-50"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-red-400/5 flex items-center justify-center">
+                        {isLoggingOut ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
+                        ) : (
+                          <Icon name="logout" className="h-4 w-4" />
+                        )}
+                      </div>
+                      <span>{isLoggingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}</span>
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
-            <div className="hidden sm:block text-left">
-              <p className="text-sm font-medium text-foreground leading-tight group-hover:text-white transition-colors">
-                {displayName}
-              </p>
-              <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                <span className="text-[10px] uppercase font-bold tracking-widest text-text-muted">{roleLabel}</span>
-                <Icon name="chevron-down" className={`h-3 w-3 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-              </div>
-            </div>
-          </button>
-
-          {/* Dropdown Menu */}
-          {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-full min-w-[200px] max-w-[280px] rounded-2xl bg-[#0d101a] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200 backdrop-blur-2xl">
-              <div className="p-2 space-y-1">
-                <div className="px-3 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest border-b border-white/5 mb-2">
-                  บัญชีผู้ใช้งาน
-                </div>
-
-                <Link
-                  href="/profile/settings"
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
-                    <Icon name="gear" className="h-4 w-4" />
-                  </div>
-                  <span>ตั้งค่าโปรไฟล์</span>
-                </Link>
-
-                <button
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                  className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition-colors rounded-xl text-left disabled:opacity-50"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-red-400/5 flex items-center justify-center">
-                    {isLoggingOut ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
-                    ) : (
-                      <Icon name="logout" className="h-4 w-4" />
-                    )}
-                  </div>
-                  <span>{isLoggingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </header>
   );

@@ -56,14 +56,13 @@ export function UnsavedChangesBar({
 
   return (
     <div
-      className={`fixed bottom-0 right-0 z-[60] left-0 md:left-[var(--sidebar-width)] transition-[left,transform,opacity] duration-300 ${
+      className={`fixed bottom-8 left-1/2 z-[60] -translate-x-1/2 transition-all duration-300 w-[95vw] sm:w-[90vw] max-w-4xl ${
         show
           ? "translate-y-0 opacity-100"
-          : "translate-y-full opacity-0 pointer-events-none"
+          : "translate-y-12 opacity-0 pointer-events-none"
       }`}
     >
-      <div className="flex border-t border-amber-500/30 bg-[#11131f]/95 px-6 py-6 shadow-[0_-20px_50px_rgba(245,158,11,0.1)] backdrop-blur-3xl">
-        <div className="mx-auto w-full max-w-5xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6 border border-amber-500/30 bg-[#11131f]/95 px-6 py-4 rounded-3xl shadow-[0_20px_50px_rgba(245,158,11,0.2)] backdrop-blur-3xl">
           <div className="flex items-center gap-5">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-inner">
               <Icon name="clock" className="h-6 w-6 animate-pulse" />
@@ -97,7 +96,6 @@ export function UnsavedChangesBar({
             </button>
           </div>
         </div>
-      </div>
     </div>
   );
 }

@@ -68,28 +68,38 @@ const select2Styles: StylesConfig<
   }),
   menu: (base) => ({
     ...base,
-    borderRadius: ".5rem",
+    borderRadius: "1rem",
     overflow: "hidden",
     border: "1px solid rgba(255,255,255,0.1)",
-    backgroundColor: "#11121a",
-    zIndex: 30,
+    backgroundColor: "#0d101a",
+    backdropFilter: "blur(32px)",
+    zIndex: 1000,
+    marginTop: "8px",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
   }),
   menuList: (base) => ({
     ...base,
-    padding: "6px",
+    padding: "8px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
   }),
   option: (base, state) => ({
     ...base,
     borderRadius: "0.75rem",
     cursor: "pointer",
+    padding: "10px 14px",
+    fontSize: "0.875rem",
+    fontWeight: "500",
     backgroundColor: state.isFocused
-      ? "rgba(139,92,246,0.2)"
+      ? "rgba(255,255,255,0.05)"
       : state.isSelected
-        ? "rgba(139,92,246,0.28)"
+        ? "rgba(139,92,246,0.15)"
         : "transparent",
-    color: "#fff",
+    color: state.isSelected ? "#a78bfa" : "#fff",
+    transition: "all 0.2s ease",
     "&:active": {
-      backgroundColor: "rgba(139,92,246,0.35)",
+      backgroundColor: "rgba(139,92,246,0.25)",
     },
   }),
   singleValue: (base) => ({
