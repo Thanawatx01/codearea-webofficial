@@ -232,6 +232,19 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                       <span>โปรไฟล์ของฉัน</span>
                     </Link>
 
+                    {roleId === 2 && (
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                          <Icon name="stats" className="h-4 w-4" />
+                        </div>
+                        <span>หน้าจัดการระบบ</span>
+                      </Link>
+                    )}
+
                     <Link
                       href="/profile/settings"
                       className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
@@ -321,6 +334,15 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                 >
                   My Profile
                 </Link>
+                {roleId === 2 && (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="h-10 inline-flex items-center justify-center rounded-full border border-white/15 bg-primary/10 border-primary/20 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 <Link
                   href="/profile/settings"
                   onClick={() => setIsMobileMenuOpen(false)}

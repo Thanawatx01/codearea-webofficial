@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
+import Cropper from "react-easy-crop";
+import { getCroppedImg, type Area, base64ToBlob } from "@/lib/imageUtils";
+import Swal from "sweetalert2";
+
 
 // Define TypeScript interfaces for our data
 interface TechBadge {
@@ -47,20 +52,32 @@ export default function ProfilePage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
+
+  const [stats, setStats] = useState({
+    xp: 0,
+    solvedCount: 0,
+    totalSubmissions: 0,
+    passedCount: 0,
+    failedCount: 0,
+    accuracy: 0,
+    recentActivity: [] as any[],
+    categories: [] as { name: string; count: number }[]
+  });
+
+  const [submissions, setSubmissions] = useState<any[]>([]);
+
+  // --- Inline Edit & Cropper States ---
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState<GithubStyleProfileData | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", bio: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const startEditing = () => {
-    setEditForm(profileData);
-    setIsEditing(true);
-  };
-
-  const saveEditing = () => {
-    if (editForm) {
-      setProfileData(editForm);
-    }
-    setIsEditing(false);
-  };
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [isCropping, setIsCropping] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   // Load user data on mount
   useEffect(() => {
@@ -72,23 +89,148 @@ export default function ProfilePage() {
       return;
     }
 
-    try {
-      const user = JSON.parse(userRaw);
-      setProfileData((prev) => ({
-        ...prev,
-        name: user.display_name?.trim() || "User",
-        username: user.email?.split("@")[0] || "user_developer",
-        email: user.email || "user@example.com",
-        avatarUrl: user.avatar_url || "",
-        role: user.role_id === 2 ? "Administrator" : "Developer Program Member",
-      }));
-      setRoleId(user.role_id || 1);
-    } catch (error) {
-      console.error("Failed to parse user data", error);
-    }
-    
-    setIsLoading(false);
+    const fetchData = async () => {
+      try {
+        // 1. Get Basic User Info (Parsed from local storage or updated via API)
+        const user = JSON.parse(userRaw);
+        setProfileData((prev) => ({
+          ...prev,
+          name: user.display_name?.trim() || "User",
+          username: user.email?.split("@")[0] || "user_developer",
+          email: user.email || "user@example.com",
+          avatarUrl: user.avatar_url || "",
+          role: user.role_id === 2 ? "Administrator" : "Developer Program Member",
+        }));
+        setRoleId(user.role_id || 1);
+
+        // 2. Fetch Profile Summary (XP, Stats, Activity)
+        const summaryRes = await api.get<any>("/users/profile/me", { useToken: true });
+        if (summaryRes.ok && summaryRes.data) {
+          const d = summaryRes.data;
+          setStats({
+            xp: d.user.xp,
+            solvedCount: d.user.solved_count,
+            totalSubmissions: d.user.total_submissions,
+            passedCount: d.user.passed_count,
+            failedCount: d.user.failed_count,
+            accuracy: d.user.accuracy,
+            recentActivity: d.recent_activity || [],
+            categories: d.category_stats || []
+          });
+          
+          setProfileData(prev => ({
+            ...prev,
+            avatarUrl: d.user.avatar_url || prev.avatarUrl,
+            bio: d.user.bio || "",
+            location: d.user.location || "",
+            phone: d.user.phone || "",
+            dob: d.user.dob || ""
+          }));
+          setAvatarPreview(d.user.avatar_url || null);
+        }
+
+        // 3. Fetch Submissions for the feed
+        const subRes = await api.get<any>("/submissions", { useToken: true, params: { limit: 10 } });
+        if (subRes.ok && subRes.data) {
+          setSubmissions(subRes.data.data || []);
+        }
+
+      } catch (error) {
+        console.error("Failed to fetch profile data", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, [router]);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageToCrop(reader.result as string);
+        setIsCropping(true);
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    }
+  };
+
+  const onCropComplete = useCallback((_: any, pixels: Area) => {
+    setCroppedAreaPixels(pixels);
+  }, []);
+
+  const handleApplyCrop = async () => {
+    if (imageToCrop && croppedAreaPixels) {
+      try {
+        const croppedImage = await getCroppedImg(imageToCrop, croppedAreaPixels);
+        setAvatarPreview(croppedImage);
+        setIsCropping(false);
+        setImageToCrop(null);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const handleEditClick = () => {
+    setEditForm({ name: profileData.name, bio: profileData.bio });
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setAvatarPreview(profileData.avatarUrl); // Reset avatar changes if any
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSubmitting(true);
+    try {
+      const userRaw = localStorage.getItem("user");
+      if (!userRaw) throw new Error("No user found");
+      const user = JSON.parse(userRaw);
+
+      let currentAvatarUrl = avatarPreview;
+
+      if (avatarPreview && avatarPreview.startsWith("data:")) {
+        const blur = await base64ToBlob(avatarPreview);
+        const formDataObj = new FormData();
+        formDataObj.append("avatar", blur, "avatar.webp");
+        const uploadRes = await api.post<{ avatar_url: string }>(`/users/${user.id}/avatar`, formDataObj, { useToken: true });
+        if (!uploadRes.ok || !uploadRes.data) throw new Error(uploadRes.error || "Failed to upload avatar");
+        currentAvatarUrl = uploadRes.data.avatar_url;
+      }
+
+      const res = await api.put<any>(`/users/${user.id}`, {
+        display_name: editForm.name,
+        bio: editForm.bio,
+        avatar_url: currentAvatarUrl,
+      }, { useToken: true });
+
+      if (!res.ok || !res.data) throw new Error(res.error || "Error saving profile");
+
+      const updated = res.data;
+
+      localStorage.setItem("user", JSON.stringify({ ...user, display_name: updated.display_name, avatar_url: updated.avatar_url }));
+
+      setProfileData(p => ({
+        ...p,
+        name: updated.display_name,
+        bio: updated.bio || "",
+        avatarUrl: updated.avatar_url,
+      }));
+      setAvatarPreview(updated.avatar_url);
+      setIsEditing(false);
+
+      await Swal.fire({ icon: "success", title: "สำเร็จ", text: "อัปเดตโปรไฟล์เรียบร้อยแล้ว", timer: 1500, showConfirmButton: false, background: "#1a1c2e", color: "#fff" });
+    } catch (e: any) {
+      void Swal.fire({ icon: "error", title: "ผิดพลาด", text: e.message || "Failed to save profile", background: "#1a1c2e", color: "#fff" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -98,39 +240,67 @@ export default function ProfilePage() {
     );
   }
 
-  // Dummy Tech Stack Data
-  const techStack: TechBadge[] = [
-    { name: "C", color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
-    { name: "Java", color: "text-red-400", bg: "bg-red-500/10 border-red-500/20" },
-    { name: "C++", color: "text-blue-500", bg: "bg-blue-600/10 border-blue-600/20" },
-    { name: "HTML5", color: "text-orange-500", bg: "bg-orange-500/10 border-orange-500/20" },
-    { name: "CSS3", color: "text-blue-300", bg: "bg-blue-400/10 border-blue-400/20" },
-    { name: "JavaScript", color: "text-yellow-400", bg: "bg-yellow-400/10 border-yellow-400/20" },
-    { name: "Node.js", color: "text-green-500", bg: "bg-green-500/10 border-green-500/20" },
-    { name: "React", color: "text-cyan-400", bg: "bg-cyan-400/10 border-cyan-400/20" },
-  ];
-
-  // Dummy Heatmap calculation for 52 weeks x 7 days
-  const heatmapData = Array.from({ length: 364 }, () => {
-    const rand = Math.random();
-    if (rand < 0.6) return 0;
-    if (rand < 0.8) return 1;
-    if (rand < 0.95) return 2;
-    return 3;
-  });
-
-  const getHeatmapColor = (level: number) => {
-    switch(level) {
-      case 0: return "bg-white/5 border-white/5";
-      case 1: return "bg-emerald-900 border-emerald-800/50";
-      case 2: return "bg-emerald-600 border-emerald-500/50";
-      case 3: return "bg-emerald-400 border-emerald-300/50 text-emerald-400";
-      default: return "bg-white/5 border-white/5";
-    }
-  };
-
   return (
-    <div className="flex-1 w-full min-h-screen text-white pb-20">
+    <>
+      {/* Cropper Modal */}
+      {isCropping && imageToCrop && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#11131f] border border-white/10 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+              <h3 className="font-black uppercase tracking-tighter text-lg">ครอบภาพโปรไฟล์</h3>
+              <button onClick={() => setIsCropping(false)} className="text-white/40 hover:text-white transition-colors">
+                <Icon name="xmark" className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="relative h-[400px] w-full bg-black/40">
+              <Cropper
+                image={imageToCrop}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                onCropChange={setCrop}
+                onCropComplete={onCropComplete}
+                onZoomChange={setZoom}
+              />
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="space-y-4">
+                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/40">
+                  <span>ซูม</span>
+                  <span>{Math.round(zoom * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  value={zoom}
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  aria-labelledby="Zoom"
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+              </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setIsCropping(false)}
+                  className="flex-1 py-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/20 transition-all"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={handleApplyCrop}
+                  className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_10px_30px_rgba(16,185,129,0.3)] hover:bg-emerald-500"
+                >
+                  ปรับใช้
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 w-full min-h-screen text-white pb-20">
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
@@ -143,12 +313,20 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="relative group w-[296px] max-w-full mx-auto xl:mx-0">
               <div className="w-full aspect-square rounded-full border border-white/10 bg-linear-to-br from-[#1a1c3a] to-[#0a0a1a] shadow-2xl flex items-center justify-center p-2 relative overflow-hidden z-10 transition-transform duration-300">
-                {profileData.avatarUrl ? (
-                  <img src={profileData.avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover rounded-full" />
                 ) : (
                   <span className="text-8xl font-bold text-white/50">{profileData.name.charAt(0).toUpperCase()}</span>
                 )}
                 <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_rgba(255,255,255,0.05)] pointer-events-none"></div>
+                
+                {isEditing && (
+                  <label className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full">
+                    <Icon name="camera" className="w-8 h-8 text-white mb-2" />
+                    <span className="text-xs font-bold text-white tracking-wider">Change Avatar</span>
+                    <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
+                  </label>
+                )}
               </div>
               {/* Status Badge */}
               <div className="absolute bottom-[5%] right-[10%] w-12 h-12 rounded-full border border-yellow-500/30 bg-[#161b22] shadow-lg flex items-center justify-center z-20 hover:scale-110 transition-transform cursor-pointer">
@@ -156,117 +334,81 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {isEditing && editForm ? (
-              <div className="space-y-4 pt-4 text-left">
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-white">Name</label>
-                  <input type="text" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full bg-[#0d1117] border border-white/15 rounded-md px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-shadow" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-white">Bio</label>
-                  <textarea value={editForm.bio} onChange={(e) => setEditForm({...editForm, bio: e.target.value})} className="w-full bg-[#0d1117] border border-white/15 rounded-md px-3 py-1.5 text-sm h-24 resize-y focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-shadow" placeholder="Add a bio" />
-                  <p className="text-[12px] text-white/50 leading-tight">You can @mention other users and organizations to link to them.</p>
-                </div>
-                <div className="space-y-1 mt-4">
-                  <label className="text-sm font-semibold text-white">Pronouns</label>
-                  <select className="w-full bg-[#0d1117] border border-white/15 rounded-md px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none appearance-none">
-                    <option>he/him</option>
-                    <option>she/her</option>
-                    <option>they/them</option>
-                    <option>custom</option>
-                  </select>
-                </div>
-                
-                <div className="space-y-3 pt-3">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-white/40 shrink-0" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 14.25c0 .138.112.25.25.25H4v-1.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 .75.75v1.25h2.25a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25v12.5ZM1.75 16A1.75 1.75 0 0 1 0 14.25V1.75C0 .784.784 0 1.75 0h8.5C11.216 0 12 .784 12 1.75v12.5c0 .085-.006.168-.018.25h2.268a.25.25 0 0 0 .25-.25V8.285a.25.25 0 0 0-.111-.208l-1.055-.703a.75.75 0 1 1 .832-1.248l1.055.703c.487.325.779.871.779 1.456v5.965A1.75 1.75 0 0 1 14.25 16h-3.5a.75.75 0 0 1-.197-.026c-.099.017-.2.026-.303.026h-3a.75.75 0 0 1-.75-.75V14h-1v1.25a.75.75 0 0 1-.75.75h-3ZM3 3.75A.75.75 0 0 1 3.75 3h.5a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-.5A.75.75 0 0 1 3 4.25v-.5Zm0 3A.75.75 0 0 1 3.75 6h.5a.75.75 0 0 1 .75.75v.5A.75.75 0 0 1 4.25 8h-.5A.75.75 0 0 1 3 7.25v-.5Zm0 3A.75.75 0 0 1 3.75 9h.5a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-.5A.75.75 0 0 1 3 10.25v-.5ZM7 3.75A.75.75 0 0 1 7.75 3h.5a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-.5A.75.75 0 0 1 7 4.25v-.5Zm0 3A.75.75 0 0 1 7.75 6h.5a.75.75 0 0 1 .75.75v.5A.75.75 0 0 1 8.25 8h-.5A.75.75 0 0 1 7 7.25v-.5Zm0 3A.75.75 0 0 1 7.75 9h.5a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-.5A.75.75 0 0 1 7 10.25v-.5Z" /></svg>
-                    <input type="text" placeholder="Company" value={editForm.role} onChange={(e) => setEditForm({...editForm, role: e.target.value})} className="flex-1 bg-[#0d1117] border border-white/15 rounded-md px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-shadow" />
+            {/* Names */}
+            <div className="space-y-1 text-center xl:text-left pt-2">
+              <div className="flex items-center justify-center xl:justify-start gap-3">
+                <h1 className="text-2xl font-bold text-white leading-tight">{profileData.username}</h1>
+                {roleId === 2 && (
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-linear-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)] group/admin">
+                    <Icon name="shield" className="w-3.5 h-3.5 text-amber-500 group-hover/admin:scale-110 transition-transform" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Admin</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Icon name="globe" className="w-4 h-4 text-white/40 shrink-0" />
-                    <input type="text" placeholder="Location" value={editForm.location} onChange={(e) => setEditForm({...editForm, location: e.target.value})} className="flex-1 bg-[#0d1117] border border-white/15 rounded-md px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-shadow" />
-                  </div>
-                  <div className="flex items-center gap-2 pl-6">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-white/80 cursor-pointer">
-                      <input type="checkbox" className="rounded border-white/15 bg-transparent text-blue-500 focus:ring-offset-[#0d1117] focus:ring-1 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer" />
-                      Display current local time
-                    </label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Icon name="mail" className="w-4 h-4 text-white/40 shrink-0" />
-                    <select value={editForm.email} onChange={(e) => setEditForm({...editForm, email: e.target.value})} className="flex-1 bg-[#0d1117] border border-white/15 rounded-md px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-shadow appearance-none">
-                       <option>{editForm.email}</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Icon name="link" className="w-4 h-4 text-white/40 shrink-0" />
-                    <input type="text" placeholder="Website" value={editForm.website} onChange={(e) => setEditForm({...editForm, website: e.target.value})} className="flex-1 bg-[#0d1117] border border-white/15 rounded-md px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-shadow" />
-                  </div>
-                </div>
+                )}
+              </div>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full bg-[#0d1117] border border-white/20 rounded-md px-3 py-1.5 text-white/90 text-sm focus:outline-none focus:border-blue-500 shadow-inner mt-2 block"
+                  placeholder="Display Name"
+                />
+              ) : (
+                <p className="text-xl font-light text-white/50">{profileData.name}</p>
+              )}
+            </div>
 
-                <div className="pt-4">
-                  <label className="text-sm font-semibold text-white">Social accounts</label>
-                  <div className="space-y-2 mt-2">
-                    {[1,2,3,4].map(num => (
-                      <div key={num} className="flex items-center gap-2">
-                        <Icon name="link" className="w-4 h-4 text-white/40 shrink-0" />
-                        <input type="text" placeholder={`Link to social profile ${num}`} className="flex-1 bg-[#0d1117] border border-white/15 rounded-md px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-shadow" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 pt-4 border-t border-white/10 mt-6 !pb-2">
-                  <button onClick={saveEditing} className="px-4 py-1.5 bg-[#238636] hover:bg-[#2ea043] text-white text-sm font-semibold rounded-md transition-colors">
-                    Save
+            {/* Edit Profile */}
+            <div className="pt-2">
+              {isEditing ? (
+                <div className="flex gap-2">
+                  <button 
+                    onClick={handleSaveProfile} 
+                    disabled={isSubmitting}
+                    className="flex-1 py-1.5 px-3 rounded-md bg-emerald-600/20 border border-emerald-500/30 text-sm font-semibold hover:bg-emerald-600/30 text-emerald-400 transition-all disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Saving..." : "Save"}
                   </button>
-                  <button onClick={() => setIsEditing(false)} className="px-4 py-1.5 bg-[#21262d] hover:bg-[#30363d] border border-white/15 text-white text-sm font-semibold rounded-md transition-colors">
+                  <button 
+                    onClick={handleCancelEdit} 
+                    disabled={isSubmitting}
+                    className="flex-1 py-1.5 px-3 rounded-md bg-[#21262d] border border-white/10 text-sm font-semibold hover:bg-[#30363d] text-white/80 transition-all disabled:opacity-50"
+                  >
                     Cancel
                   </button>
                 </div>
-              </div>
+              ) : (
+                <button 
+                  onClick={handleEditClick}
+                  className="w-full py-1.5 px-3 block text-center rounded-md bg-[#21262d] border border-white/10 text-sm font-semibold hover:bg-[#30363d] hover:border-white/20 transition-all shadow-sm text-white"
+                >
+                  Edit profile
+                </button>
+              )}
+            </div>
+
+            {/* Bio */}
+            {isEditing ? (
+              <textarea
+                value={editForm.bio}
+                onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                className="w-full bg-[#0d1117] border border-white/20 rounded-md px-3 py-2 text-white/90 text-sm focus:outline-none focus:border-blue-500 shadow-inner mt-2 resize-none h-24"
+                placeholder="Add a bio"
+              />
             ) : (
-              <>
-                {/* Names */}
-                <div className="space-y-1 text-center xl:text-left pt-2">
-                  <div className="flex items-center justify-center xl:justify-start gap-3">
-                    <h1 className="text-2xl font-bold text-white leading-tight">{profileData.name}</h1>
-                    {roleId === 2 && (
-                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-linear-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)] group/admin">
-                        <Icon name="shield" className="w-3.5 h-3.5 text-amber-500 group-hover/admin:scale-110 transition-transform" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Admin</span>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xl font-light text-white/50">{profileData.username}</p>
-                </div>
+              <p className="text-sm text-white/80 leading-relaxed text-center xl:text-left pt-2 px-1 break-words">
+                {profileData.bio || "No bio provided."}
+              </p>
+            )}
 
-                {/* Edit Profile (Now links to settings) */}
-                <div className="pt-2">
-                  <Link href="/profile/settings" className="w-full py-1.5 px-3 block text-center rounded-md bg-[#21262d] border border-white/10 text-sm font-semibold hover:bg-[#30363d] hover:border-white/20 transition-all shadow-sm text-white">
-                    Edit profile
-                  </Link>
-                </div>
-
-                {/* Bio */}
-                <p className="text-sm text-white/80 leading-relaxed text-center xl:text-left pt-2">
-                  {profileData.bio || "No bio provided."}
-                </p>
-
-                {/* User Info Links */}
-                <ul className="space-y-2 text-sm text-white/80 pt-4 border-t border-white/10 mt-4">
-                  {profileData.location && (
-                    <li className="flex items-center gap-3">
-                      <Icon name="globe" className="w-4 h-4 text-white/40" />
-                      <span className="truncate">{profileData.location}</span>
-                    </li>
-                  )}
-                  <li className="flex items-center gap-3">
-                    <Icon name="mail" className="w-4 h-4 text-white/40" />
-                    <a href={`mailto:${profileData.email}`} className="truncate hover:text-blue-400 hover:underline">{profileData.email}</a>
-                  </li>
-                </ul>
-              </>
+            {/* User Info Links */}
+            {!isEditing && (
+              <ul className="space-y-2 text-sm text-white/80 pt-4 border-t border-white/10 mt-4">
+                <li className="flex items-center gap-3">
+                  <Icon name="mail" className="w-4 h-4 text-white/40" />
+                  <a href={`mailto:${profileData.email}`} className="truncate hover:text-blue-400 hover:underline">{profileData.email}</a>
+                </li>
+              </ul>
             )}
 
           </div>
@@ -280,8 +422,8 @@ export default function ProfilePage() {
             <div className="flex overflow-x-auto border-b border-white/10 no-scrollbar mb-6 sticky top-0 bg-[#05070f]/90 backdrop-blur-md z-30 pt-2 pb-px w-full">
               {[
                 { id: "dashboard", label: "Overview", icon: "stats", count: null },
-                { id: "questions", label: "Questions Solved", icon: "check-circle", count: 84 },
-                { id: "submissions", label: "Submissions", icon: "activity", count: 397 },
+                { id: "questions", label: "Questions Solved", icon: "check-circle", count: stats.solvedCount || 0 },
+                { id: "submissions", label: "Submissions", icon: "activity", count: stats.totalSubmissions || 0 },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -306,210 +448,223 @@ export default function ProfilePage() {
             {/* Dashboard / Overview Content */}
             {activeTab === "dashboard" && (
               <div className="space-y-8 animate-in fade-in duration-500">
-                
-                {/* Profile "README" Section */}
-                <div className="rounded-xl border border-white/10 overflow-hidden bg-transparent">
-                  {/* README Header label */}
-                  <div className="px-4 py-2 border-b border-white/10 bg-[#161b22] text-xs font-semibold text-white/80 flex items-center gap-2">
-                    <span className="text-[10px]">📖</span> {profileData.username}/README.md
-                  </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
-                  {/* The actual README content area (Dark themed) */}
-                  <div className="p-1 pb-8 flex flex-col items-center">
-                    
-                    {/* Banner */}
-                    <div className="relative w-full aspect-[21/9] sm:aspect-[3/1] rounded-lg overflow-hidden border border-white/5 bg-linear-to-b from-orange-400/20 to-purple-900/40 mb-6 flex flex-col items-center justify-center shadow-lg">
-                      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 mix-blend-overlay pointer-events-none"></div>
-                      <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white mix-blend-screen drop-shadow-md tracking-tight mb-2 text-center px-4">
-                        Hi, I'm {profileData.name} <span className="inline-block animate-bounce ml-2 z-10 text-orange-400">●</span>
-                      </h2>
-                      <p className="text-xl sm:text-2xl font-mono text-white/90 font-bold bg-black/40 px-4 py-1 rounded shadow-sm">
-                        A CodeArea Developer
-                      </p>
+                  {/* Left Column: Performance & Category */}
+                  <div className="lg:col-span-1 space-y-6">
+                    {/* Performance Card */}
+                    <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl -z-10 group-hover:bg-emerald-500/10 transition-colors"></div>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-white/40 mb-6 flex items-center gap-2">
+                        <Icon name="target" className="w-4 h-4 text-emerald-500" />
+                        Performance
+                      </h3>
+                      <div className="space-y-6">
+                        <div className="flex items-end justify-between">
+                          <div>
+                            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">Solved Rate</p>
+                            <p className="text-3xl font-black text-white">{stats.accuracy}%</p>
+                          </div>
+                          <div className="text-right">
+                             <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">Total XP</p>
+                             <p className="text-xl font-bold text-orange-400">{stats.xp.toLocaleString()}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                              <span className="text-[11px] font-bold text-white/60">PASSED</span>
+                            </div>
+                            <p className="text-xl font-black text-white ml-3.5">{stats.passedCount}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                              <span className="text-[11px] font-bold text-white/60">FAILED</span>
+                            </div>
+                            <p className="text-xl font-black text-white ml-3.5">{stats.failedCount}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Basic Intro paragraph */}
-                    <p className="text-sm font-medium text-white/80 max-w-4xl text-center leading-relaxed mb-10 px-4">
-                      Welcome to my profile! I am consistently practicing Data Structures and Algorithms to improve my logic skills. 
-                      Take a look at my stats below to see my progress and recent problem-solving activity.
-                    </p>
+                    {/* Top Categories */}
+                    <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+                      <h3 className="text-sm font-black uppercase tracking-widest text-white/40 mb-6 flex items-center gap-2">
+                        <Icon name="tag" className="w-4 h-4 text-pink-500" />
+                        Top Categories
+                      </h3>
+                      <div className="space-y-5">
+                        {stats.categories.length > 0 ? stats.categories.map((cat, idx) => (
+                           <div key={cat.name} className="space-y-2">
+                             <div className="flex justify-between items-center text-xs">
+                               <span className="font-bold text-white/80">{cat.name}</span>
+                               <span className="text-white/40 font-mono">{cat.count} solved</span>
+                             </div>
+                             <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                               <div 
+                                 className="h-full bg-linear-to-r from-pink-500 to-purple-600 rounded-full" 
+                                 style={{ width: `${Math.min(100, (cat.count / Math.max(1, stats.solvedCount)) * 100)}%` }}
+                               ></div>
+                             </div>
+                           </div>
+                        )) : (
+                          <div className="py-8 text-center border border-dashed border-white/5 rounded-xl">
+                            <p className="text-xs text-white/20 italic">No category data yet</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-                    {/* Two column stats cards */}
-                    <h3 className="text-xl font-bold text-white flex items-center justify-center gap-2 mb-4">
-                      My CodeArea Stats 
-                    </h3>
-                    
-                    <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-4 px-4 mb-6">
+                  {/* Right Column: Recent Activity */}
+                  <div className="lg:col-span-2 space-y-6">
+                    <div className="bg-[#0d1117] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+                      <div className="px-6 py-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-white/40 flex items-center gap-2">
+                          <Icon name="history" className="w-4 h-4 text-blue-500" />
+                          Recent Activity
+                        </h3>
+                        <button onClick={() => setActiveTab("submissions")} className="text-[10px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-300 transition-colors">
+                          View All
+                        </button>
+                      </div>
                       
-                      {/* Stats Overview */}
-                      <div className="p-5 rounded-lg border border-pink-500/30 bg-[#0d1117] flex justify-between items-center relative overflow-hidden">
-                        <div className="absolute inset-0 bg-pink-500/5 mix-blend-overlay"></div>
-                        <div className="z-10 w-full">
-                           <h4 className="text-[13px] font-bold text-pink-500 mb-4 tracking-widest uppercase">
-                             {profileData.name}'s Dashboard Stats
-                           </h4>
-                           <div className="space-y-3">
-                             <div className="flex justify-between items-center text-sm">
-                               <div className="flex items-center gap-2"><Icon name="star" className="w-4 h-4 text-yellow-400" /><span className="text-white/80 font-bold tracking-wide">Total XP:</span></div>
-                               <span className="font-bold text-white">4,397</span>
-                             </div>
-                             <div className="flex justify-between items-center text-sm">
-                               <div className="flex items-center gap-2"><Icon name="problem-type" className="w-4 h-4 text-blue-400" /><span className="text-white/80 font-bold tracking-wide">Total Submissions:</span></div>
-                               <span className="font-bold text-white">397</span>
-                             </div>
-                             <div className="flex justify-between items-center text-sm">
-                               <div className="flex items-center gap-2"><Icon name="target" className="w-4 h-4 text-emerald-400" /><span className="text-white/80 font-bold tracking-wide">Win Rate / Accuracy:</span></div>
-                               <span className="font-bold text-emerald-400">76%</span>
-                             </div>
-                             <div className="flex justify-between items-center text-sm">
-                               <div className="flex items-center gap-2"><Icon name="check-circle" className="w-4 h-4 text-orange-400" /><span className="text-white/80 font-bold tracking-wide">Questions Solved:</span></div>
-                               <span className="font-bold text-orange-400">84</span>
-                             </div>
-                           </div>
-                        </div>
-                        {/* Grade Circle */}
-                        <div className="z-10 shrink-0 ml-4 hidden sm:flex items-center justify-center w-20 h-20 lg:w-24 lg:h-24 rounded-full border-4 border-pink-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.5)] bg-[#161b22]">
-                          <span className="text-2xl lg:text-3xl font-black text-pink-500">A+</span>
-                        </div>
-                      </div>
-
-                      {/* Language / Category Usage */}
-                      <div className="p-5 rounded-lg border border-pink-500/30 bg-[#0d1117] flex justify-between items-center relative overflow-hidden">
-                        <div className="absolute inset-0 bg-blue-500/5 mix-blend-overlay"></div>
-                        <div className="z-10 w-full h-full flex flex-col justify-center">
-                           <h4 className="text-[13px] font-bold text-pink-500 mb-4 tracking-widest uppercase">
-                             Top Category Stats
-                           </h4>
-                           <div className="space-y-4">
-                             <div>
-                               <div className="flex justify-between text-xs mb-1">
-                                 <span className="font-bold text-white/80">Data Structures</span>
-                                 <span className="text-white/50">60.81%</span>
-                               </div>
-                               <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                                  <div className="h-full bg-yellow-400 w-[60.81%]"></div>
-                               </div>
-                             </div>
-                             <div>
-                               <div className="flex justify-between text-xs mb-1">
-                                 <span className="font-bold text-white/80">Dynamic Programming</span>
-                                 <span className="text-white/50">37.83%</span>
-                               </div>
-                               <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                                  <div className="h-full bg-emerald-500 w-[37.83%]"></div>
-                               </div>
-                             </div>
-                             <div>
-                               <div className="flex justify-between text-xs mb-1">
-                                 <span className="font-bold text-white/80">Graph Theory</span>
-                                 <span className="text-white/50">1.36%</span>
-                               </div>
-                               <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                                  <div className="h-full bg-pink-400 w-[1.36%]"></div>
-                               </div>
-                             </div>
-                           </div>
-                        </div>
-                      </div>
-
-                    </div>
-
-                    {/* Streak Summary */}
-                    <div className="w-full max-w-[calc(100vw-32px)] overflow-x-auto text-center flex justify-center mb-12">
-                      <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/10 border border-white/10 rounded-lg p-0 bg-[#0d1117] overflow-hidden shrink-0 min-w-[300px]">
-                        <div className="flex flex-col items-center justify-center p-6 bg-white/[0.01] hover:bg-white/[0.03] transition-colors">
-                          <span className="text-3xl font-black text-pink-500 mb-1">888</span>
-                          <span className="text-[11px] font-bold text-white/60 tracking-wider uppercase mb-1">Total Contributions</span>
-                          <span className="text-[10px] text-white/40">Sep 22, 2023 - Present</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center p-6 bg-white/[0.01] hover:bg-white/[0.03] transition-colors relative">
-                          <div className="w-16 h-16 rounded-full border-[3px] border-orange-500 flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(249,115,22,0.3)]">
-                            <span className="text-2xl font-black text-white">1</span>
+                      <div className="divide-y divide-white/5">
+                        {stats.recentActivity.length > 0 ? stats.recentActivity.map((sub) => (
+                          <div key={sub.id} className="p-4 sm:p-6 hover:bg-white/[0.01] transition-colors group flex items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-start sm:items-center gap-4 min-w-0">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                                sub.status === 1 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-red-500/10 border-red-500/20 text-red-500"
+                              }`}>
+                                <Icon name={sub.status === 1 ? "check-circle" : "xmark"} className="w-5 h-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="font-bold text-white text-sm sm:text-base group-hover:text-primary transition-colors truncate">
+                                  {sub.questions?.title || "Unknown Question"}
+                                </h4>
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                                  <span className="text-[10px] font-mono text-white/30 uppercase tracking-widest">{sub.language}</span>
+                                  <span className="text-[10px] text-white/30">•</span>
+                                  <span className="text-[10px] text-white/30">{new Date(sub.created_at).toLocaleDateString()}</span>
+                                  {sub.run_time && (
+                                    <>
+                                      <span className="text-[10px] text-white/30">•</span>
+                                      <span className="text-[10px] text-white/30">{sub.run_time}ms</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="shrink-0 text-right hidden sm:block">
+                              <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${
+                                sub.status === 1 ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
+                              }`}>
+                                {sub.status === 1 ? "Accepted" : "Wrong Answer"}
+                              </span>
+                            </div>
                           </div>
-                          <span className="text-[11px] font-bold text-orange-400 tracking-wider uppercase mb-1">Current Streak</span>
-                          <span className="text-[10px] text-white/40">Today</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center p-6 bg-white/[0.01] hover:bg-white/[0.03] transition-colors">
-                          <span className="text-3xl font-black text-pink-500 mb-1">145</span>
-                          <span className="text-[11px] font-bold text-white/60 tracking-wider uppercase mb-1">Longest Streak</span>
-                          <span className="text-[10px] text-white/40">Jan 9 - Jun 2</span>
-                        </div>
+                        )) : (
+                          <div className="p-12 text-center">
+                            <Icon name="activity" className="w-12 h-12 text-white/5 mx-auto mb-4" />
+                            <p className="text-sm text-white/30">No recent activity found.</p>
+                            <Link href="/questions" className="text-xs text-blue-400 hover:underline mt-2 inline-block">Start Solving</Link>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Heatmap Area */}
-                <div className="mt-8 border border-white/10 rounded-xl p-4 sm:p-6 bg-[#0d1117]/50 backdrop-blur-sm w-full overflow-hidden">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
-                    <h3 className="text-[15px] font-semibold text-white/90">
-                      888 contributions in the last year
-                    </h3>
-                    <div className="text-[11px] text-white/50 bg-[#161b22] px-3 py-1 rounded border border-white/10">Contribution Settings</div>
-                  </div>
-
-                  <div className="w-full overflow-x-auto no-scrollbar border border-white/5 bg-[#161b22]/30 rounded-lg p-4">
-                     <div className="min-w-[800px]">
-                        {/* Months Row */}
-                        <div className="flex text-[9px] text-white/40 mb-2 font-medium">
-                          <div className="w-8"></div> {/* Space for weekday labels */}
-                          {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
-                            <div key={i} className="flex-1 text-center">{month}</div>
-                          ))}
-                        </div>
-                        
-                        <div className="flex gap-1.5">
-                          {/* Weekdays */}
-                          <div className="flex flex-col gap-[5px] text-[9px] text-white/40 font-medium justify-between pr-2">
-                            <span className="h-[10px]"></span>
-                            <span className="h-[10px] leading-[10px]">Mon</span>
-                            <span className="h-[10px]"></span>
-                            <span className="h-[10px] leading-[10px]">Wed</span>
-                            <span className="h-[10px]"></span>
-                            <span className="h-[10px] leading-[10px]">Fri</span>
-                            <span className="h-[10px]"></span>
-                          </div>
-
-                          {/* Grid */}
-                          <div className="flex flex-col flex-wrap h-[100px] gap-[5px]">
-                            {heatmapData.map((level, i) => (
-                              <div
-                                key={i}
-                                className={`w-[10px] h-[10px] rounded-[2px] ${getHeatmapColor(level)} border`}
-                                title={`Activity level: ${level}`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        
-                     </div>
-                  </div>
-
-                  {/* Heatmap Legend */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-[11px] text-white/50 mt-4 px-1 gap-2">
-                    <a href="#" className="hover:text-blue-400">Learn how User Activity works</a>
-                    <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
-                      <span>Less</span>
-                      <div className="flex gap-1">
-                        <div className="w-[10px] h-[10px] rounded-[2px] bg-white/5 border border-white/5"></div>
-                        <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-900 border border-emerald-800/50"></div>
-                        <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-600 border border-emerald-500/50"></div>
-                        <div className="w-[10px] h-[10px] rounded-[2px] bg-emerald-400 border border-emerald-300/50"></div>
-                      </div>
-                      <span>More</span>
-                    </div>
-                  </div>
-
-                </div>
-
               </div>
             )}
             
-            {activeTab !== "dashboard" && (
-               <div className="border border-white/10 rounded-xl p-12 text-center bg-[#0d1117]/50 mt-8">
-                  <h2 className="text-xl font-bold text-white/60 mb-2">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Feed Empty</h2>
-                  <p className="text-sm text-white/40">This tab does not have any content yet.</p>
-               </div>
+            {activeTab === "submissions" && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-white">Recent Submissions</h3>
+                  </div>
+                  
+                  {submissions.length > 0 ? (
+                    <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0d1117]/50">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-white/5 text-[10px] font-bold uppercase tracking-widest text-white/40 border-b border-white/10">
+                          <tr>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4">Language</th>
+                            <th className="px-6 py-4">Time</th>
+                            <th className="px-6 py-4">Memory</th>
+                            <th className="px-6 py-4 text-right">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {submissions.map((sub) => (
+                            <tr key={sub.id} className="hover:bg-white/[0.02] transition-colors group">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                  {sub.status === 1 ? (
+                                    <span className="flex items-center gap-1.5 text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded-full text-xs">
+                                      <Icon name="check-circle" className="w-3 h-3" /> Accepted
+                                    </span>
+                                  ) : sub.status === 2 ? (
+                                    <span className="flex items-center gap-1.5 text-red-400 font-bold bg-red-400/10 px-2 py-0.5 rounded-full text-xs">
+                                      <Icon name="x-circle" className="w-3 h-3" /> Wrong Answer
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center gap-1.5 text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded-full text-xs">
+                                      <Icon name="activity" className="w-3 h-3" /> Error
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="font-mono text-white/60 bg-white/5 px-2 py-0.5 rounded border border-white/10 uppercase text-[10px]">{sub.language}</span>
+                              </td>
+                              <td className="px-6 py-4 text-white/60">{sub.run_time ? `${sub.run_time} ms` : "N/A"}</td>
+                              <td className="px-6 py-4 text-white/60">{sub.memory_used ? `${(sub.memory_used / 1024).toFixed(1)} KB` : "N/A"}</td>
+                              <td className="px-6 py-4 text-right text-white/40 font-mono text-xs">
+                                {new Date(sub.created_at).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="border border-white/10 rounded-xl p-12 text-center bg-[#0d1117]/50 mt-4">
+                      <Icon name="activity" className="w-12 h-12 text-white/10 mx-auto mb-4" />
+                      <h2 className="text-xl font-bold text-white/60 mb-2">No Submissions Yet</h2>
+                      <p className="text-sm text-white/40">Start solving questions to see your history here.</p>
+                    </div>
+                  )}
+                </div>
+            )}
+
+            {activeTab === "questions" && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8">
+                 <div className="flex items-center justify-between mb-4">
+                   <h3 className="text-lg font-bold text-white">Solved Questions</h3>
+                 </div>
+
+                 {/* For now we show a placeholder for specific solved questions list, but count is real */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Unique Solved Questions would be fetched here. Showing empty state if 0 */}
+                    {stats.solvedCount > 0 ? (
+                      <div className="col-span-full border border-orange-500/20 rounded-xl p-12 text-center bg-orange-500/[0.02]">
+                        <Icon name="check-circle" className="w-12 h-12 text-orange-500/30 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-white/80 mb-2">{stats.solvedCount} Questions Solved</h2>
+                        <p className="text-sm text-white/40 max-w-md mx-auto">Great job! You have successfully mastered {stats.solvedCount} coding challenges across various categories.</p>
+                      </div>
+                    ) : (
+                      <div className="col-span-full border border-white/10 rounded-xl p-12 text-center bg-[#0d1117]/50">
+                        <Icon name="problem" className="w-12 h-12 text-white/10 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-white/60 mb-2">No Questions Solved Yet</h2>
+                        <p className="text-sm text-white/40">Challenge yourself and start solving problems to build your collection.</p>
+                      </div>
+                    )}
+                 </div>
+              </div>
             )}
 
           </div>
@@ -518,5 +673,6 @@ export default function ProfilePage() {
       </div>
       
     </div>
+    </>
   );
 }

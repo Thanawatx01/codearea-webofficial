@@ -171,9 +171,12 @@ export default function SettingsPage() {
         const userRaw = localStorage.getItem("user");
         const user = JSON.parse(userRaw!) as { id: string };
 
-        const response = await api.put<{ id: string; email: string; display_name: string; avatar_url: string }>(`/users/${user.id}`, {
+        const response = await api.put<any>(`/users/${user.id}`, {
           display_name: formData.displayName,
           avatar_url: currentAvatarUrl,
+          bio: formData.bio,
+          phone: formData.phone,
+          dob: formData.dob,
         }, {
           useToken: true,
         });
@@ -279,7 +282,6 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col text-white pb-20">
-      <Header title="การตั้งค่าโปรไฟล์" />
 
       {/* Cropper Modal */}
       {isCropping && imageToCrop && (

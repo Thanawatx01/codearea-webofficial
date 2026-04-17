@@ -247,21 +247,33 @@ export default function UsersPage() {
           </button>
 
           {activeMenuId === row.id && (
-            <div className="absolute left-0 mt-2 w-full min-w-[max(100%,160px)] max-w-[240px] rounded-xl bg-[#1a1c2e] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
-              <div className="py-1">
-                <div className="px-4 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest border-b border-white/5 mb-1">
-                  เลือกบทบาท
+            <div className="absolute left-0 mt-2 w-full min-w-[max(100%,180px)] max-w-[240px] rounded-2xl bg-[#0d101a] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200 backdrop-blur-2xl px-2 py-2">
+              <div className="space-y-1">
+                <div className="px-3 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest border-b border-white/5 mb-2 flex items-center justify-between">
+                  <span>เลือกบทบาท</span>
                 </div>
-                {Object.entries(roleNames).map(([id, label]) => (
-                  <button
-                    key={id}
-                    onClick={() => handleRoleChange(row.id, parseInt(id))}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-white/5 flex items-center gap-3 ${row.role_id === parseInt(id) ? (parseInt(id) === 2 ? 'text-violet-400' : 'text-blue-400') : 'text-white/70'}`}
-                  >
-                    <div className={`w-2 h-2 rounded-full ${row.role_id === parseInt(id) ? (parseInt(id) === 2 ? 'bg-violet-400' : 'bg-blue-400') : 'bg-white/20'}`} />
-                    {label}
-                  </button>
-                ))}
+                {Object.entries(roleNames).map(([id, label]) => {
+                  const isCurrent = row.role_id === parseInt(id);
+                  const isRoleAdmin = parseInt(id) === 2;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => handleRoleChange(row.id, parseInt(id))}
+                      className={`w-full text-left px-3 py-2.5 text-sm transition-colors rounded-xl flex items-center gap-3 ${
+                        isCurrent 
+                          ? (isRoleAdmin ? 'bg-violet-500/10 text-violet-400' : 'bg-blue-500/10 text-blue-400') 
+                          : 'text-white/70 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <div className={`w-2 h-2 rounded-full ring-2 ring-white/5 ${
+                        isCurrent 
+                          ? (isRoleAdmin ? 'bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.5)]' : 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]') 
+                          : 'bg-white/20'
+                      }`} />
+                      <span className="font-medium">{label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -299,33 +311,33 @@ export default function UsersPage() {
           </button>
 
           {activeActionsId === row.id && (
-            <div className="absolute right-0 mt-2 w-full min-w-[200px] max-w-[280px] rounded-xl bg-[#1a1c2e] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
-              <div className="py-1">
-                <div className="px-4 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest border-b border-white/5 mb-1">
+            <div className="absolute right-0 mt-2 w-full min-w-[220px] max-w-[280px] rounded-2xl bg-[#0d101a] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200 backdrop-blur-2xl px-2 py-2">
+              <div className="space-y-1">
+                <div className="px-3 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest border-b border-white/5 mb-2">
                   การจัดการบัญชี
                 </div>
                 <button
                   disabled
-                  className="w-full text-left px-4 py-2.5 text-sm text-white/40 flex items-center gap-3 cursor-not-allowed group"
+                  className="w-full text-left px-3 py-2.5 text-sm transition-colors rounded-xl flex items-center gap-3 cursor-not-allowed group opacity-40 bg-white/5"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
-                    <Icon name="key" className="h-4 w-4 opacity-50" />
+                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                    <Icon name="key" className="h-4 w-4" />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="font-medium text-white/20">เปลี่ยนรหัสผ่าน</span>
-                    <span className="text-[10px] text-red-400/50">ฟีเจอร์นี้ไม่พร้อมใช้งานในขณะนี้</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium text-white/50 truncate">เปลี่ยนรหัสผ่าน</span>
+                    <span className="text-[10px] text-red-400/50 truncate">Coming soon</span>
                   </div>
                 </button>
                 <button
                   disabled
-                  className="w-full text-left px-4 py-2.5 text-sm text-white/40 flex items-center gap-3 cursor-not-allowed group"
+                  className="w-full text-left px-3 py-2.5 text-sm transition-colors rounded-xl flex items-center gap-3 cursor-not-allowed group opacity-40 bg-white/5"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-red-400/5 flex items-center justify-center shrink-0">
-                    <Icon name="trash" className="h-4 w-4 text-red-400/50" />
+                  <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
+                    <Icon name="trash" className="h-4 w-4 text-red-500/70" />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="font-medium text-white/20 text-red-400/20">ลบบัญชีผู้ใช้</span>
-                    <span className="text-[10px] text-red-400/50">ฟีเจอร์นี้ไม่พร้อมใช้งานในขณะนี้</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium text-red-400/50 truncate">ลบบัญชีผู้ใช้</span>
+                    <span className="text-[10px] text-red-400/50 truncate">Coming soon</span>
                   </div>
                 </button>
               </div>
