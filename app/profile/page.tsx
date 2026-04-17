@@ -334,49 +334,94 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Names */}
+            {/* Display Name & Role */}
             <div className="space-y-1 text-center xl:text-left pt-2">
-              <div className="flex items-center justify-center xl:justify-start gap-3">
-                <h1 className="text-2xl font-bold text-white leading-tight">{profileData.username}</h1>
-                {roleId === 2 && (
+              <div className="flex flex-wrap items-center justify-center xl:justify-start gap-3">
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className="w-full bg-[#0d1117] border border-white/20 rounded-md px-3 py-1.5 text-white/90 text-xl font-bold focus:outline-none focus:border-blue-500 shadow-inner"
+                    placeholder="Display Name"
+                  />
+                ) : (
+                  <h1 className="text-2xl font-bold text-white leading-tight break-words">{profileData.name}</h1>
+                )}
+                
+                {roleId === 2 && !isEditing && (
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-linear-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)] group/admin">
                     <Icon name="shield" className="w-3.5 h-3.5 text-amber-500 group-hover/admin:scale-110 transition-transform" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Admin</span>
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Email */}
+            <div className="flex items-center justify-center xl:justify-start gap-2 text-sm text-white/60">
+              <Icon name="mail" className="w-4 h-4 text-white/40" />
+              <a href={`mailto:${profileData.email}`} className="truncate hover:text-blue-400 hover:underline">{profileData.email}</a>
+            </div>
+
+            {/* Bio */}
+            <div className="pt-2">
               {isEditing ? (
-                <input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="w-full bg-[#0d1117] border border-white/20 rounded-md px-3 py-1.5 text-white/90 text-sm focus:outline-none focus:border-blue-500 shadow-inner mt-2 block"
-                  placeholder="Display Name"
+                <textarea
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                  className="w-full bg-[#0d1117] border border-white/20 rounded-md px-3 py-2 text-white/90 text-sm focus:outline-none focus:border-blue-500 shadow-inner resize-none h-24"
+                  placeholder="Add a bio"
                 />
               ) : (
-                <p className="text-xl font-light text-white/50">{profileData.name}</p>
+                <p className="text-sm text-white/80 leading-relaxed text-center xl:text-left break-words">
+                  {profileData.bio || "No bio provided."}
+                </p>
               )}
             </div>
 
-            {/* Edit Profile */}
-            <div className="pt-2">
+            {/* Actions */}
+            <div className="pt-4 space-y-3">
               {isEditing ? (
-                <div className="flex gap-2">
-                  <button 
-                    onClick={handleSaveProfile} 
-                    disabled={isSubmitting}
-                    className="flex-1 py-1.5 px-3 rounded-md bg-emerald-600/20 border border-emerald-500/30 text-sm font-semibold hover:bg-emerald-600/30 text-emerald-400 transition-all disabled:opacity-50"
-                  >
-                    {isSubmitting ? "Saving..." : "Save"}
-                  </button>
-                  <button 
-                    onClick={handleCancelEdit} 
-                    disabled={isSubmitting}
-                    className="flex-1 py-1.5 px-3 rounded-md bg-[#21262d] border border-white/10 text-sm font-semibold hover:bg-[#30363d] text-white/80 transition-all disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                <>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={handleSaveProfile} 
+                      disabled={isSubmitting}
+                      className="flex-1 py-1.5 px-3 rounded-md bg-emerald-600/20 border border-emerald-500/30 text-sm font-semibold hover:bg-emerald-600/30 text-emerald-400 transition-all disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Saving..." : "Save"}
+                    </button>
+                    <button 
+                      onClick={handleCancelEdit} 
+                      disabled={isSubmitting}
+                      className="flex-1 py-1.5 px-3 rounded-md bg-[#21262d] border border-white/10 text-sm font-semibold hover:bg-[#30363d] text-white/80 transition-all disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {/* Settings Modes */}
+                  <div className="flex items-center justify-center gap-6 pt-5 border-t border-white/10 mt-4">
+                    <Link href="/profile/settings" title="Change Password" className="flex flex-col items-center gap-1.5 group">
+                      <div className="p-2.5 rounded-xl bg-[#21262d] border border-white/5 group-hover:bg-amber-500/20 group-hover:border-amber-500/30 group-hover:text-amber-500 text-white/50 transition-all shadow-sm">
+                        <Icon name="key" className="w-4 h-4" />
+                      </div>
+                      <span className="text-[9px] text-white/40 font-bold group-hover:text-white/80 transition-colors uppercase tracking-wider">Password</span>
+                    </Link>
+                    <Link href="/profile/settings" title="Change Email" className="flex flex-col items-center gap-1.5 group">
+                      <div className="p-2.5 rounded-xl bg-[#21262d] border border-white/5 group-hover:bg-blue-500/20 group-hover:border-blue-500/30 group-hover:text-blue-500 text-white/50 transition-all shadow-sm">
+                        <Icon name="mail" className="w-4 h-4" />
+                      </div>
+                      <span className="text-[9px] text-white/40 font-bold group-hover:text-white/80 transition-colors uppercase tracking-wider">Email</span>
+                    </Link>
+                    <Link href="/profile/settings" title="Other Settings" className="flex flex-col items-center gap-1.5 group">
+                      <div className="p-2.5 rounded-xl bg-[#21262d] border border-white/5 group-hover:bg-purple-500/20 group-hover:border-purple-500/30 group-hover:text-purple-500 text-white/50 transition-all shadow-sm">
+                        <Icon name="cog" className="w-4 h-4" />
+                      </div>
+                      <span className="text-[9px] text-white/40 font-bold group-hover:text-white/80 transition-colors uppercase tracking-wider">Settings</span>
+                    </Link>
+                  </div>
+                </>
               ) : (
                 <button 
                   onClick={handleEditClick}
@@ -386,30 +431,6 @@ export default function ProfilePage() {
                 </button>
               )}
             </div>
-
-            {/* Bio */}
-            {isEditing ? (
-              <textarea
-                value={editForm.bio}
-                onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                className="w-full bg-[#0d1117] border border-white/20 rounded-md px-3 py-2 text-white/90 text-sm focus:outline-none focus:border-blue-500 shadow-inner mt-2 resize-none h-24"
-                placeholder="Add a bio"
-              />
-            ) : (
-              <p className="text-sm text-white/80 leading-relaxed text-center xl:text-left pt-2 px-1 break-words">
-                {profileData.bio || "No bio provided."}
-              </p>
-            )}
-
-            {/* User Info Links */}
-            {!isEditing && (
-              <ul className="space-y-2 text-sm text-white/80 pt-4 border-t border-white/10 mt-4">
-                <li className="flex items-center gap-3">
-                  <Icon name="mail" className="w-4 h-4 text-white/40" />
-                  <a href={`mailto:${profileData.email}`} className="truncate hover:text-blue-400 hover:underline">{profileData.email}</a>
-                </li>
-              </ul>
-            )}
 
           </div>
 
