@@ -212,27 +212,54 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
 
               {/* Dropdown Menu */}
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 mt-2 w-full min-w-[240px] rounded-2xl bg-[#0d101a] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200 backdrop-blur-2xl px-2 py-2">
+                  <div className="space-y-1">
+                    <div className="px-3 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest border-b border-white/5 mb-2 flex items-center justify-between">
+                      <span>บัญชีผู้ใช้งาน</span>
+                      {roleId === 2 && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[8px] font-black uppercase tracking-widest text-amber-500">Admin</span>
+                      )}
+                    </div>
 
-                  <Link
-                    href={roleId === 2 ? "/dashboard/settings" : "/profile"}
-                    className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    <Icon name="gear" className="w-4 h-4" /> Settings
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-red-400 transition-colors flex items-center gap-2 disabled:opacity-50"
-                  >
-                    {isLoggingOut ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
-                    ) : (
-                      <Icon name="logout" className="w-4 h-4" />
-                    )}
-                    {isLoggingOut ? "Logging out..." : "Logout"}
-                  </button>
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                        <Icon name="user" className="h-4 w-4" />
+                      </div>
+                      <span>โปรไฟล์ของฉัน</span>
+                    </Link>
+
+                    <Link
+                      href="/profile/settings"
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                        <Icon name="gear" className="h-4 w-4" />
+                      </div>
+                      <span>ตั้งค่าโปรไฟล์</span>
+                    </Link>
+
+                    <div className="h-px bg-white/5 my-1" />
+
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition-colors rounded-xl text-left disabled:opacity-50"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-red-400/5 flex items-center justify-center">
+                        {isLoggingOut ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
+                        ) : (
+                          <Icon name="logout" className="h-4 w-4" />
+                        )}
+                      </div>
+                      <span>{isLoggingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -288,7 +315,14 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                   Signed in as {displayName}
                 </p>
                 <Link
-                  href={roleId === 2 ? "/dashboard/settings" : "/profile"}
+                  href="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="h-10 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10"
+                >
+                  My Profile
+                </Link>
+                <Link
+                  href="/profile/settings"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="h-10 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10"
                 >

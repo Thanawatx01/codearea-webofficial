@@ -79,7 +79,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       {
         label: "ตั้งค่าโปรไฟล์",
-        href: "/dashboard/settings",
+        href: "/profile/settings",
         iconName: "settings",
       },
     ],

@@ -43,6 +43,7 @@ export default function ProfilePage() {
     twitter: "@user_dev",
     role: "Developer Program Member",
   });
+  const [roleId, setRoleId] = useState<number>(1);
 
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -79,7 +80,9 @@ export default function ProfilePage() {
         username: user.email?.split("@")[0] || "user_developer",
         email: user.email || "user@example.com",
         avatarUrl: user.avatar_url || "",
+        role: user.role_id === 2 ? "Administrator" : "Developer Program Member",
       }));
+      setRoleId(user.role_id || 1);
     } catch (error) {
       console.error("Failed to parse user data", error);
     }
@@ -226,15 +229,23 @@ export default function ProfilePage() {
               <>
                 {/* Names */}
                 <div className="space-y-1 text-center xl:text-left pt-2">
-                  <h1 className="text-2xl font-bold text-white leading-tight">{profileData.name}</h1>
+                  <div className="flex items-center justify-center xl:justify-start gap-3">
+                    <h1 className="text-2xl font-bold text-white leading-tight">{profileData.name}</h1>
+                    {roleId === 2 && (
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-linear-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)] group/admin">
+                        <Icon name="shield" className="w-3.5 h-3.5 text-amber-500 group-hover/admin:scale-110 transition-transform" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Admin</span>
+                      </div>
+                    )}
+                  </div>
                   <p className="text-xl font-light text-white/50">{profileData.username}</p>
                 </div>
 
-                {/* Follow / Edit Profile */}
+                {/* Edit Profile (Now links to settings) */}
                 <div className="pt-2">
-                  <button onClick={startEditing} className="w-full py-1.5 px-3 block text-center rounded-md bg-[#21262d] border border-white/10 text-sm font-semibold hover:bg-[#30363d] hover:border-white/20 transition-all shadow-sm text-white">
+                  <Link href="/profile/settings" className="w-full py-1.5 px-3 block text-center rounded-md bg-[#21262d] border border-white/10 text-sm font-semibold hover:bg-[#30363d] hover:border-white/20 transition-all shadow-sm text-white">
                     Edit profile
-                  </button>
+                  </Link>
                 </div>
 
                 {/* Bio */}

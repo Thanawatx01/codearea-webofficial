@@ -112,7 +112,7 @@ export default function Header({ title, icon }: HeaderProps) {
                 </div>
 
                 <Link
-                  href="/dashboard/settings"
+                  href="/profile/settings"
                   onClick={() => setIsDropdownOpen(false)}
                   className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
                 >
