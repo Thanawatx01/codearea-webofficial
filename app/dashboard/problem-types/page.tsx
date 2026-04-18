@@ -9,6 +9,7 @@ import Swal from "sweetalert2";
 
 import { Icon } from "@/components/icons/Icon";
 import { ManagementCard } from "@/components/ManagementCard";
+import { ManagementAddCard } from "@/components/ManagementAddCard";
 
 type SortOrder = "popular" | "least" | "newest";
 
@@ -18,6 +19,7 @@ type CategoryApiRow = {
   name?: string;
   category_name?: string;
   title?: string;
+  description?: string;
   question_count?: number;
   count?: number;
 };
@@ -33,6 +35,7 @@ export default function ProblemTypesPage() {
   const router = useRouter();
   const [types, setTypes] = useState<ProblemTypeItem[]>(initialProblemTypes);
   const [newType, setNewType] = useState("");
+  const [newDescription, setNewDescription] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("");
@@ -42,6 +45,7 @@ export default function ProblemTypesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [editingDescription, setEditingDescription] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | number | null>(null);
 
   // ฟังก์ชัน fetchCategoriesWithCounts
@@ -69,8 +73,9 @@ export default function ProblemTypesPage() {
             .map((row) => {
               const id = row.id ?? row.category_id ?? "";
               const name = row.name ?? row.category_name ?? row.title ?? JSON.stringify(row.id) ?? "ไม่ทราบประเภท";
+              const description = row.description ?? "";
               const questionCount = Number(row.question_count ?? row.count ?? 0);
-              return { id, name, questionCount };
+              return { id, name, description, questionCount };
             })
             .filter((item) => String(item.name).length > 0);
 
@@ -155,11 +160,12 @@ export default function ProblemTypesPage() {
     if (trimmed && !types.some((t) => t.name === trimmed)) {
       setIsSubmitting(true);
       try {
-        const res = await api.post<{ data: CategoryApiRow }>("/question-categories", { name: trimmed }, { useToken: true });
+        const res = await api.post<{ data: CategoryApiRow }>("/question-categories", { name: trimmed, description: newDescription.trim() }, { useToken: true });
         if (res.ok && res.data) {
           const newId = res.data.data?.id ?? `new-${Date.now()}`;
-          setTypes([{ id: newId, name: trimmed, questionCount: 0 }, ...types]);
+          setTypes([{ id: newId, name: trimmed, description: newDescription.trim(), questionCount: 0 }, ...types]);
           setNewType("");
+          setNewDescription("");
           setIsAdding(false);
         } else {
           alert(res.error || "Failed to create category");
@@ -239,11 +245,13 @@ export default function ProblemTypesPage() {
   const handleStartEdit = (item: ProblemTypeItem) => {
     setEditingId(item.id);
     setEditingName(item.name);
+    setEditingDescription(item.description);
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingName("");
+    setEditingDescription("");
   };
 
   // ฟังก์ชัน handleUpdateType
@@ -269,11 +277,12 @@ export default function ProblemTypesPage() {
         color: "#fff",
       });
 
-      const res = await api.put(`/question-categories/${id}`, { name: trimmed }, { useToken: true });
+      const res = await api.put(`/question-categories/${id}`, { name: trimmed, description: editingDescription.trim() }, { useToken: true });
       if (res.ok) {
-        setTypes(prev => prev.map(t => t.id === id ? { ...t, name: trimmed } : t));
+        setTypes(prev => prev.map(t => t.id === id ? { ...t, name: trimmed, description: editingDescription.trim() } : t));
         setEditingId(null);
         setEditingName("");
+        setEditingDescription("");
 
         await Swal.fire({
           icon: "success",
@@ -402,38 +411,18 @@ export default function ProblemTypesPage() {
           {/* Grid of Types */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {isAdding && (
-              <div className="bg-primary/20 border-2 border-dashed border-primary/40 rounded-3xl p-6 transition-all animate-in zoom-in duration-300">
-                <form onSubmit={handleAddType} className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-2">
-                      <Icon name="plus" className="w-3.5 h-3.5" />
-                      สร้างใหม่
-                    </span>
-                    <button type="button" onClick={() => setIsAdding(false)} className="text-white/40 hover:text-white">
-                      <Icon name="x" className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    <input
-                      autoFocus
-                      type="text"
-                      placeholder="ชื่อประเภทโจทย์..."
-                      value={newType}
-                      onChange={(e) => setNewType(e.target.value)}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary"
-                    />
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="flex-1 py-2 bg-primary text-white text-[11px] font-bold rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50"
-                      >
-                        เพิ่มทันที
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </div>
+              <ManagementAddCard
+                onClose={() => setIsAdding(false)}
+                onSubmit={handleAddType}
+                isSubmitting={isSubmitting}
+                nameValue={newType}
+                setNameValue={setNewType}
+                namePlaceholder="ชื่อประเภทโจทย์..."
+                showDescription={true}
+                descriptionValue={newDescription}
+                setDescriptionValue={setNewDescription}
+                descriptionPlaceholder="คำอธิบายประเภทโจทย์..."
+              />
             )}
 
             {filteredAndSortedTypes.map((item, idx) => (
@@ -446,6 +435,9 @@ export default function ProblemTypesPage() {
                 isSubmitting={isSubmitting}
                 editValue={editingName}
                 setEditValue={setEditingName}
+                description={item.description}
+                editDescriptionValue={editingDescription}
+                setEditDescriptionValue={setEditingDescription}
                 onUpdate={handleUpdateType}
                 onCancelEdit={handleCancelEdit}
                 onStartEdit={() => handleStartEdit(item)}

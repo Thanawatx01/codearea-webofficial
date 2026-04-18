@@ -35,7 +35,16 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
 
       if (token && userRaw) {
         try {
-          const user = JSON.parse(userRaw) as { display_name?: string };
+          // ขั้นตอนที่ 1: วิเคราะห์ข้อมูลผู้ใช้และตรวจสอบฟิลด์สำคัญ (เช่น ID)
+          const user = JSON.parse(userRaw) as { id?: string | number; display_name?: string; role_id?: number; avatar_url?: string };
+
+          if (!user.id) {
+            console.warn("[NavigationHeader] User ID missing in localStorage. Forcing logout.");
+            handleLogout();
+            return;
+          }
+
+          // ขั้นตอนที่ 2: เติมข้อมูลสถานะ UI สำหรับผู้ใช้ที่เข้าสู่ระบบ
           const name = user.display_name?.trim() || "ผู้ใช้งาน";
           setDisplayName(name);
           setAvatarText(name.charAt(0).toUpperCase());
@@ -93,21 +102,20 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   };
 
   const defaultLinks: NavLink[] = [
-    { label: "Home", href: "/" },
-    { label: "Questions", href: "/questions" },
-    { label: "Categories", href: "/categories" },
-    { label: "Leaderboard", href: "/leaderboard" },
+    { label: "หน้าหลัก", href: "/" },
+    { label: "โจทย์", href: "/questions" },
+    { label: "ประเภทโจทย์", href: "/categories" },
+    { label: "ตารางอันดับ", href: "/leaderboard" },
   ];
 
   const navLinks = links.length > 0 ? links : defaultLinks;
 
   return (
     <nav
-      className={`fixed inset-x-0 top-0 z-50 w-full transition-all duration-500 ease-in-out ${
-        isScrolled
-          ? "bg-[#05060d]/60 border-b border-white/5 backdrop-blur-3xl py-0 shadow-2xl"
-          : "bg-transparent py-3"
-      }`}
+      className={`fixed inset-x-0 top-0 z-50 w-full transition-all duration-500 ease-in-out ${isScrolled
+        ? "bg-[#05060d]/60 border-b border-white/5 backdrop-blur-3xl py-0 shadow-2xl"
+        : "bg-transparent py-3"
+        }`}
     >
       <div className="relative w-full max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
@@ -128,19 +136,16 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
         >
           <span className="relative h-4 w-5">
             <span
-              className={`absolute left-0 top-0 h-0.5 w-5 rounded-full bg-current transition-all duration-300 ${
-                isMobileMenuOpen ? "top-[7px] rotate-45" : ""
-              }`}
+              className={`absolute left-0 top-0 h-0.5 w-5 rounded-full bg-current transition-all duration-300 ${isMobileMenuOpen ? "top-[7px] rotate-45" : ""
+                }`}
             />
             <span
-              className={`absolute left-0 top-[7px] h-0.5 w-5 rounded-full bg-current transition-all duration-300 ${
-                isMobileMenuOpen ? "opacity-0" : "opacity-100"
-              }`}
+              className={`absolute left-0 top-[7px] h-0.5 w-5 rounded-full bg-current transition-all duration-300 ${isMobileMenuOpen ? "opacity-0" : "opacity-100"
+                }`}
             />
             <span
-              className={`absolute left-0 top-[14px] h-0.5 w-5 rounded-full bg-current transition-all duration-300 ${
-                isMobileMenuOpen ? "top-[7px] -rotate-45" : ""
-              }`}
+              className={`absolute left-0 top-[14px] h-0.5 w-5 rounded-full bg-current transition-all duration-300 ${isMobileMenuOpen ? "top-[7px] -rotate-45" : ""
+                }`}
             />
           </span>
         </button>
@@ -153,13 +158,11 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`group relative text-sm font-medium transition-all duration-300 ${
-                  isActive ? "text-blue-400" : "text-white hover:text-blue-300"
-                } after:absolute after:bottom-[-8px] after:left-1/2 after:h-0.5 after:w-full after:-translate-x-1/2 after:rounded-full after:bg-blue-400 after:shadow-[0_0_10px_rgba(96,165,250,0.9)] after:transition-transform after:duration-300 after:ease-out ${
-                  isActive
+                className={`group relative text-sm font-medium transition-all duration-300 ${isActive ? "text-blue-400" : "text-white hover:text-blue-300"
+                  } after:absolute after:bottom-[-8px] after:left-1/2 after:h-0.5 after:w-full after:-translate-x-1/2 after:rounded-full after:bg-blue-400 after:shadow-[0_0_10px_rgba(96,165,250,0.9)] after:transition-transform after:duration-300 after:ease-out ${isActive
                     ? "after:scale-x-100"
                     : "after:scale-x-0 group-hover:after:scale-x-100"
-                }`}
+                  }`}
               >
                 {link.label}
               </Link>
@@ -191,8 +194,17 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer rounded-full p-1 hover:bg-white/5"
               >
                 {/* Avatar */}
-                <div className="w-9 h-9 rounded-full bg-linear-to-br from-primary to-blue-400 flex items-center justify-center text-white text-sm font-semibold shadow-sm">
-                  {avatarText}
+                <div className="w-9 h-9 rounded-full bg-linear-to-br from-primary to-blue-400 flex items-center justify-center text-white text-sm font-semibold shadow-sm overflow-hidden relative">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={displayName}
+                      className="w-full h-full object-cover"
+                      onError={() => setAvatarUrl(null)}
+                    />
+                  ) : (
+                    avatarText
+                  )}
                 </div>
                 <div className="hidden sm:flex flex-col items-start">
                   <p className="text-sm font-medium text-white leading-tight">
@@ -202,9 +214,8 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                 {/* Dropdown Icon */}
                 <Icon
                   name="chevron"
-                  className={`w-4 h-4 text-white transition-transform ml-1 ${
-                    isDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 text-white transition-transform ml-1 ${isDropdownOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -245,9 +256,8 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
       </div>
 
       <div
-        className={`md:hidden overflow-hidden border-t border-white/10 bg-[#0a0f1f]/95 backdrop-blur-md transition-all duration-300 ${
-          isMobileMenuOpen ? "max-h-[70vh] opacity-100" : "max-h-0 opacity-0"
-        }`}
+        className={`md:hidden overflow-hidden border-t border-white/10 bg-[#0a0f1f]/95 backdrop-blur-md transition-all duration-300 ${isMobileMenuOpen ? "max-h-[70vh] opacity-100" : "max-h-0 opacity-0"
+          }`}
       >
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-6 py-4">
           {navLinks.map((link) => {
@@ -257,11 +267,10 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                 key={`mobile-${link.href}`}
                 href={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-blue-400/15 text-blue-300"
-                    : "text-white/80 hover:bg-white/5 hover:text-white"
-                }`}
+                className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${isActive
+                  ? "bg-blue-400/15 text-blue-300"
+                  : "text-white/80 hover:bg-white/5 hover:text-white"
+                  }`}
               >
                 {link.label}
               </Link>

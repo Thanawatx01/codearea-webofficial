@@ -9,6 +9,7 @@ import Swal from "sweetalert2";
 
 import { Icon } from "@/components/icons/Icon";
 import { ManagementCard } from "@/components/ManagementCard";
+import { ManagementAddCard } from "@/components/ManagementAddCard";
 
 type SortOrder = "popular" | "least" | "newest";
 
@@ -403,38 +404,15 @@ export default function TagsPage() {
           {/* Grid of Tags */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {isAdding && (
-              <div className="bg-primary/20 border-2 border-dashed border-primary/40 rounded-3xl p-6 transition-all animate-in zoom-in duration-300">
-                <form onSubmit={handleAddTag} className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-2">
-                      <Icon name="plus" className="w-3.5 h-3.5" />
-                      สร้างใหม่
-                    </span>
-                    <button type="button" onClick={() => setIsAdding(false)} className="text-white/40 hover:text-white">
-                      <Icon name="x" className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    <input
-                      autoFocus
-                      type="text"
-                      placeholder="ชื่อแท็ก..."
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary"
-                    />
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="flex-1 py-2 bg-primary text-white text-[11px] font-bold rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50"
-                      >
-                        เพิ่มทันที
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </div>
+              <ManagementAddCard
+                onClose={() => setIsAdding(false)}
+                onSubmit={handleAddTag}
+                isSubmitting={isSubmitting}
+                nameValue={newTag}
+                setNameValue={setNewTag}
+                namePlaceholder="ชื่อแท็ก..."
+                showDescription={false}
+              />
             )}
 
             {filteredAndSortedTags.map((item, idx) => (
