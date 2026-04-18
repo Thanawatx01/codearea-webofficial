@@ -32,6 +32,19 @@ export function LogoutProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async (redirectTo: string = "/") => {
     setIsLoggingOut(true);
 
+    // ขั้นตอนที่ 1: ดำเนินการออกจากระบบทางเทคนิค
+    await performLogout();
+
+    // ขั้นตอนที่ 2: หน่วงเวลาเพื่อให้ Overlay แสดงผลได้ครบถ้วน
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // ขั้นตอนที่ 3: เปลี่ยนหน้าและล้างสถานะทั้งหมดของเบราว์เซอร์
+    window.location.href = redirectTo;
+
+    // ขั้นตอนที่ 4: ทำความสะอาดสถานะในกรณีฉุกเฉิน
+    setTimeout(() => setIsLoggingOut(false), 500);
+  }, []);
+
     // Perform technical logout
     await performLogout();
 
