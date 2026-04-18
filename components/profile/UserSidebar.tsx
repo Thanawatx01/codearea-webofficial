@@ -34,12 +34,23 @@ interface UserSidebarProps {
   onToggle: () => void;
 }
 
+// # ส่วนประกอบ UserSidebar
+// แถบเมนูด้านข้างสำหรับผู้ใช้ (Sidebar)
+// 1. แสดงผลลิงก์นำทางที่แบ่งตามกลุ่มฟังก์ชัน (Core Console, Settings)
+// 2. จัดการสถานะการย่อ/ขยาย (Collapsed/Expanded) ของ Sidebar
+// 3. ดึงข้อมูลและแสดงผลข้อมูลโปรไฟล์ของผู้ใช้แบบ Real-time
+// 4. บูรณาการฟังก์ชันการออกจากระบบผ่าน LogoutProvider
 export default function UserSidebar({ collapsed, onToggle }: UserSidebarProps) {
   const pathname = usePathname();
   const { logout, isLoggingOut } = useLogout();
   const [userData, setUserData] = useState({ name: "User", title: "Developer", avatarUrl: "" });
 
-  useEffect(() => {
+  // # ฟังก์ชันโหลดข้อมูลผู้ใช้
+  // ดึงข้อมูลโปรไฟล์จาก localStorage และอัปเดตสถานะ UI
+  // 1. ตรวจสอบข้อมูลผู้ใช้ใน localStorage
+  // 2. แยกวิเคราะห์ข้อมูลและเติมข้อมูลชื่อ บทบาท และรูปโปรไฟล์
+  // 3. จัดการกรณีที่ข้อมูลเสียหายหรือหายไป
+  const loadUserData = () => {
     try {
       const userRaw = window.localStorage.getItem("user");
       if (userRaw) {
@@ -53,6 +64,23 @@ export default function UserSidebar({ collapsed, onToggle }: UserSidebarProps) {
     } catch (e) {
       console.error("Failed to parse user data", e);
     }
+  };
+
+  // # การติดตามการเปลี่ยนแปลงข้อมูล
+  // ลงทะเบียนตัวฟังเหตุการณ์เพื่ออัปเดตข้อมูลผู้ใช้ทันทีเมื่อมีการเปลี่ยนแปลง
+  useEffect(() => {
+    loadUserData();
+    
+    // ขั้นตอนที่ 1: ฟังเหตุการณ์อัปเดตโปรไฟล์ในแท็บเดียวกัน
+    window.addEventListener("profile-updated", loadUserData);
+    
+    // ขั้นตอนที่ 2: ฟังเหตุการณ์ storage จากแท็บอื่นๆ
+    window.addEventListener("storage", loadUserData);
+
+    return () => {
+      window.removeEventListener("profile-updated", loadUserData);
+      window.removeEventListener("storage", loadUserData);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -197,3 +225,9 @@ export default function UserSidebar({ collapsed, onToggle }: UserSidebarProps) {
     </aside>
   );
 }
+
+// # ความปลอดภัย
+// ตรวจสอบรหัสความปลอดภัย
+// 1. Data Parsing Protection: ใช้ try-catch ครอบการ JSON.parse(userRaw) เพื่อป้องกันแอปพลิเคชันพังจากข้อมูล localStorage ที่ไม่สมบูรณ์
+// 2. State Synchronization: ใช้เหตุการณ์ 'storage' และ 'profile-updated' เพื่อให้มั่นใจว่าข้อมูลโปรไฟล์ที่แสดงผลใน Sidebar เป็นรุ่นล่าสุดเสมอ แม้จะมีการแก้ไขในหน้าอื่นๆ
+// 3. Access Control Visuals: ปรับการแสดงผลเมนู (เช่น Dashboard, Settings) ตามเส้นทางการนำทางที่ได้รับการตรวจสอบแล้ว
