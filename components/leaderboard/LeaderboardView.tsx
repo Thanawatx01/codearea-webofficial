@@ -1,6 +1,7 @@
 "use client";
 
 import { fetchLeaderboard, type LeaderboardRow } from "@/lib/leaderboardApi";
+import { maskEmail } from "@/lib/utils";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -245,7 +246,7 @@ export default function LeaderboardView() {
                           </td>
                           <td className="px-4 py-3 text-white/45 hidden sm:table-cell">
                             <span className="truncate font-mono text-xs">
-                              {r.email}
+                              {maskEmail(r.email)}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right font-mono text-violet-200/90">
