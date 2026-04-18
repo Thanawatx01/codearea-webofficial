@@ -21,31 +21,28 @@ export function LogoutProvider({ children }: { children: ReactNode }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
 
-  // # ฟังก์ชัน Logout
-  // ดำเนินการล้างเซสชันและนำทางผู้ใช้ไปยังหน้าที่กำหนด
-  // 1. เริ่มสถานะการออกจากระบบเพื่อบล็อกหน้าจอ
-  // 2. เรียกใช้ performLogout เพื่อล้าง localStorage และ Token
-  // 3. รอ 2 วินาทีเพื่อให้ผู้ใช้เห็นข้อความยืนยัน
-  // 4. บังคับโหลดหน้าใหม่ (Full Browser Navigation) เพื่อล้างสถานะ Hydration ใน React
+  const pathname = usePathname();
+
   const logout = useCallback(async (redirectTo: string = "/") => {
     setIsLoggingOut(true);
 
-    // ขั้นตอนที่ 1: ดำเนินการออกจากระบบทางเทคนิค
+    // Perform technical logout
     await performLogout();
 
-    // ขั้นตอนที่ 2: หน่วงเวลาเพื่อให้ Overlay แสดงผลได้ครบถ้วน
+    // Delay to let the overlay and message be seen
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    // ขั้นตอนที่ 3: เปลี่ยนหน้าและล้างสถานะทั้งหมดของเบราว์เซอร์
-    window.location.href = redirectTo;
+    // Redirect
+    router.replace(redirectTo);
 
-    // ขั้นตอนที่ 4: ทำความสะอาดสถานะในกรณีฉุกเฉิน
-    setTimeout(() => setIsLoggingOut(false), 500);
-  }, []);
+    // If we are already on the same page, the useEffect won't trigger from a pathname change.
+    // Reset manually after a short tick to ensure UI consistency.
+    if (pathname === redirectTo) {
+      setTimeout(() => setIsLoggingOut(false), 100);
+    }
+  }, [router, pathname]);
 
-  // # การรีเซ็ตสถานะตามเส้นทาง
-  // ตรวจสอบการเปลี่ยนเส้นทางเพื่อรีเซ็ตสถานะการออกจากระบบหากจำเป็น
-  const pathname = usePathname();
+  // Reset logging out state when route changes
   useEffect(() => {
     if (isLoggingOut) {
       setIsLoggingOut(false);

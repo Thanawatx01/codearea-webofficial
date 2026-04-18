@@ -67,6 +67,10 @@ export default function LoginPage() {
     const { token, user } = res.data;
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
+    
+    // Dispatch storage event to notify other components (like NavigationHeader) in the same tab
+    window.dispatchEvent(new Event("storage"));
+    
     document.cookie = `token=${encodeURIComponent(token)}; path=/; samesite=lax`;
     document.cookie = `role_id=${user.role_id}; path=/; samesite=lax`;
     document.cookie = `display_name=${encodeURIComponent(user.display_name)}; path=/; samesite=lax`;
