@@ -67,10 +67,10 @@ export default function SettingsPage() {
       return;
     }
     try {
-      const user = JSON.parse(userRaw) as { 
-        display_name: string; 
-        email: string; 
-        id: string; 
+      const user = JSON.parse(userRaw) as {
+        display_name: string;
+        email: string;
+        id: string;
         avatar_url?: string;
         bio?: string;
         phone?: string;
@@ -230,8 +230,8 @@ export default function SettingsPage() {
         });
 
         if (!response.ok || !response.data) {
-           const errMsg = response.data?.message || response.data?.details || "Failed to update profile";
-           throw new Error(errMsg);
+          const errMsg = response.data?.message || response.data?.details || "Failed to update profile";
+          throw new Error(errMsg);
         }
 
         const updatedUser = response.data;
@@ -251,7 +251,16 @@ export default function SettingsPage() {
         setHasChanges(false);
 
         window.dispatchEvent(new Event("profile-updated"));
-        void Swal.fire({ icon: "success", title: "สำเร็จ", text: "บันทึกการตั้งค่าเรียบร้อยแล้ว", background: "#1a1c2e", color: "#fff", timer: 1500, showConfirmButton: false });
+        await Swal.fire({
+          icon: "success",
+          title: "สำเร็จ",
+          text: "บันทึกการตั้งค่าเรียบร้อยแล้ว",
+          background: "#1a1c2e",
+          color: "#fff",
+          timer: 1500,
+          showConfirmButton: false
+        });
+        router.push("/profile");
       } catch (error: any) {
         console.error("Save error:", error);
         const errorDetail = error.response?.data?.details || error.response?.data?.message || error.message || "ไม่สามารถบันทึกข้อมูลได้";
@@ -284,15 +293,52 @@ export default function SettingsPage() {
       return Swal.fire({ icon: "error", title: "รหัสผ่านไม่ตรงกัน", text: "รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน", background: "#1a1c2e", color: "#fff" });
     }
 
-    void Swal.fire({
-      icon: "success",
-      title: "เปลี่ยนรหัสผ่านสำเร็จ",
-      text: "ระบบได้ทำการเปลี่ยนรหัสผ่านของคุณเรียบร้อยแล้ว (Mockup)",
-      background: "#1a1c2e",
-      color: "#fff",
-    });
-    setShowPasswordFields(false);
-    setPasswordForm({ old: "", new: "", confirm: "" });
+    try {
+      Swal.fire({
+        title: "กำลังดำเนินการ...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+        background: "#1a1c2e",
+        color: "#fff",
+      });
+
+      const userRaw = localStorage.getItem("user");
+      const user = JSON.parse(userRaw!) as { id: string };
+
+      const response = await api.put<any>(`/users/${user.id}/change-password`, {
+        old_password: passwordForm.old,
+        new_password: passwordForm.new,
+      }, {
+        useToken: true,
+      });
+
+      if (!response.ok) {
+        throw new Error(response.data?.message || "ไม่สามารถเปลี่ยนรหัสผ่านได้");
+      }
+
+      void Swal.fire({
+        icon: "success",
+        title: "เปลี่ยนรหัสผ่านสำเร็จ",
+        text: "ระบบได้ทำการเปลี่ยนรหัสผ่านของคุณเรียบร้อยแล้ว",
+        background: "#1a1c2e",
+        color: "#fff",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      setShowPasswordFields(false);
+      setPasswordForm({ old: "", new: "", confirm: "" });
+    } catch (error: any) {
+      console.error("Change password error:", error);
+      void Swal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาด",
+        text: error.message || "ไม่สามารถเปลี่ยนรหัสผ่านได้",
+        background: "#1a1c2e",
+        color: "#fff",
+      });
+    }
   };
 
   // ฟังก์ชัน handleEmailChange
@@ -468,7 +514,7 @@ export default function SettingsPage() {
                   formData.displayName.charAt(0).toUpperCase()
                 )}
               </div>
-              
+
               {avatarPreview && (
                 <button
                   onClick={handleRemoveAvatar}
@@ -508,8 +554,21 @@ export default function SettingsPage() {
               </div>
 
               <div className="w-full space-y-2">
-                <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">คำแนะนำตัว</label>
-                <textarea name="bio" value={formData.bio} onChange={handleInputChange} rows={3} className="w-full p-5 bg-white/[0.03] border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:border-primary transition-all resize-none shadow-inner" placeholder="Describe who you are here"></textarea>
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">คำแนะนำตัว</label>
+                  <span className={`text-[10px] font-black tabular-nums transition-colors ${formData.bio.length >= 240 ? "text-orange-500" : "text-white/20"}`}>
+                    {formData.bio.length} / 255
+                  </span>
+                </div>
+                <textarea 
+                  name="bio" 
+                  value={formData.bio} 
+                  onChange={handleInputChange} 
+                  maxLength={255} 
+                  rows={3} 
+                  className="w-full p-5 bg-white/[0.03] border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:border-primary transition-all resize-none shadow-inner" 
+                  placeholder="อธิบายว่าคุณเป็นใคร"
+                />
               </div>
             </div>
           </div>

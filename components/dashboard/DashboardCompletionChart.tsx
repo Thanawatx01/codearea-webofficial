@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState, useEffect } from "react";
 import {
   Cell,
   Legend,
@@ -24,6 +24,10 @@ export function DashboardCompletionChart({
   successfulSubmissions,
   unsuccessfulSubmissions,
 }: DashboardCompletionChartProps) {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const uid = useId().replace(/:/g, "");
   const successId = `dashPieSuccess-${uid}`;
   const failId = `dashPieFail-${uid}`;
@@ -40,8 +44,9 @@ export function DashboardCompletionChart({
           className="pointer-events-none absolute left-1/2 top-1/2 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.06] blur-3xl"
           aria-hidden
         />
-        <div className="relative h-[300px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+        <div className="relative h-[300px] w-full min-w-0 min-h-0">
+          {isMounted ? (
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <PieChart>
               <defs>
                 <linearGradient id={successId} x1="0" y1="0" x2="0" y2="1">
@@ -95,6 +100,11 @@ export function DashboardCompletionChart({
               />
             </PieChart>
           </ResponsiveContainer>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center opacity-10">
+              <div className="w-32 h-32 rounded-full border-4 border-white animate-pulse" />
+            </div>
+          )}
         </div>
         <div className="mt-4 flex flex-wrap justify-center gap-3">
           <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-1.5 text-xs text-emerald-200/90">
