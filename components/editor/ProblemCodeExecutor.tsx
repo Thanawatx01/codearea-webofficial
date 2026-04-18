@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import CodeEditor, { type CodeEditorLanguage } from "./CodeEditor";
 import SampleRunResultView, {
   type SampleExampleRow,
@@ -65,18 +66,22 @@ export default function ProblemCodeExecutor({
     FILTERED_LANGUAGES.find((l) => l.id === languageId) ||
     FILTERED_LANGUAGES[0];
 
+  const isLoggedIn = () =>
+    typeof window !== "undefined" && Boolean(localStorage.getItem("token"));
+
   const handleRun = async () => {
+    if (!isLoggedIn()) {
+      setError("กรุณาเข้าสู่ระบบเพื่อรันทดสอบโค้ด");
+      return;
+    }
     setIsRunning(true);
     setError(null);
     setResult(null);
 
-    const useToken = Boolean(
-      typeof window !== "undefined" && localStorage.getItem("token"),
-    );
     const run = await simpleRunQuestion(
       questionCode,
       { sourceCode: code, languageId },
-      { useToken },
+      { useToken: true },
     );
 
     if (!run.ok) {
@@ -111,6 +116,10 @@ export default function ProblemCodeExecutor({
   };
 
   const handleSubmit = async () => {
+    if (!isLoggedIn()) {
+      setSubmitError("กรุณาเข้าสู่ระบบเพื่อส่งโค้ด");
+      return;
+    }
     const cfg = PISTON_LANGUAGE_MAP[languageId];
     if (!cfg) {
       setSubmitError("ไม่รองรับภาษานี้สำหรับการส่งโค้ด");
@@ -119,16 +128,13 @@ export default function ProblemCodeExecutor({
     setIsSubmitting(true);
     setSubmitError(null);
 
-    const useToken = Boolean(
-      typeof window !== "undefined" && localStorage.getItem("token"),
-    );
     const out = await submitQuestionCode(
       {
         questionCode,
         language: cfg.language,
         code,
       },
-      { useToken },
+      { useToken: true },
     );
 
     if (!out.ok) {
@@ -237,7 +243,17 @@ export default function ProblemCodeExecutor({
           </div>
         </div>
         {submitError ? (
-          <p className="text-[12px] leading-snug text-red-300/95">{submitError}</p>
+          <div className="flex items-center gap-2 text-[12px] leading-snug text-amber-200/95">
+            <p>{submitError}</p>
+            {!isLoggedIn() && (
+              <Link
+                href="/login"
+                className="font-semibold text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
+              >
+                ไปหน้าเข้าสู่ระบบ
+              </Link>
+            )}
+          </div>
         ) : null}
       </div>
 

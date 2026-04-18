@@ -193,8 +193,16 @@ export default function SampleRunResultView({
           </div>
         )}
         {error && (
-          <div className="mb-4 rounded-lg border border-red-400/20 bg-red-400/10 p-3 text-red-400">
-            {error}
+          <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/10 p-3 text-center text-sm text-amber-100/95">
+            <p>{error}</p>
+            {error.includes("เข้าสู่ระบบ") && (
+              <a
+                href="/login"
+                className="mt-2 inline-block text-sm font-semibold text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
+              >
+                ไปหน้าเข้าสู่ระบบ
+              </a>
+            )}
           </div>
         )}
         {data && !isRunning && (

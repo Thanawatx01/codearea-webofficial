@@ -46,7 +46,7 @@ export default function CategoriesPage() {
         <div className="text-center space-y-6">
           <h1 className="text-4xl md:text-5xl font-bold">ประเภทโจทย์</h1>
           <p className="text-white/60 text-lg">
-            สำรวจโจทย์ตามหมวดหมู่และความยาก
+            สำรวจโจทย์ตามหมวดหมู่
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export default function CategoriesPage() {
                 {category.name}
               </h3>
               <p className="text-white/60 text-sm mt-2">
-                {category.question_count ?? 0} problems
+                {category.question_count ?? 0} โจทย์
               </p>
               {category.description && (
                 <p className="text-white/40 text-xs mt-1 line-clamp-2">
