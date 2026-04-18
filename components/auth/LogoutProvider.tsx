@@ -45,22 +45,6 @@ export function LogoutProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setIsLoggingOut(false), 500);
   }, []);
 
-    // Perform technical logout
-    await performLogout();
-
-    // Delay to let the overlay and message be seen
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Redirect
-    router.replace(redirectTo);
-
-    // If we are already on the same page, the useEffect won't trigger from a pathname change.
-    // Reset manually after a short tick to ensure UI consistency.
-    if (pathname === redirectTo) {
-      setTimeout(() => setIsLoggingOut(false), 100);
-    }
-  }, [router, pathname]);
-
   // Reset logging out state when route changes
   useEffect(() => {
     if (isLoggingOut) {

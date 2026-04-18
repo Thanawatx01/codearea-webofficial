@@ -58,10 +58,11 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
           }
 
           // ขั้นตอนที่ 2: เติมข้อมูลสถานะ UI สำหรับผู้ใช้ที่เข้าสู่ระบบ
-          const user = JSON.parse(userRaw) as { display_name?: string; role_id?: number };
           const name = user.display_name?.trim() || "ผู้ใช้งาน";
           setDisplayName(name);
           setAvatarText(name.charAt(0).toUpperCase());
+          setAvatarUrl(user.avatar_url || null);
+          setRoleId(user.role_id ?? 1);
           setIsLoggedIn(true);
         } catch {
           setIsLoggedIn(false);
