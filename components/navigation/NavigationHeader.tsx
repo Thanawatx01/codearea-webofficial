@@ -50,6 +50,7 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
           // ขั้นตอนที่ 1: วิเคราะห์ข้อมูลผู้ใช้และตรวจสอบฟิลด์สำคัญ (เช่น ID)
           const user = JSON.parse(userRaw) as { id?: string | number; display_name?: string; role_id?: number; avatar_url?: string };
 
+
           if (!user.id) {
             console.warn("[NavigationHeader] User ID missing in localStorage. Forcing logout.");
             handleLogout();
