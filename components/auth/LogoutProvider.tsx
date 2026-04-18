@@ -12,6 +12,11 @@ interface LogoutContextType {
 
 const LogoutContext = createContext<LogoutContextType | undefined>(undefined);
 
+// # ส่วนประกอบ LogoutProvider
+// จัดการสถานะการออกจากระบบและตรรกะการล้างข้อมูลเซสชันทั่วทั้งแอปพลิเคชัน
+// 1. ควบคุมสถานะ isLoggingOut เพื่อแสดงผล Overlay ป้องกันการใช้งานขณะประมวลผล
+// 2. ประสานงานกับ LogoutOverlay เพื่อให้ประสบการณ์การใช้งานที่ลื่นไหล
+// 3. จัดการการล้างข้อมูล local storage และโทเค็นผ่าน performLogout
 export function LogoutProvider({ children }: { children: ReactNode }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
@@ -59,3 +64,9 @@ export function useLogout() {
   }
   return context;
 }
+
+// # ความปลอดภัย
+// ตรวจสอบรหัสความปลอดภัย
+// 1. Session Invalidation: บังคับใช้การล้าง localStorage ทันทีและรีสตาร์ทเบราว์เซอร์คอนเท็กซ์ผ่าน window.location.href
+// 2. UI Locking: ใช้ Overlay สีดำทับทั้งหน้าจอขณะออกจากระบบเพื่อป้องกันไม่ให้ผู้ใช้กดปุ่มอื่นๆ ระหว่างล้างข้อมูล
+// 3. Memory Cleanup: ล้างสถานะ React ทั้งหมดโดยการเปลี่ยนหน้าแบบ Full Refresh เพื่อป้องกันข้อมูลที่ละเอียดอ่อนค้างอยู่ในหน่วยความจำ

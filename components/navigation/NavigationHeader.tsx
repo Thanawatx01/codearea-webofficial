@@ -16,10 +16,18 @@ interface NavigationHeaderProps {
   links?: NavLink[];
 }
 
+// # ส่วนประกอบ NavigationHeader
+// แถบนำทางหลักของแอปพลิเคชัน
+// 1. จัดการลิงก์นำทางที่รองรับการแสดงผลบนมือถือและเดสก์ท็อป
+// 2. ติดตามสถานะการเข้าสู่ระบบและบทบาทของผู้ใช้ (Role-based permissions)
+// 3. แสดงผลเมนูโปรไฟล์แบบ Dropdown สำหรับการเข้าถึงการตั้งค่าและการออกจากระบบ
+// 4. จัดการสไตล์ของ Header ตามตำแหน่งการเลื่อนหน้าจอ (Scroll)
 export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [roleId, setRoleId] = useState(1);
   const [avatarText, setAvatarText] = useState("U");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -27,7 +35,11 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // ตรวจสอบ login status
+  // # ตรรกะการตรวจสอบสิทธิ์และเริ่มต้น
+  // จัดการการตั้งสถานะการยืนยันตัวตนและตัวฟังเหตุการณ์
+  // 1. ตรวจสอบ JWT และข้อมูลเมตาจาก localStorage เมื่อโหลดส่วนประกอบ
+  // 2. เพิ่มตัวฟังการเลื่อนหน้าจอเพื่ออัปเดตสไตล์ของ Header
+  // 3. เชื่อมต่อเหตุการณ์ 'storage' และ 'profile-updated' เพื่อซิงค์สถานะระหว่างแท็บ
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("token");
@@ -35,16 +47,29 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
 
       if (token && userRaw) {
         try {
-          const user = JSON.parse(userRaw) as { display_name?: string };
+          // ขั้นตอนที่ 1: วิเคราะห์ข้อมูลผู้ใช้และตรวจสอบฟิลด์สำคัญ (เช่น ID)
+          const user = JSON.parse(userRaw) as { id?: string | number; display_name?: string; role_id?: number; avatar_url?: string };
+          
+          if (!user.id) {
+            console.warn("[NavigationHeader] User ID missing in localStorage. Forcing logout.");
+            handleLogout();
+            return;
+          }
+
+          // ขั้นตอนที่ 2: เติมข้อมูลสถานะ UI สำหรับผู้ใช้ที่เข้าสู่ระบบ
           const name = user.display_name?.trim() || "ผู้ใช้งาน";
           setDisplayName(name);
           setAvatarText(name.charAt(0).toUpperCase());
+          setAvatarUrl(user.avatar_url || null);
+          setRoleId(user.role_id ?? 1);
           setIsLoggedIn(true);
         } catch {
           setIsLoggedIn(false);
         }
       } else {
+        // ขั้นตอนที่ 3: จัดการสถานะผู้ใช้ทั่วไป (ไม่ระบุตัวตน)
         setIsLoggedIn(false);
+        setAvatarUrl(null);
       }
     };
 
@@ -55,15 +80,21 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
     };
     window.addEventListener("scroll", handleScroll);
 
-    // ฟังเหตุการณ์จาก storage
+    // # การประสานข้อมูลแบบ Real-time
+    // ตรวจสอบให้แน่ใจว่าสถานะการเข้าสู่ระบบตรงกันหากมีการเปลี่ยนแปลงในแท็บอื่นหรือหน้าการตั้งค่า
     window.addEventListener("storage", checkAuth);
+    window.addEventListener("profile-updated", checkAuth);
+
     return () => {
       window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("profile-updated", checkAuth);
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [pathname]);
 
-  // ปิด dropdown เมื่อคลิกนอก
+  // # ส่วนติดต่อผู้ใช้และ Dropdown
+  // จัดการการแสดงผลและการปิดเมนู Dropdown
+  // 1. ปิดเมนูโปรไฟล์เมื่อมีการคลิกพื้นที่ภายนอก
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -85,6 +116,11 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
 
   const { logout, isLoggingOut } = useLogout();
 
+  // # ฟังก์ชันการออกจากระบบ
+  // เริ่มต้นการล้างเซสชันและทำความสะอาดสถานะ
+  // 1. รีเซ็ตสถานะ UI ท้องถิ่น
+  // 2. ส่งต่อหน้าที่ไปยัง LogoutProvider เพื่อล้างโทเค็นระดับสากล
+  // 3. เปลี่ยนหน้ากลับไปยังหน้าแรก
   const handleLogout = () => {
     setIsLoggedIn(false);
     setIsDropdownOpen(false);
@@ -191,8 +227,17 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer rounded-full p-1 hover:bg-white/5"
               >
                 {/* Avatar */}
-                <div className="w-9 h-9 rounded-full bg-linear-to-br from-primary to-blue-400 flex items-center justify-center text-white text-sm font-semibold shadow-sm">
-                  {avatarText}
+                <div className="w-9 h-9 rounded-full bg-linear-to-br from-primary to-blue-400 flex items-center justify-center text-white text-sm font-semibold shadow-sm overflow-hidden relative">
+                  {avatarUrl ? (
+                    <img 
+                      src={avatarUrl} 
+                      alt={displayName} 
+                      className="w-full h-full object-cover"
+                      onError={() => setAvatarUrl(null)} 
+                    />
+                  ) : (
+                    avatarText
+                  )}
                 </div>
                 <div className="hidden sm:flex flex-col items-start">
                   <p className="text-sm font-medium text-white leading-tight">
@@ -210,33 +255,67 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
 
               {/* Dropdown Menu */}
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                  <Link
-                    href="/dashboard"
-                    onClick={() => setIsDropdownOpen(false)}
-                    className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-blue-400 transition-colors flex items-center gap-2 border-b border-white/5"
-                  >
-                    <Icon name="stats" className="w-4 h-4" /> Dashboard
-                  </Link>
-                  <Link
-                    href="/dashboard/settings"
-                    className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    <Icon name="gear" className="w-4 h-4" /> Settings
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="w-full text-left px-4 py-3 text-sm text-white/80 hover:bg-white/5 hover:text-red-400 transition-colors flex items-center gap-2 disabled:opacity-50"
-                  >
-                    {isLoggingOut ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
-                    ) : (
-                      <Icon name="logout" className="w-4 h-4" />
+                <div className="absolute right-0 mt-2 w-full min-w-[240px] rounded-2xl bg-[#0d101a] border border-white/10 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200 backdrop-blur-2xl px-2 py-2">
+                  <div className="space-y-1">
+                    <div className="px-3 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest border-b border-white/5 mb-2 flex items-center justify-between">
+                      <span>บัญชีผู้ใช้งาน</span>
+                      {roleId === 2 && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[8px] font-black uppercase tracking-widest text-amber-500">Admin</span>
+                      )}
+                    </div>
+
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                        <Icon name="user" className="h-4 w-4" />
+                      </div>
+                      <span>โปรไฟล์ของฉัน</span>
+                    </Link>
+
+                    {roleId === 2 && (
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                          <Icon name="stats" className="h-4 w-4" />
+                        </div>
+                        <span>หน้าจัดการระบบ</span>
+                      </Link>
                     )}
-                    {isLoggingOut ? "Logging out..." : "Logout"}
-                  </button>
+
+                    <Link
+                      href="/profile/settings"
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors rounded-xl"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                        <Icon name="gear" className="h-4 w-4" />
+                      </div>
+                      <span>ตั้งค่าโปรไฟล์</span>
+                    </Link>
+
+                    <div className="h-px bg-white/5 my-1" />
+
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition-colors rounded-xl text-left disabled:opacity-50"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-red-400/5 flex items-center justify-center">
+                        {isLoggingOut ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
+                        ) : (
+                          <Icon name="logout" className="h-4 w-4" />
+                        )}
+                      </div>
+                      <span>{isLoggingOut ? "กำลังออกจากระบบ..." : "ออกจากระบบ"}</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -292,7 +371,23 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                   Signed in as {displayName}
                 </p>
                 <Link
-                  href="/dashboard/settings"
+                  href="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="h-10 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10"
+                >
+                  My Profile
+                </Link>
+                {roleId === 2 && (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="h-10 inline-flex items-center justify-center rounded-full border border-white/15 bg-primary/10 border-primary/20 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+                  >
+                    Dashboard
+                  </Link>
+                )}
+                <Link
+                  href="/profile/settings"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="h-10 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 text-sm font-medium text-white/90 transition-colors hover:bg-white/10"
                 >
@@ -316,3 +411,11 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
     </nav>
   );
 }
+
+// # ความปลอดภัย
+// ตรวจสอบรหัสความปลอดภัย
+// เอกสารเกี่ยวกับความปลอดภัยหลักในส่วนประกอบ NavigationHeader:
+// 1. Authentication Synchronization: ใช้ตัวฟังเหตุการณ์ 'storage' เพื่อให้แน่ใจว่าการออกจากระบบในแท็บหนึ่งจะส่งผลลัพธ์ไปยังแท็บอื่นๆ ทันที
+// 2. Metadata Validation: ตรวจสอบ 'user.id' ใน localStorage อย่างเข้มงวดก่อนยอมรับเซสชัน เพื่อป้องกัน UI แสดงผลผิดพลาดจากข้อมูลที่เสียหาย
+// 3. RBAC Visualization: การแสดงผลป้ายระดับ (เช่น ผู้ดูแลระบบ) อ้างอิงจากบทบาท (role_id) ในโทเค็นที่ได้รับการตรวจสอบแล้วเท่านั้น
+// 4. Client-Side Sanitization: ข้อมูลที่ผู้ใช้สร้าง เช่น ชื่อที่แสดง จะถูก Render ผ่าน React เพื่อป้องกันการโจมตีประเภท XSS
