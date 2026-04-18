@@ -20,6 +20,7 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [avatarText, setAvatarText] = useState("U");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -48,6 +49,7 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
           const name = user.display_name?.trim() || "ผู้ใช้งาน";
           setDisplayName(name);
           setAvatarText(name.charAt(0).toUpperCase());
+          setAvatarUrl(user.avatar_url || null);
           setIsLoggedIn(true);
         } catch {
           setIsLoggedIn(false);
@@ -178,13 +180,13 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
                 href="/login"
                 className="h-10 px-6 inline-flex items-center justify-center bg-white/5 border border-white/10 text-sm font-medium rounded-full hover:bg-white/10 transition-all backdrop-blur-sm text-white/80"
               >
-                Log in
+                เข้าสู่ระบบ
               </Link>
               <Link
                 href="/register"
                 className="h-10 px-6 inline-flex items-center justify-center bg-primary text-white text-sm font-medium rounded-full hover:bg-primary-hover transition-all shadow-[0_0_20px_rgba(139,92,246,0.4)]"
               >
-                Get Started
+                สมัครสมาชิก
               </Link>
             </>
           ) : (

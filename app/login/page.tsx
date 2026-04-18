@@ -36,7 +36,7 @@ export default function LoginPage() {
     // โหลดข้อมูลที่จดจำไว้
     const savedEmail = localStorage.getItem("remember_email");
     const savedChecked = localStorage.getItem("remember_me_checked") === "true";
-    
+
     if (savedEmail) {
       setFormData(prev => ({ ...prev, email: savedEmail }));
       setRememberMe(savedChecked);
@@ -67,10 +67,10 @@ export default function LoginPage() {
     const { token, user } = res.data;
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
-    
+
     // Dispatch storage event to notify other components (like NavigationHeader) in the same tab
     window.dispatchEvent(new Event("storage"));
-    
+
     document.cookie = `token=${encodeURIComponent(token)}; path=/; samesite=lax`;
     document.cookie = `role_id=${user.role_id}; path=/; samesite=lax`;
     document.cookie = `display_name=${encodeURIComponent(user.display_name)}; path=/; samesite=lax`;
@@ -90,9 +90,9 @@ export default function LoginPage() {
       const from = params.get("from");
       const safeFrom =
         from &&
-        from.startsWith("/dashboard") &&
-        !from.includes("//") &&
-        !from.includes("\\")
+          from.startsWith("/dashboard") &&
+          !from.includes("//") &&
+          !from.includes("\\")
           ? from
           : null;
       router.replace(safeFrom ?? "/dashboard");
@@ -138,7 +138,7 @@ export default function LoginPage() {
               CODEAREA
             </h1>
             <p className="mb-10 max-w-[280px] text-sm font-medium text-white/50">
-              The ultimate tech command center for visionary developers.
+              เพิ่มทักษะการเขียนโปรแกรมได้ที่นี่
             </p>
 
             <div className="h-1 w-12 rounded-full bg-violet-500/50" />
