@@ -163,7 +163,6 @@ export const ManagementCard = ({
               <Icon name="link" className="w-4 h-4 text-emerald-400" />
               <p className="text-xs font-bold text-white/60 uppercase tracking-wider">
                 {questionCount.toLocaleString()} {unitLabel}
-
               </p>
             </div>
           )}

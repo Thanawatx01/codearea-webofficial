@@ -62,8 +62,6 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
           const name = user.display_name?.trim() || "ผู้ใช้งาน";
           setDisplayName(name);
           setAvatarText(name.charAt(0).toUpperCase());
-          setAvatarUrl(user.avatar_url || null);
-          setRoleId(user.role_id ?? 1);
           setIsLoggedIn(true);
         } catch {
           setIsLoggedIn(false);
