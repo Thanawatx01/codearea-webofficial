@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -72,10 +72,31 @@ export default function ProfilePage() {
     tags: [] as { name: string; count: number }[],
     solvedQuestions: [] as any[]
   });
-  const [isMounted, setIsMounted] = useState(false);
+  // ใช้ Callback Ref + ResizeObserver ตรวจจับว่า container มีขนาดจริงแล้วจึงแสดง Recharts
+  // Callback ref จะทำงานทันทีที่ DOM element ถูกสร้าง — ไม่ขึ้นกับ isLoading
+  const [chartReady, setChartReady] = useState(false);
+  const roRef = useRef<ResizeObserver | null>(null);
 
-  useEffect(() => {
-    setIsMounted(true);
+  const chartContainerRef = useCallback((node: HTMLDivElement | null) => {
+    // ล้าง observer เก่า
+    if (roRef.current) {
+      roRef.current.disconnect();
+      roRef.current = null;
+    }
+    if (!node) return;
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setChartReady(true);
+          ro.disconnect();
+          return;
+        }
+      }
+    });
+    roRef.current = ro;
+    ro.observe(node);
   }, []);
 
   // ฟังก์ชัน fetchData
@@ -326,10 +347,10 @@ export default function ProfilePage() {
                           </button>
                         </div>
 
-                        <div className="flex-1 min-h-[250px] w-full flex items-center justify-center min-w-0 min-h-0">
+                        <div ref={chartContainerRef} className="flex-1 min-h-[250px] w-full flex items-center justify-center">
                           {(chartTab === "category" ? stats.categories : stats.tags).length > 0 ? (
                             <div className="flex-1 flex flex-col w-full h-full">
-                              <div className="relative w-full h-[220px] -ml-2 min-w-0 min-h-0">
+                              <div className="relative w-full h-[220px] -ml-2">
                                 {(() => {
                                   const sourceData = chartTab === "category" ? stats.categories : stats.tags;
                                   const currentData = [...sourceData];
@@ -338,10 +359,10 @@ export default function ProfilePage() {
                                   }
                                   const maxVal = Math.max(...currentData.map(d => d.count), 5);
 
-                                  if (!isMounted) return <div className="w-full h-full bg-white/5 animate-pulse rounded-full" />;
+                                  if (!chartReady) return <div className="w-full h-full bg-white/5 animate-pulse rounded-full" />;
 
                                   return (
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={50}>
+                                    <ResponsiveContainer width="100%" height="100%" debounce={50}>
                                       <RadarChart cx="50%" cy="50%" outerRadius="65%" data={currentData}>
                                         <PolarGrid stroke="rgba(255,255,255,0.1)" />
                                         <PolarAngleAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 'bold' }} />

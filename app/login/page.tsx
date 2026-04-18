@@ -16,6 +16,7 @@ interface LoginResponse {
     email: string;
     display_name: string;
     role_id: number;
+    avatar_url: string | null;
   };
 }
 
@@ -97,7 +98,7 @@ export default function LoginPage() {
           : null;
       router.replace(safeFrom ?? "/dashboard");
     } else {
-      router.replace("/");
+      router.replace("/profile");
     }
   };
 
