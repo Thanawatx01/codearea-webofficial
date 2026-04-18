@@ -39,11 +39,13 @@ export default function CategoryDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      const useToken =
+        typeof window !== "undefined" && Boolean(localStorage.getItem("token"));
 
       // ดึงข้อมูล category
       const catRes = await api.get<{ data: Category }>(
         `/question-categories/${id}`,
-        { useToken: true }, // เพิ่มตรงนี้
+        { useToken },
       );
 
       if (!catRes.ok || !catRes.data?.data) {
@@ -56,7 +58,7 @@ export default function CategoryDetailPage() {
       // ดึงโจทย์ตาม category
       const probRes = await api.get<{ data: Problem[] }>(
         `/questions`,
-        { params: { category_id: id, status: "1", limit: 50 }, useToken: true }, // เพิ่มตรงนี้
+        { params: { category_id: id, status: "1", limit: 50 }, useToken },
       );
 
       if (probRes.ok && probRes.data?.data) {

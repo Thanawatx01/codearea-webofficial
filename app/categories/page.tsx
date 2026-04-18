@@ -17,9 +17,11 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     const fetchCategories = async () => {
+      const useToken =
+        typeof window !== "undefined" && Boolean(localStorage.getItem("token"));
       const res = await api.get<{ data: Category[] }>(
         "/question-categories/list",
-        { useToken: true },
+        { useToken },
       );
       if (res.ok && res.data?.data) {
         setCategories(res.data.data);
