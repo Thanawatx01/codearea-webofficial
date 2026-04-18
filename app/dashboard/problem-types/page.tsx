@@ -259,20 +259,48 @@ export default function ProblemTypesPage() {
 
     setIsSubmitting(true);
     try {
+      Swal.fire({
+        title: "กำลังบันทึก...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+        background: "#1a1c2e",
+        color: "#fff",
+      });
+
       const res = await api.put(`/question-categories/${id}`, { name: trimmed }, { useToken: true });
       if (res.ok) {
         setTypes(prev => prev.map(t => t.id === id ? { ...t, name: trimmed } : t));
         setEditingId(null);
         setEditingName("");
+
+        await Swal.fire({
+          icon: "success",
+          title: "สำเร็จ",
+          text: "ปรับปรุงประเภทโจทย์เรียบร้อยแล้ว",
+          background: "#1a1c2e",
+          color: "#fff",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       } else {
-        alert(res.error || "Failed to update category");
+        throw new Error(res.error || "Failed to update category");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error updating category:", err);
+      void Swal.fire({
+        icon: "error",
+        title: "เกิดข้อผิดพลาด",
+        text: err.message || "ไม่สามารถแก้ไขประเภทโจทย์ได้",
+        background: "#1a1c2e",
+        color: "#fff",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   const handleClearFilters = () => {
     setSearchQuery("");
