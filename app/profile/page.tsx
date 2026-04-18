@@ -337,7 +337,7 @@ export default function ProfilePage() {
                                     currentData.push({ name: `\u200B${currentData.length}`, count: 0 });
                                   }
                                   const maxVal = Math.max(...currentData.map(d => d.count), 5);
-                                  
+
                                   if (!isMounted) return <div className="w-full h-full bg-white/5 animate-pulse rounded-full" />;
 
                                   return (
@@ -505,7 +505,7 @@ export default function ProfilePage() {
               {activeTab === "questions" && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-white">Solved Questions</h3>
+                    <h3 className="text-lg font-bold text-white">โจทย์ที่ทำสำเร็จ</h3>
                   </div>
 
                   {/* For now we show a placeholder for specific solved questions list, but count is real */}
@@ -530,8 +530,8 @@ export default function ProfilePage() {
 
                           <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
                             <div className="flex flex-col gap-0.5">
-                              <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest leading-none">Category</p>
-                              <p className="text-xs text-white/60 font-medium truncate max-w-[120px]">{q.category_name || "General"}</p>
+                              <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest leading-none">หมวดหมู่</p>
+                              <p className="text-xs text-white/60 font-medium truncate max-w-[120px]">{q.category_name || "ทั่วไป"}</p>
                             </div>
                             <Link
                               href={`/questions/${q.code}`}
