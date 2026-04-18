@@ -5,30 +5,10 @@ import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
 import { initialTags, type TagItem } from "./data";
 import { api } from "@/lib/api";
+import Swal from "sweetalert2";
 
-const TagIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>
-);
-
-const SearchIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-);
-
-const PlusIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-);
-
-const FilterIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-);
-
-const SortIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
-);
-
-const XIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-);
+import { Icon } from "@/components/icons/Icon";
+import { ManagementCard } from "@/components/ManagementCard";
 
 type SortOrder = "popular" | "least" | "newest";
 
@@ -59,7 +39,20 @@ export default function TagsPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("popular");
   const [isLoadingCounts, setIsLoadingCounts] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [openMenuId, setOpenMenuId] = useState<string | number | null>(null);
 
+  // ฟังก์ชัน fetchTagsWithCounts
+  // ดึงข้อมูลรายการแท็กพร้อมจำนวนโจทย์จาก API หลังบ้าน
+  // เริ่มโหลด -> ขอข้อมูลจาก API -> กรอง/คัดแยกผลลัพธ์ -> อัปเดตสถานะแท็ก -> หยุดโหลด
+  // 1. ตั้งค่า isLoadingCounts เป็น true เพื่อแสดงสถานะการโหลด
+  // 2. ดึงข้อมูลแท็กจาก /api/tags โดยใช้ฟังก์ชันช่วยของ API ที่มีการระบุตัวตน
+  // 3. จัดการรูปแบบการตอบกลับที่หลากหลายจาก API (data, rows, items, results)
+  // 4. แปลงข้อมูลแถวจาก API เป็นวัตถุ TagItem และทำการฆ่าเชื้อข้อมูล (sanitization)
+  // 5. อัปเดตสถานะแท็กในเครื่องหากพบข้อมูลที่แปลงมาได้
+  // 6. ตั้งค่า isLoadingCounts เป็น false เมื่อเสร็จสิ้น
   const fetchTagsWithCounts = useCallback(async () => {
     setIsLoadingCounts(true);
     try {
@@ -85,7 +78,6 @@ export default function TagsPage() {
             setTags(mapped);
           }
         } else {
-          // If API returns successfully but empty, we keep initial tags (the placeholders)
           console.log("Tags API returned empty, keeping placeholders");
         }
       }
@@ -101,6 +93,9 @@ export default function TagsPage() {
     }
   }, [isAuthorized, fetchTagsWithCounts]);
 
+  // ระบบความปลอดภัย
+  // บังคับใช้การควบคุมการเข้าถึงตามบทบาท (RBAC) เพื่อให้แน่ใจว่าเฉพาะผู้ดูแลระบบที่มีสิทธิ์ (role_id === 2) เท่านั้นที่สามารถจัดการแท็กได้
+  // หากผู้ใช้ไม่มีสิทธิ์ จะถูกส่งไปที่หน้าหลักของ dashboard โจทย์
   useEffect(() => {
     const userJson = localStorage.getItem("user");
     if (userJson) {
@@ -147,13 +142,136 @@ export default function TagsPage() {
     [tags],
   );
 
-  const handleAddTag = (e: React.FormEvent) => {
+  // ฟังก์ชัน handleAddTag
+  // สร้างบันทึกแท็กใหม่ผ่าน API และอัปเดตสถานะในหน้าจอ
+  // ตัดช่องว่าง -> ตรวจสอบชื่อซ้ำ -> ส่งข้อมูล POST ไปที่ /api/tags -> อัปเดตรายการในเครื่อง -> ล้างค่าช่องกรอก
+  // 1. ป้องกันการทำงานเริ่มต้นของฟอร์ม (reload หน้า)
+  // 2. ตัดช่องว่างและตรวจสอบว่าแท็กนี้มีอยู่แล้วในเครื่องหรือไม่
+  // 3. ส่งคำขอ POST ไปยังระบบหลังบ้านพร้อมชื่อแท็กใหม่
+  // 4. หากสำเร็จ ให้นำแท็กใหม่ใส่ไว้หน้าสุดของรายการแท็กในเครื่อง
+  // 5. ล้างค่าในช่องกรอกข้อมูลและปิดโหมดการเพิ่มแท็ก
+  const handleAddTag = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newTag.trim();
     if (trimmed && !tags.some((t) => t.name === trimmed)) {
-      setTags([{ id: `tag-${Date.now()}`, name: trimmed, questionCount: 0 }, ...tags]);
-      setNewTag("");
-      setIsAdding(false);
+      setIsSubmitting(true);
+      try {
+        const res = await api.post<TagApiRow>("/tags", { name: trimmed }, { useToken: true });
+        if (res.ok && res.data) {
+          const newId = res.data.id ?? `tag-${Date.now()}`;
+          setTags([{ id: newId, name: trimmed, questionCount: 0 }, ...tags]);
+          setNewTag("");
+          setIsAdding(false);
+        } else {
+          alert(res.error || "Failed to create tag");
+        }
+      } catch (err) {
+        console.error("Error creating tag:", err);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  // ฟังก์ชัน handleDeleteTag
+  // ลบแท็กออกจากระบบหลังจากเสร็จสิ้นการยืนยันจากผู้ใช้
+  // ถามผู้ใช้ -> แสดงสถานะกำลังโหลด -> แจ้ง API ให้ลบ -> กรองสถานะในเครื่องออก -> แสดงข้อความสำเร็จ
+  // 1. แสดงหน้าต่างยืนยันการลบ (SweetAlert2)
+  // 2. หากยืนยัน ให้แสดงสถานะกำลังโหลดขณะกำลังดำเนินการลบ
+  // 3. ส่งคำขอ DELETE ไปที่ /api/tags/:id
+  // 4. เมื่อสำเร็จ ให้นำแท็กนั้นออกจากรายการในเครื่อง
+  // 5. แสดงการแจ้งเตือนความสำเร็จให้ผู้ใช้ทราบ
+  const handleDeleteTag = async (id: string | number) => {
+    const result = await Swal.fire({
+      title: "ลบแท็ก?",
+      text: "คุณแน่ใจหรือไม่ว่าต้องการลบแท็กนี้? การกระทำนี้ไม่สามารถย้อนกลับได้",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "ลบแท็ก",
+      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#ef4444",
+      background: "#1a1c2e",
+      color: "#fff",
+    });
+
+    if (result.isConfirmed) {
+      setIsSubmitting(true);
+      try {
+        Swal.fire({
+          title: "กำลังลบ...",
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+          background: "#1a1c2e",
+          color: "#fff",
+        });
+
+        const res = await api.delete(`/tags/${id}`, { useToken: true });
+        if (res.ok) {
+          setTags(prev => prev.filter(t => t.id !== id));
+          await Swal.fire({
+            icon: "success",
+            title: "สำเร็จ",
+            text: "ลบแท็กเรียบร้อยแล้ว",
+            background: "#1a1c2e",
+            color: "#fff",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        } else {
+          throw new Error(res.error || "Failed to delete tag");
+        }
+      } catch (err: any) {
+        console.error("Error deleting tag:", err);
+        void Swal.fire({
+          icon: "error",
+          title: "เกิดข้อผิดพลาด",
+          text: err.message || "ไม่สามารถลบแท็กได้",
+          background: "#1a1c2e",
+          color: "#fff",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const handleStartEdit = (item: TagItem) => {
+    setEditingId(item.id);
+    setEditingName(item.name);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingName("");
+  };
+
+  // ฟังก์ชัน handleUpdateTag
+  // บันทึกชื่อแท็กที่แก้ไขไปยังระบบหลังบ้าน
+  // ตรวจสอบข้อมูล -> แจ้ง API ให้แก้ไข (PUT) -> อัปเดตข้อมูลในหน้าจอ -> ล้างสถานะการแก้ไข
+  // 1. ตรวจสอบว่าชื่อแท็กที่แก้ไขต้องไม่ว่างเปล่า
+  // 2. ส่งคำขอ PUT ไปที่ /api/tags/:id ผ่านระบบหลังบ้าน
+  // 3. อัปเดตชื่อแท็กที่ระบุในรายการแท็กในเครื่องโดยใช้ map
+  // 4. ออกจากโหมดการแก้ไขและล้างสถานะชั่วคราวออก
+  const handleUpdateTag = async (id: string | number) => {
+    const trimmed = editingName.trim();
+    if (!trimmed) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await api.put<TagApiRow>(`/tags/${id}`, { name: trimmed }, { useToken: true });
+      if (res.ok) {
+        setTags(prev => prev.map(t => t.id === id ? { ...t, name: trimmed } : t));
+        setEditingId(null);
+        setEditingName("");
+      } else {
+        alert(res.error || "Failed to update tag");
+      }
+    } catch (err) {
+      console.error("Error updating tag:", err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -177,13 +295,13 @@ export default function TagsPage() {
 
   return (
     <>
-      <Header title="จัดการแท็ก" icon={<TagIcon />} />
+      <Header title="จัดการแท็ก" icon={<Icon name="tag" className="w-5 h-5" />} />
       <main className="flex-1 p-6 space-y-6 overflow-y-auto w-full max-w-7xl mx-auto">
         {/* Top Stats Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/5 shadow-2xl flex items-center gap-5 group transition-all duration-300 hover:bg-white/[0.08]">
             <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 group-hover:scale-105 transition-transform">
-              <TagIcon />
+              <Icon name="tag" className="w-5 h-5" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">แท็กทั้งหมด</p>
@@ -192,7 +310,7 @@ export default function TagsPage() {
           </div>
           <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/5 shadow-2xl flex items-center gap-5 group transition-all duration-300 hover:bg-white/[0.08]">
             <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 group-hover:scale-105 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400 group-hover:scale-110 transition-transform"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <Icon name="check" className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">คำถามรวมทั้งหมด</p>
@@ -203,52 +321,43 @@ export default function TagsPage() {
 
         <div className="space-y-4">
           {/* Action Bar */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#1a1c2e]/60 backdrop-blur-2xl p-4 rounded-3xl border border-white/10 shadow-xl">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative group">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-[#1a1c2e]/60 backdrop-blur-2xl p-5 md:p-6 rounded-[2rem] border border-white/10 shadow-xl">
+            <div className="flex flex-col md:flex-row md:items-center gap-4 flex-1">
+              <div className="relative group w-full md:w-auto">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-white/20 group-focus-within:text-primary transition-colors">
-                  <SearchIcon />
+                  <Icon name="search" className="w-4 h-4" />
                 </div>
                 <input
                   type="text"
                   placeholder="ค้นหาแท็ก..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-black/30 transition-all w-full sm:w-64"
+                  className="bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-black/30 transition-all w-full md:w-64"
                 />
               </div>
 
-              <div className="flex items-center gap-2 p-1 bg-black/20 rounded-xl border border-white/5 overflow-hidden">
-                <div className="px-3 py-1.5 flex items-center gap-2 border-r border-white/5">
-                  <SortIcon />
+              <div className="flex flex-wrap items-center gap-1.5 p-1 bg-black/20 rounded-xl border border-white/5 w-fit">
+                <div className="px-3 py-1.5 flex items-center gap-2 border-r border-white/5 hidden sm:flex">
+                  <Icon name="sort" className="w-4 h-4" />
                   <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">จัดเรียง:</span>
                 </div>
-                <button
-                  onClick={() => setSortOrder("popular")}
-                  className={`px-3 py-1 text-[11px] font-bold transition-all rounded-lg ${sortOrder === "popular" ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}
-                >
-                  ยอดนิยม
-                </button>
-                <button
-                  onClick={() => setSortOrder("newest")}
-                  className={`px-3 py-1 text-[11px] font-bold transition-all rounded-lg ${sortOrder === "newest" ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}
-                >
-                  ใหม่ล่าสุด
-                </button>
-                <button
-                  onClick={() => setSortOrder("least")}
-                  className={`px-3 py-1 text-[11px] font-bold transition-all rounded-lg ${sortOrder === "least" ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}
-                >
-                  น้อยสุด
-                </button>
+                {(["popular", "newest", "least"] as SortOrder[]).map((order) => (
+                  <button
+                    key={order}
+                    onClick={() => setSortOrder(order)}
+                    className={`px-3 py-1.5 text-[11px] font-bold transition-all rounded-lg ${sortOrder === order ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"}`}
+                  >
+                    {order === "popular" ? "ยอดนิยม" : order === "newest" ? "ใหม่ล่าสุด" : "น้อยสุด"}
+                  </button>
+                ))}
               </div>
 
               {hasActiveFilters && (
                 <button
                   onClick={handleClearFilters}
-                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-red-400 hover:text-red-300 transition-colors bg-red-400/5 hover:bg-red-400/10 rounded-xl"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold text-red-400 hover:text-red-300 transition-colors bg-red-400/5 hover:bg-red-400/10 rounded-xl w-full md:w-auto"
                 >
-                  <XIcon />
+                  <Icon name="x" className="w-3.5 h-3.5" />
                   ล้างตัวกรอง
                 </button>
               )}
@@ -256,25 +365,25 @@ export default function TagsPage() {
 
             <button
               onClick={() => setIsAdding(true)}
-              className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary-hover hover:scale-[1.02] shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-95"
+              className="px-6 py-3 bg-primary text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary-hover hover:scale-[1.02] shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-95 w-full xl:w-auto"
             >
-              <PlusIcon />
+              <Icon name="plus" className="w-4 h-4" />
               เพิ่มแท็กใหม่
             </button>
           </div>
 
           {/* Grid of Tags */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {isAdding && (
               <div className="bg-primary/20 border-2 border-dashed border-primary/40 rounded-3xl p-6 transition-all animate-in zoom-in duration-300">
                 <form onSubmit={handleAddTag} className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-2">
-                       <PlusIcon />
+                      <Icon name="plus" className="w-3.5 h-3.5" />
                       สร้างใหม่
                     </span>
                     <button type="button" onClick={() => setIsAdding(false)} className="text-white/40 hover:text-white">
-                      <XIcon />
+                      <Icon name="x" className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <div className="space-y-3">
@@ -289,7 +398,8 @@ export default function TagsPage() {
                     <div className="flex gap-2 pt-1">
                       <button
                         type="submit"
-                        className="flex-1 py-2 bg-primary text-white text-[11px] font-bold rounded-lg hover:bg-primary-hover transition-colors"
+                        disabled={isSubmitting}
+                        className="flex-1 py-2 bg-primary text-white text-[11px] font-bold rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50"
                       >
                         เพิ่มทันที
                       </button>
@@ -300,56 +410,33 @@ export default function TagsPage() {
             )}
 
             {filteredAndSortedTags.map((item, idx) => (
-              <div
-                key={item.name}
-                className={`group relative overflow-hidden bg-white/5 border border-white/5 rounded-3xl p-6 transition-all duration-300 hover:bg-white/[0.08] hover:border-white/10 hover:-translate-y-1 hover:shadow-2xl animate-in fade-in slide-in-from-bottom-4`}
-                style={{ animationDelay: `${idx * 50}ms` }}
-              >
-                <div className="absolute -top-6 -right-6 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-all"></div>
-
-                <div className="relative flex flex-col h-full space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 bg-white/5 rounded-2xl flex items-center justify-center border border-white/5 group-hover:border-primary/30 transition-all rotate-3 group-hover:rotate-6">
-                      <TagIcon />
-                    </div>
-                    <div className="px-2.5 py-1 bg-white/5 border border-white/5 rounded-lg text-[10px] font-bold text-white/30 uppercase tracking-tighter">
-                      ID: {item.id}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors truncate">
-                      {item.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span>
-                      <p className="text-xs font-bold text-white/40 uppercase tracking-wider">
-                        {item.questionCount.toLocaleString()} Problems
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex items-center justify-between mt-auto border-t border-white/5">
-                    <button 
-                      onClick={() => router.push(`/dashboard/problems?tag=${item.id}`)}
-                      className="text-[11px] font-black text-white/30 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-1.5"
-                    >
-                      View details
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                    </button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded-xl bg-red-400/5 text-red-400/30 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <ManagementCard
+                key={item.id}
+                id={item.id}
+                name={item.name}
+                questionCount={item.questionCount}
+                isEditing={editingId === item.id}
+                isSubmitting={isSubmitting}
+                editValue={editingName}
+                setEditValue={setEditingName}
+                onUpdate={handleUpdateTag}
+                onCancelEdit={handleCancelEdit}
+                onStartEdit={() => handleStartEdit(item)}
+                onDelete={handleDeleteTag}
+                viewUrl={`/dashboard/problems?tag=${item.id}`}
+                unitLabel="โจทย์"
+                entityName="แท็ก"
+                index={idx}
+                openMenuId={openMenuId}
+                setOpenMenuId={setOpenMenuId}
+              />
             ))}
           </div>
 
           {filteredAndSortedTags.length === 0 && !isAdding && (
             <div className="py-20 text-center space-y-4">
               <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto border border-white/5">
-                <TagIcon />
+                <Icon name="tag" className="w-8 h-8 text-white/20" />
               </div>
               <p className="text-white/40 font-bold uppercase tracking-widest text-sm italic">ไม่พบแท็กที่ต้องการค้นหา</p>
             </div>
