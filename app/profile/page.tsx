@@ -1,16 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import Cropper from "react-easy-crop";
-import { getCroppedImg, type Area, base64ToBlob } from "@/lib/imageUtils";
-import Swal from "sweetalert2";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
 
-
-// Define TypeScript interfaces for our data
+// กำหนดอินเทอร์เฟซของ TypeScript สำหรับข้อมูลของเรา
 interface TechBadge {
   name: string;
   color: string;
@@ -30,10 +27,20 @@ interface GithubStyleProfileData {
   website: string;
   twitter: string;
   role: string;
+  phone?: string;
+  dob?: string;
 }
 
+// ส่วนประกอบหน้า Profile (โปรไฟล์)
+// นี่คือส่วนประกอบหลักของหน้าโปรไฟล์ที่แสดงสถิติผู้ใช้ ผลการทำงาน และกิจกรรมล่าสุด
+// 1. กำหนดค่าเริ่มต้นให้กับข้อมูลโปรไฟล์ สถิติ และการส่งคำตอบ
+// 2. เปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบหากโทเค็นการยืนยันตัวตนหายไป
+// 3. ดึงข้อมูลผู้ใช้ที่ครอบคลุม (สรุป กิจกรรม การส่งคำตอบ) เมื่อเริ่มโหลดส่วนประกอบ
+// 4. แสดงผลแดชบอร์ดที่รองรับหลายอุปกรณ์พร้อมแถบนำทาง (ภาพรวม, คำถาม, การส่งคำตอบ)
 export default function ProfilePage() {
   const router = useRouter();
+  
+  // --- States ---
   const [profileData, setProfileData] = useState<GithubStyleProfileData>({
     name: "User",
     username: "user_developer",
@@ -49,10 +56,10 @@ export default function ProfilePage() {
     role: "Developer Program Member",
   });
   const [roleId, setRoleId] = useState<number>(1);
-
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
-
+  const [chartTab, setChartTab] = useState<"category" | "tags">("category");
+  const [submissions, setSubmissions] = useState<any[]>([]);
   const [stats, setStats] = useState({
     xp: 0,
     solvedCount: 0,
@@ -61,176 +68,88 @@ export default function ProfilePage() {
     failedCount: 0,
     accuracy: 0,
     recentActivity: [] as any[],
-    categories: [] as { name: string; count: number }[]
+    categories: [] as { name: string; count: number }[],
+    tags: [] as { name: string; count: number }[],
+    solvedQuestions: [] as any[]
   });
 
-  const [submissions, setSubmissions] = useState<any[]>([]);
+  // ฟังก์ชัน fetchData
+  // ดึงข้อมูลที่จำเป็นทั้งหมดสำหรับหน้าโปรไฟล์จาก local storage และ API
+  // 1. แยกวิเคราะห์ข้อมูลผู้ใช้พื้นฐานจาก localStorage เพื่อแสดงผล UI ทันที
+  // 2. เรียก /users/profile/me เพื่อรับรายละเอียด XP สถิติ และประวัติกิจกรรม
+  // 3. เรียก /submissions เพื่อรับผลการตรวจล่าสุดสำหรับฟีด
+  // 4. อัปเดตสถานะและจัดการเมื่อการโหลดเสร็จสิ้น
+  const fetchData = useCallback(async (userRaw: string) => {
+    try {
+      // ขั้นตอนที่ 1: เตรียมข้อมูลโปรไฟล์จากข้อมูลใน local storage
+      // 1. แยกวิเคราะห์ JSON ของผู้ใช้
+      const user = JSON.parse(userRaw);
+      setProfileData((prev) => ({
+        ...prev,
+        name: user.display_name?.trim() || "User",
+        username: user.email?.split("@")[0] || "user_developer",
+        email: user.email || "user@example.com",
+        avatarUrl: user.avatar_url || "",
+        role: user.role_id === 2 ? "Administrator" : "Developer Program Member",
+      }));
+      setRoleId(user.role_id || 1);
 
-  // --- Inline Edit & Cropper States ---
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", bio: "" });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+      // ขั้นตอนที่ 2: ดึงสถิติโดยละเอียดและข้อมูลสรุปจาก API
+      // 2. ร้องขอสรุปโปรไฟล์ผ่าน API ที่มีการยืนยันตัวตน
+      const summaryRes = await api.get<any>("/users/profile/me", { useToken: true });
+      if (summaryRes.ok && summaryRes.data) {
+        const d = summaryRes.data;
+        setStats({
+          xp: d.user.xp,
+          solvedCount: d.user.solved_count,
+          totalSubmissions: d.user.total_submissions,
+          passedCount: d.user.passed_count,
+          failedCount: d.user.failed_count,
+          accuracy: d.user.accuracy,
+          recentActivity: d.recent_activity || [],
+          categories: d.category_stats || [],
+          tags: d.tag_stats || [],
+          solvedQuestions: d.solved_questions || []
+        });
+        
+        setProfileData(prev => ({
+          ...prev,
+          avatarUrl: d.user.avatar_url || prev.avatarUrl,
+          bio: d.user.bio || "",
+          location: d.user.location || "",
+          phone: d.user.phone || "",
+          dob: d.user.dob || ""
+        }));
+      }
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-  const [isCropping, setIsCropping] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+      // ขั้นตอนที่ 3: ดึงข้อมูลการส่งคำตอบล่าสุดสำหรับรายการบนแดชบอร์ด
+      // 3. ร้องขอการส่งคำตอบล่าสุด (จำกัด 10 รายการ)
+      const subRes = await api.get<any>("/submissions", { useToken: true, params: { limit: 10 } });
+      if (subRes.ok && subRes.data) {
+        setSubmissions(subRes.data.data || []);
+      }
 
-  // Load user data on mount
+    } catch (error) {
+      console.error("Failed to fetch profile data", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // ผลกระทบในการเริ่มต้น (Initialization Effect)
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userRaw = localStorage.getItem("user");
 
+    // 1. ตรวจสอบโทเค็นการยืนยันตัวตน
     if (!token || !userRaw) {
       router.replace("/login");
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        // 1. Get Basic User Info (Parsed from local storage or updated via API)
-        const user = JSON.parse(userRaw);
-        setProfileData((prev) => ({
-          ...prev,
-          name: user.display_name?.trim() || "User",
-          username: user.email?.split("@")[0] || "user_developer",
-          email: user.email || "user@example.com",
-          avatarUrl: user.avatar_url || "",
-          role: user.role_id === 2 ? "Administrator" : "Developer Program Member",
-        }));
-        setRoleId(user.role_id || 1);
-
-        // 2. Fetch Profile Summary (XP, Stats, Activity)
-        const summaryRes = await api.get<any>("/users/profile/me", { useToken: true });
-        if (summaryRes.ok && summaryRes.data) {
-          const d = summaryRes.data;
-          setStats({
-            xp: d.user.xp,
-            solvedCount: d.user.solved_count,
-            totalSubmissions: d.user.total_submissions,
-            passedCount: d.user.passed_count,
-            failedCount: d.user.failed_count,
-            accuracy: d.user.accuracy,
-            recentActivity: d.recent_activity || [],
-            categories: d.category_stats || []
-          });
-          
-          setProfileData(prev => ({
-            ...prev,
-            avatarUrl: d.user.avatar_url || prev.avatarUrl,
-            bio: d.user.bio || "",
-            location: d.user.location || "",
-            phone: d.user.phone || "",
-            dob: d.user.dob || ""
-          }));
-          setAvatarPreview(d.user.avatar_url || null);
-        }
-
-        // 3. Fetch Submissions for the feed
-        const subRes = await api.get<any>("/submissions", { useToken: true, params: { limit: 10 } });
-        if (subRes.ok && subRes.data) {
-          setSubmissions(subRes.data.data || []);
-        }
-
-      } catch (error) {
-        console.error("Failed to fetch profile data", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [router]);
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageToCrop(reader.result as string);
-        setIsCropping(true);
-      };
-      reader.readAsDataURL(file);
-      e.target.value = "";
-    }
-  };
-
-  const onCropComplete = useCallback((_: any, pixels: Area) => {
-    setCroppedAreaPixels(pixels);
-  }, []);
-
-  const handleApplyCrop = async () => {
-    if (imageToCrop && croppedAreaPixels) {
-      try {
-        const croppedImage = await getCroppedImg(imageToCrop, croppedAreaPixels);
-        setAvatarPreview(croppedImage);
-        setIsCropping(false);
-        setImageToCrop(null);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  };
-
-  const handleEditClick = () => {
-    setEditForm({ name: profileData.name, bio: profileData.bio });
-    setIsEditing(true);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setAvatarPreview(profileData.avatarUrl); // Reset avatar changes if any
-  };
-
-  const handleSaveProfile = async () => {
-    setIsSubmitting(true);
-    try {
-      const userRaw = localStorage.getItem("user");
-      if (!userRaw) throw new Error("No user found");
-      const user = JSON.parse(userRaw);
-
-      let currentAvatarUrl = avatarPreview;
-
-      if (avatarPreview && avatarPreview.startsWith("data:")) {
-        const blur = await base64ToBlob(avatarPreview);
-        const formDataObj = new FormData();
-        formDataObj.append("avatar", blur, "avatar.webp");
-        const uploadRes = await api.post<{ avatar_url: string }>(`/users/${user.id}/avatar`, formDataObj, { useToken: true });
-        if (!uploadRes.ok || !uploadRes.data) throw new Error(uploadRes.error || "Failed to upload avatar");
-        currentAvatarUrl = uploadRes.data.avatar_url;
-      }
-
-      const res = await api.put<any>(`/users/${user.id}`, {
-        display_name: editForm.name,
-        bio: editForm.bio,
-        avatar_url: currentAvatarUrl,
-      }, { useToken: true });
-
-      if (!res.ok || !res.data) throw new Error(res.error || "Error saving profile");
-
-      const updated = res.data;
-
-      localStorage.setItem("user", JSON.stringify({ ...user, display_name: updated.display_name, avatar_url: updated.avatar_url }));
-
-      setProfileData(p => ({
-        ...p,
-        name: updated.display_name,
-        bio: updated.bio || "",
-        avatarUrl: updated.avatar_url,
-      }));
-      setAvatarPreview(updated.avatar_url);
-      setIsEditing(false);
-
-      await Swal.fire({ icon: "success", title: "สำเร็จ", text: "อัปเดตโปรไฟล์เรียบร้อยแล้ว", timer: 1500, showConfirmButton: false, background: "#1a1c2e", color: "#fff" });
-    } catch (e: any) {
-      void Swal.fire({ icon: "error", title: "ผิดพลาด", text: e.message || "Failed to save profile", background: "#1a1c2e", color: "#fff" });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    // 2. เริ่มต้นการดึงข้อมูล
+    fetchData(userRaw);
+  }, [router, fetchData]);
 
   if (isLoading) {
     return (
@@ -242,114 +161,59 @@ export default function ProfilePage() {
 
   return (
     <>
-      {/* Cropper Modal */}
-      {isCropping && imageToCrop && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#11131f] border border-white/10 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-              <h3 className="font-black uppercase tracking-tighter text-lg">ครอบภาพโปรไฟล์</h3>
-              <button onClick={() => setIsCropping(false)} className="text-white/40 hover:text-white transition-colors">
-                <Icon name="xmark" className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="relative h-[400px] w-full bg-black/40">
-              <Cropper
-                image={imageToCrop}
-                crop={crop}
-                zoom={zoom}
-                aspect={1}
-                cropShape="round"
-                onCropChange={setCrop}
-                onCropComplete={onCropComplete}
-                onZoomChange={setZoom}
-              />
-            </div>
-            <div className="p-8 space-y-6">
-              <div className="space-y-4">
-                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/40">
-                  <span>ซูม</span>
-                  <span>{Math.round(zoom * 100)}%</span>
-                </div>
-                <input
-                  type="range"
-                  value={zoom}
-                  min={1}
-                  max={3}
-                  step={0.1}
-                  aria-labelledby="Zoom"
-                  onChange={(e) => setZoom(Number(e.target.value))}
-                  className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
-                />
-              </div>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setIsCropping(false)}
-                  className="flex-1 py-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] font-black uppercase tracking-widest text-red-500 hover:bg-red-500/20 transition-all"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  onClick={handleApplyCrop}
-                  className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_10px_30px_rgba(16,185,129,0.3)] hover:bg-emerald-500"
-                >
-                  ปรับใช้
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="flex-1 w-full min-h-screen text-white pb-20">
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* แถบนำทาน (Navigation Tabs) */}
+        <div className="flex overflow-x-auto border-b border-white/10 no-scrollbar mb-8 sticky top-[64px] bg-[#05070f]/90 backdrop-blur-md z-30 pt-2 pb-px w-full">
+          {[
+            { id: "dashboard", label: "Overview", icon: "stats", count: null },
+            { id: "questions", label: "Questions Solved", icon: "check-circle", count: stats.solvedCount || 0 },
+            { id: "submissions", label: "Submissions", icon: "activity", count: stats.totalSubmissions || 0 },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+                activeTab === tab.id
+                  ? "border-orange-500 text-white"
+                  : "border-transparent text-white/60 hover:text-white hover:border-white/20 hover:bg-white/5 rounded-t-md"
+              }`}
+            >
+              <Icon name={tab.icon} className={`w-4 h-4 ${activeTab === tab.id ? "text-white/70" : "text-white/40"}`} />
+              {tab.label}
+              {tab.count !== null && (
+                <span className="ml-1 px-2 py-0.5 rounded-full bg-white/10 text-xs text-white/80 font-semibold leading-none flex items-center justify-center">
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-          
           {/* ======================= */}
           {/* LEFT SIDEBAR (xl:col-span-3) */}
           {/* ======================= */}
           <div className="xl:col-span-3 space-y-6">
             
-            {/* Avatar */}
-            <div className="relative group w-[296px] max-w-full mx-auto xl:mx-0">
-              <div className="w-full aspect-square rounded-full border border-white/10 bg-linear-to-br from-[#1a1c3a] to-[#0a0a1a] shadow-2xl flex items-center justify-center p-2 relative overflow-hidden z-10 transition-transform duration-300">
-                {avatarPreview ? (
-                  <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+            {/* รูปโปรไฟล์ (Avatar) */}
+            <div className="relative group w-48 xl:w-[260px] max-w-full mx-auto shrink-0">
+              <div className="w-full aspect-square rounded-full bg-linear-to-br from-primary/20 to-blue-500/20 text-primary flex items-center justify-center font-black border border-white/10 shadow-2xl ring-4 ring-white/5 group-hover:scale-[1.02] transition-all overflow-hidden relative">
+                {profileData.avatarUrl ? (
+                  <img src={profileData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-8xl font-bold text-white/50">{profileData.name.charAt(0).toUpperCase()}</span>
+                  <span className="text-6xl xl:text-8xl font-bold text-white/50">{profileData.name.charAt(0).toUpperCase()}</span>
                 )}
-                <div className="absolute inset-0 rounded-full shadow-[inset_0_0_20px_rgba(255,255,255,0.05)] pointer-events-none"></div>
-                
-                {isEditing && (
-                  <label className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full">
-                    <Icon name="camera" className="w-8 h-8 text-white mb-2" />
-                    <span className="text-xs font-bold text-white tracking-wider">Change Avatar</span>
-                    <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
-                  </label>
-                )}
-              </div>
-              {/* Status Badge */}
-              <div className="absolute bottom-[5%] right-[10%] w-12 h-12 rounded-full border border-yellow-500/30 bg-[#161b22] shadow-lg flex items-center justify-center z-20 hover:scale-110 transition-transform cursor-pointer">
-                <span className="text-lg">💛</span>
               </div>
             </div>
 
-            {/* Display Name & Role */}
-            <div className="space-y-1 text-center xl:text-left pt-2">
-              <div className="flex flex-wrap items-center justify-center xl:justify-start gap-3">
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="w-full bg-[#0d1117] border border-white/20 rounded-md px-3 py-1.5 text-white/90 text-xl font-bold focus:outline-none focus:border-blue-500 shadow-inner"
-                    placeholder="Display Name"
-                  />
-                ) : (
-                  <h1 className="text-2xl font-bold text-white leading-tight break-words">{profileData.name}</h1>
-                )}
+            {/* ชื่อที่แสดงและบทบาท (Display Name & Role) */}
+            <div className="space-y-2 text-center pt-2">
+              <div className="flex flex-col items-center justify-center gap-2">
+                <h1 className="text-2xl font-bold text-white leading-tight break-words">{profileData.name}</h1>
                 
-                {roleId === 2 && !isEditing && (
+                {roleId === 2 && (
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-linear-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)] group/admin">
                     <Icon name="shield" className="w-3.5 h-3.5 text-amber-500 group-hover/admin:scale-110 transition-transform" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Admin</span>
@@ -358,78 +222,27 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Email */}
-            <div className="flex items-center justify-center xl:justify-start gap-2 text-sm text-white/60">
+            {/* อีเมล (Email) */}
+            <div className="flex items-center justify-center gap-2 text-sm text-white/60">
               <Icon name="mail" className="w-4 h-4 text-white/40" />
               <a href={`mailto:${profileData.email}`} className="truncate hover:text-blue-400 hover:underline">{profileData.email}</a>
             </div>
 
-            {/* Bio */}
+            {/* คำแนะนำตัว (Bio) */}
             <div className="pt-2">
-              {isEditing ? (
-                <textarea
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                  className="w-full bg-[#0d1117] border border-white/20 rounded-md px-3 py-2 text-white/90 text-sm focus:outline-none focus:border-blue-500 shadow-inner resize-none h-24"
-                  placeholder="Add a bio"
-                />
-              ) : (
-                <p className="text-sm text-white/80 leading-relaxed text-center xl:text-left break-words">
-                  {profileData.bio || "No bio provided."}
-                </p>
-              )}
+              <p className="text-sm text-white/80 leading-relaxed text-center break-words">
+                {profileData.bio || "No bio provided."}
+              </p>
             </div>
 
-            {/* Actions */}
+            {/* การดำเนินการ (Actions) */}
             <div className="pt-4 space-y-3">
-              {isEditing ? (
-                <>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={handleSaveProfile} 
-                      disabled={isSubmitting}
-                      className="flex-1 py-1.5 px-3 rounded-md bg-emerald-600/20 border border-emerald-500/30 text-sm font-semibold hover:bg-emerald-600/30 text-emerald-400 transition-all disabled:opacity-50"
-                    >
-                      {isSubmitting ? "Saving..." : "Save"}
-                    </button>
-                    <button 
-                      onClick={handleCancelEdit} 
-                      disabled={isSubmitting}
-                      className="flex-1 py-1.5 px-3 rounded-md bg-[#21262d] border border-white/10 text-sm font-semibold hover:bg-[#30363d] text-white/80 transition-all disabled:opacity-50"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  {/* Settings Modes */}
-                  <div className="flex items-center justify-center gap-6 pt-5 border-t border-white/10 mt-4">
-                    <Link href="/profile/settings" title="Change Password" className="flex flex-col items-center gap-1.5 group">
-                      <div className="p-2.5 rounded-xl bg-[#21262d] border border-white/5 group-hover:bg-amber-500/20 group-hover:border-amber-500/30 group-hover:text-amber-500 text-white/50 transition-all shadow-sm">
-                        <Icon name="key" className="w-4 h-4" />
-                      </div>
-                      <span className="text-[9px] text-white/40 font-bold group-hover:text-white/80 transition-colors uppercase tracking-wider">Password</span>
-                    </Link>
-                    <Link href="/profile/settings" title="Change Email" className="flex flex-col items-center gap-1.5 group">
-                      <div className="p-2.5 rounded-xl bg-[#21262d] border border-white/5 group-hover:bg-blue-500/20 group-hover:border-blue-500/30 group-hover:text-blue-500 text-white/50 transition-all shadow-sm">
-                        <Icon name="mail" className="w-4 h-4" />
-                      </div>
-                      <span className="text-[9px] text-white/40 font-bold group-hover:text-white/80 transition-colors uppercase tracking-wider">Email</span>
-                    </Link>
-                    <Link href="/profile/settings" title="Other Settings" className="flex flex-col items-center gap-1.5 group">
-                      <div className="p-2.5 rounded-xl bg-[#21262d] border border-white/5 group-hover:bg-purple-500/20 group-hover:border-purple-500/30 group-hover:text-purple-500 text-white/50 transition-all shadow-sm">
-                        <Icon name="cog" className="w-4 h-4" />
-                      </div>
-                      <span className="text-[9px] text-white/40 font-bold group-hover:text-white/80 transition-colors uppercase tracking-wider">Settings</span>
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <button 
-                  onClick={handleEditClick}
-                  className="w-full py-1.5 px-3 block text-center rounded-md bg-[#21262d] border border-white/10 text-sm font-semibold hover:bg-[#30363d] hover:border-white/20 transition-all shadow-sm text-white"
-                >
-                  Edit profile
-                </button>
-              )}
+              <Link 
+                href="/profile/settings"
+                className="w-full py-1.5 px-3 block text-center rounded-md bg-[#21262d] border border-white/10 text-sm font-semibold hover:bg-[#30363d] hover:border-white/20 transition-all shadow-sm text-white"
+              >
+                Edit profile
+              </Link>
             </div>
 
           </div>
@@ -438,40 +251,13 @@ export default function ProfilePage() {
           {/* RIGHT CONTENT (xl:col-span-9) */}
           {/* ======================= */}
           <div className="xl:col-span-9 min-w-0">
-            
-            {/* Navigation Tabs */}
-            <div className="flex overflow-x-auto border-b border-white/10 no-scrollbar mb-6 sticky top-0 bg-[#05070f]/90 backdrop-blur-md z-30 pt-2 pb-px w-full">
-              {[
-                { id: "dashboard", label: "Overview", icon: "stats", count: null },
-                { id: "questions", label: "Questions Solved", icon: "check-circle", count: stats.solvedCount || 0 },
-                { id: "submissions", label: "Submissions", icon: "activity", count: stats.totalSubmissions || 0 },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0 ${
-                    activeTab === tab.id
-                      ? "border-orange-500 text-white"
-                      : "border-transparent text-white/60 hover:text-white hover:border-white/20 hover:bg-white/5 rounded-t-md"
-                  }`}
-                >
-                  <Icon name={tab.icon} className={`w-4 h-4 ${activeTab === tab.id ? "text-white/70" : "text-white/40"}`} />
-                  {tab.label}
-                  {tab.count !== null && (
-                    <span className="ml-1 px-2 py-0.5 rounded-full bg-white/10 text-xs text-white/80 font-semibold leading-none flex items-center justify-center">
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
 
-            {/* Dashboard / Overview Content */}
+            {/* เนื้อหาแดชบอร์ด / ภาพรวม (Dashboard / Overview Content) */}
             {activeTab === "dashboard" && (
               <div className="space-y-8 animate-in fade-in duration-500">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
-                  {/* Left Column: Performance & Category */}
+                  {/* คอลัมน์ซ้าย: ผลการทำงานและหมวดหมู่ (Left Column: Performance & Category) */}
                   <div className="lg:col-span-1 space-y-6">
                     {/* Performance Card */}
                     <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
@@ -511,36 +297,64 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    {/* Top Categories */}
-                    <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-white/40 mb-6 flex items-center gap-2">
-                        <Icon name="tag" className="w-4 h-4 text-pink-500" />
-                        Top Categories
-                      </h3>
-                      <div className="space-y-5">
-                        {stats.categories.length > 0 ? stats.categories.map((cat, idx) => (
-                           <div key={cat.name} className="space-y-2">
-                             <div className="flex justify-between items-center text-xs">
-                               <span className="font-bold text-white/80">{cat.name}</span>
-                               <span className="text-white/40 font-mono">{cat.count} solved</span>
-                             </div>
-                             <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                               <div 
-                                 className="h-full bg-linear-to-r from-pink-500 to-purple-600 rounded-full" 
-                                 style={{ width: `${Math.min(100, (cat.count / Math.max(1, stats.solvedCount)) * 100)}%` }}
-                               ></div>
-                             </div>
-                           </div>
-                        )) : (
-                          <div className="py-8 text-center border border-dashed border-white/5 rounded-xl">
-                            <p className="text-xs text-white/20 italic">No category data yet</p>
+                    {/* กราฟใยแมงมุมวิเคราะห์ทักษะ (Skills Web Chart) */}
+                    <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group flex flex-col">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-white/40 flex items-center gap-2">
+                          <Icon name="tag" className="w-4 h-4 text-pink-500" />
+                          Skill Analysis
+                        </h3>
+                      </div>
+                      
+                      {/* Sub-tabs for Category and Tags */}
+                      <div className="flex bg-white/5 rounded-lg mb-4 p-1 ring-1 ring-white/10">
+                        <button 
+                          onClick={() => setChartTab("category")}
+                          className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${chartTab === "category" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white/60"}`}
+                        >
+                          Category
+                        </button>
+                        <button 
+                          onClick={() => setChartTab("tags")}
+                          className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${chartTab === "tags" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white/60"}`}
+                        >
+                          Tags
+                        </button>
+                      </div>
+
+                      <div className="flex-1 min-h-[250px] w-full flex items-center justify-center min-w-0 min-h-0">
+                        {(chartTab === "category" ? stats.categories : stats.tags).length > 0 ? (
+                          <div className="w-full h-[250px] -ml-2 min-w-0 min-h-0">
+                            {(() => {
+                              const sourceData = chartTab === "category" ? stats.categories : stats.tags;
+                              const currentData = [...sourceData];
+                              while (currentData.length > 0 && currentData.length < 5) {
+                                currentData.push({ name: `\u200B${currentData.length}`, count: 0 }); // Zero-width space to hide labels but form polygon
+                              }
+                              const maxVal = Math.max(...currentData.map(d => d.count), 5);
+                              return (
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <RadarChart cx="50%" cy="50%" outerRadius="65%" data={currentData}>
+                                    <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                                    <PolarAngleAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 'bold' }} />
+                                    <PolarRadiusAxis angle={30} domain={[0, maxVal]} tick={false} axisLine={false} />
+                                    <Radar name="Solved" dataKey="count" stroke="#ec4899" fill="#ec4899" fillOpacity={0.3} />
+                                  </RadarChart>
+                                </ResponsiveContainer>
+                              );
+                            })()}
+                          </div>
+                        ) : (
+                          <div className="w-full py-10 flex flex-col items-center text-center border border-dashed border-white/5 rounded-xl">
+                            <Icon name="activity" className="w-6 h-6 text-white/10 mb-2" />
+                            <p className="text-xs text-white/20 italic">No {chartTab} data yet</p>
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Right Column: Recent Activity */}
+                  {/* คอลัมน์ขวา: กิจกรรมล่าสุด (Right Column: Recent Activity) */}
                   <div className="lg:col-span-2 space-y-6">
                     <div className="bg-[#0d1117] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
                       <div className="px-6 py-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
@@ -669,14 +483,40 @@ export default function ProfilePage() {
                  </div>
 
                  {/* For now we show a placeholder for specific solved questions list, but count is real */}
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Unique Solved Questions would be fetched here. Showing empty state if 0 */}
-                    {stats.solvedCount > 0 ? (
-                      <div className="col-span-full border border-orange-500/20 rounded-xl p-12 text-center bg-orange-500/[0.02]">
-                        <Icon name="check-circle" className="w-12 h-12 text-orange-500/30 mx-auto mb-4" />
-                        <h2 className="text-xl font-bold text-white/80 mb-2">{stats.solvedCount} Questions Solved</h2>
-                        <p className="text-sm text-white/40 max-w-md mx-auto">Great job! You have successfully mastered {stats.solvedCount} coding challenges across various categories.</p>
-                      </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {stats.solvedQuestions && stats.solvedQuestions.length > 0 ? (
+                      stats.solvedQuestions.map((q) => (
+                        <div key={q.id} className="group relative bg-[#0d1117] border border-white/10 rounded-2xl p-5 hover:border-orange-500/30 transition-all hover:shadow-[0_0_20px_rgba(245,158,11,0.05)] flex flex-col justify-between overflow-hidden">
+                           {/* Background Glow */}
+                           <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/[0.03] blur-2xl -z-10 group-hover:bg-orange-500/[0.08] transition-colors"></div>
+                           
+                           <div className="flex items-start justify-between mb-3">
+                              <span className="text-[10px] font-black font-mono text-white/30 tracking-widest bg-white/5 px-2 py-0.5 rounded border border-white/5">{q.code}</span>
+                              <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                q.difficulty === 1 ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" :
+                                q.difficulty === 2 ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
+                                "bg-red-500/10 text-red-500 border border-red-500/20"
+                              }`}>
+                                {q.difficulty === 1 ? "Easy" : q.difficulty === 2 ? "Medium" : "Hard"}
+                              </div>
+                           </div>
+                           
+                           <h4 className="text-white font-bold group-hover:text-orange-400 transition-colors mb-4 line-clamp-1">{q.title}</h4>
+                           
+                           <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+                              <div className="flex flex-col gap-0.5">
+                                 <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest leading-none">Category</p>
+                                 <p className="text-xs text-white/60 font-medium truncate max-w-[120px]">{q.category_name || "General"}</p>
+                              </div>
+                              <Link 
+                                href={`/questions/${q.code}`}
+                                className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center text-white/40 hover:bg-orange-500/10 hover:text-orange-400 border border-white/5 transition-all group/btn"
+                              >
+                                 <Icon name="problem" className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" />
+                              </Link>
+                           </div>
+                        </div>
+                      ))
                     ) : (
                       <div className="col-span-full border border-white/10 rounded-xl p-12 text-center bg-[#0d1117]/50">
                         <Icon name="problem" className="w-12 h-12 text-white/10 mx-auto mb-4" />
@@ -697,3 +537,10 @@ export default function ProfilePage() {
     </>
   );
 }
+
+// ความปลอดภัย
+// ตรวจสอบรหัสความปลอดภัย
+// 1. การตรวจสอบการยืนยันตัวตนด้วย JWT จะดำเนินการขณะโหลด; เปลี่ยนเส้นทางไปยัง /login หากข้อมูลหายไปหรือไม่ถูกต้อง
+// 2. การเรียกใช้ API ใช้ 'useToken: true' ซึ่งจะแนบ Bearer Token ในอินเทอร์เซพเตอร์ที่ปลอดภัย
+// 3. ข้อมูลที่ผู้ใช้ป้อนทั้งหมด (หากมีส่วนที่ป้อน) จะถูกล้างข้อมูลผ่านการแสดงผลเทมเพลตและการยกเว้นมาตรฐานของ React
+// 4. ข้อมูลโปรไฟล์ที่ละเอียดอ่อน (อีเมล, บทบาท) นำมาจากข้อมูลสรุปฝั่งเซิร์ฟเวอร์หรือ localStorage ที่ปลอดภัย

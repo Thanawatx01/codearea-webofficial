@@ -16,6 +16,12 @@ interface NavigationHeaderProps {
   links?: NavLink[];
 }
 
+// # ส่วนประกอบ NavigationHeader
+// แถบนำทางหลักของแอปพลิเคชัน
+// 1. จัดการลิงก์นำทางที่รองรับการแสดงผลบนมือถือและเดสก์ท็อป
+// 2. ติดตามสถานะการเข้าสู่ระบบและบทบาทของผู้ใช้ (Role-based permissions)
+// 3. แสดงผลเมนูโปรไฟล์แบบ Dropdown สำหรับการเข้าถึงการตั้งค่าและการออกจากระบบ
+// 4. จัดการสไตล์ของ Header ตามตำแหน่งการเลื่อนหน้าจอ (Scroll)
 export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [displayName, setDisplayName] = useState("");
@@ -29,7 +35,11 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // ตรวจสอบ login status
+  // # ตรรกะการตรวจสอบสิทธิ์และเริ่มต้น
+  // จัดการการตั้งสถานะการยืนยันตัวตนและตัวฟังเหตุการณ์
+  // 1. ตรวจสอบ JWT และข้อมูลเมตาจาก localStorage เมื่อโหลดส่วนประกอบ
+  // 2. เพิ่มตัวฟังการเลื่อนหน้าจอเพื่ออัปเดตสไตล์ของ Header
+  // 3. เชื่อมต่อเหตุการณ์ 'storage' และ 'profile-updated' เพื่อซิงค์สถานะระหว่างแท็บ
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("token");
@@ -58,7 +68,9 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
           setIsLoggedIn(false);
         }
       } else {
+        // ขั้นตอนที่ 3: จัดการสถานะผู้ใช้ทั่วไป (ไม่ระบุตัวตน)
         setIsLoggedIn(false);
+        setAvatarUrl(null);
       }
     };
 
@@ -69,15 +81,21 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
     };
     window.addEventListener("scroll", handleScroll);
 
-    // ฟังเหตุการณ์จาก storage
+    // # การประสานข้อมูลแบบ Real-time
+    // ตรวจสอบให้แน่ใจว่าสถานะการเข้าสู่ระบบตรงกันหากมีการเปลี่ยนแปลงในแท็บอื่นหรือหน้าการตั้งค่า
     window.addEventListener("storage", checkAuth);
+    window.addEventListener("profile-updated", checkAuth);
+
     return () => {
       window.removeEventListener("storage", checkAuth);
+      window.removeEventListener("profile-updated", checkAuth);
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [pathname]);
 
-  // ปิด dropdown เมื่อคลิกนอก
+  // # ส่วนติดต่อผู้ใช้และ Dropdown
+  // จัดการการแสดงผลและการปิดเมนู Dropdown
+  // 1. ปิดเมนูโปรไฟล์เมื่อมีการคลิกพื้นที่ภายนอก
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -99,6 +117,11 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
 
   const { logout, isLoggingOut } = useLogout();
 
+  // # ฟังก์ชันการออกจากระบบ
+  // เริ่มต้นการล้างเซสชันและทำความสะอาดสถานะ
+  // 1. รีเซ็ตสถานะ UI ท้องถิ่น
+  // 2. ส่งต่อหน้าที่ไปยัง LogoutProvider เพื่อล้างโทเค็นระดับสากล
+  // 3. เปลี่ยนหน้ากลับไปยังหน้าแรก
   const handleLogout = () => {
     setIsLoggedIn(false);
     setIsDropdownOpen(false);
@@ -380,3 +403,11 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
     </nav>
   );
 }
+
+// # ความปลอดภัย
+// ตรวจสอบรหัสความปลอดภัย
+// เอกสารเกี่ยวกับความปลอดภัยหลักในส่วนประกอบ NavigationHeader:
+// 1. Authentication Synchronization: ใช้ตัวฟังเหตุการณ์ 'storage' เพื่อให้แน่ใจว่าการออกจากระบบในแท็บหนึ่งจะส่งผลลัพธ์ไปยังแท็บอื่นๆ ทันที
+// 2. Metadata Validation: ตรวจสอบ 'user.id' ใน localStorage อย่างเข้มงวดก่อนยอมรับเซสชัน เพื่อป้องกัน UI แสดงผลผิดพลาดจากข้อมูลที่เสียหาย
+// 3. RBAC Visualization: การแสดงผลป้ายระดับ (เช่น ผู้ดูแลระบบ) อ้างอิงจากบทบาท (role_id) ในโทเค็นที่ได้รับการตรวจสอบแล้วเท่านั้น
+// 4. Client-Side Sanitization: ข้อมูลที่ผู้ใช้สร้าง เช่น ชื่อที่แสดง จะถูก Render ผ่าน React เพื่อป้องกันการโจมตีประเภท XSS

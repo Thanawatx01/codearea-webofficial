@@ -11,6 +11,13 @@ import Cropper from "react-easy-crop";
 import { getCroppedImg, type Area, base64ToBlob } from "@/lib/imageUtils";
 import { useLogout } from "@/components/auth/LogoutProvider";
 
+// ส่วนประกอบหน้า Settings (การตั้งค่า)
+// ส่วนประกอบนี้มีส่วนต่อประสานที่ครอบคลุมสำหรับผู้ใช้ในการอัปเดตการตั้งค่าโปรไฟล์ 
+// จัดการข้อมูลประจำตัวด้านความปลอดภัย และจัดการการดำเนินการที่เกี่ยวข้องกับบัญชี
+// 1. จัดการสถานะที่ซับซ้อนสำหรับข้อมูลโปรไฟล์ การครอบภาพ และการเปลี่ยนแปลงที่ยังไม่ได้บันทึก
+// 2. ดำเนินการประมวลผลรูปภาพสำหรับการอัปโหลดรูปโปรไฟล์ (การครอบภาพและการบีบอัด)
+// 3. ปรับสถานะท้องถิ่นให้ตรงกับ backend API และอัปเดต localStorage เมื่อสำเร็จ
+// 4. จัดเตรียม UI สำหรับการยืนยันการลบรูปโปรไฟล์และการครอบภาพ
 export default function SettingsPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -19,10 +26,10 @@ export default function SettingsPage() {
   const [formData, setFormData] = useState({
     displayName: "User",
     username: "user@example.com",
-    bio: "Digital Nomad | Cloud Enthusiast",
+    bio: "",
     email: "user@example.com",
-    phone: "+66 81-234-5678",
-    dob: "1995-10-24",
+    phone: "",
+    dob: "",
     language: "Thai",
     theme: "System Default",
     twoFactor: false,
@@ -43,9 +50,14 @@ export default function SettingsPage() {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isCropping, setIsCropping] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1. Initialize data from localStorage
+  // ผลกระทบในการเริ่มต้น (Initialization Effect)
+  // โหลดสถานะผู้ใช้เริ่มต้นจาก localStorage และตรวจสอบการยืนยันตัวตน
+  // 1. ตรวจสอบโทเค็นและข้อมูลเมตาของผู้ใช้ใน local storage
+  // 2. แยกวิเคราะห์ข้อมูลผู้ใช้และเติมสถานะฟอร์ม
+  // 3. จัดการข้อผิดพลาดที่อาจเกิดขึ้นจากการแยกวิเคราะห์โดยเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
   useEffect(() => {
     if (typeof window === "undefined") return;
     const userRaw = localStorage.getItem("user");
@@ -55,13 +67,24 @@ export default function SettingsPage() {
       return;
     }
     try {
-      const user = JSON.parse(userRaw) as { display_name: string; email: string; id: string; avatar_url?: string };
+      const user = JSON.parse(userRaw) as { 
+        display_name: string; 
+        email: string; 
+        id: string; 
+        avatar_url?: string;
+        bio?: string;
+        phone?: string;
+        dob?: string;
+      };
       const loadedData = {
         ...formData,
         displayName: user.display_name,
         username: user.email,
         email: user.email,
         avatarUrl: user.avatar_url || null,
+        bio: user.bio || "",
+        phone: user.phone || "",
+        dob: user.dob || "",
       };
       setFormData(loadedData);
       setInitialData({ ...loadedData });
@@ -73,11 +96,17 @@ export default function SettingsPage() {
     }
   }, [router]);
 
+  // ตัวติดตามการเปลี่ยนแปลงที่ยังไม่ได้บันทึก (Unsaved Changes Tracker)
+  // ตรวจสอบความแตกต่างระหว่างข้อมูลฟอร์มปัจจุบันและสถานะเริ่มต้นที่โหลดมา
+  // 1. เปรียบเทียบ formData ปัจจุบันกับ initialData โดยใช้ stringification
+  // 2. ตรวจสอบว่ารูปโปรไฟล์มีการเปลี่ยนแปลงหรือถูกลบออกหรือไม่
+  // 3. อัปเดตสถานะ hasChanges เพื่อแสดงแถบการดำเนินการด้านล่าง
   useEffect(() => {
     const isChanged = JSON.stringify(formData) !== JSON.stringify(initialData) || (avatarPreview !== null && avatarPreview !== initialData.avatarUrl);
     setHasChanges(isChanged);
   }, [formData, initialData, avatarPreview]);
 
+  // --- Input Handlers ---
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -88,6 +117,11 @@ export default function SettingsPage() {
     setPasswordForm(prev => ({ ...prev, [name]: value }));
   };
 
+  // ฟังก์ชัน handleAvatarChange
+  // จัดการการเลือกไฟล์เริ่มต้นสำหรับรูปโปรไฟล์
+  // 1. อ่านไฟล์เป็น Data URL โดยใช้ FileReader
+  // 2. กำหนดเป้าหมายรูปภาพสำหรับเครื่องมือครอบภาพ
+  // 3. รีเซ็ตค่าอินพุตเพื่อให้สามารถเลือกรูปภาพเดิมซ้ำได้
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -97,15 +131,15 @@ export default function SettingsPage() {
         setIsCropping(true);
       };
       reader.readAsDataURL(file);
-      // Clear input value so same file can be selected again if needed
       e.target.value = "";
     }
   };
 
-  const onCropComplete = useCallback((_: any, pixels: Area) => {
-    setCroppedAreaPixels(pixels);
-  }, []);
-
+  // ฟังก์ชัน handleApplyCrop
+  // บันทึกขั้นตอนการครอบภาพและอัปเดตตัวอย่างภาพ
+  // 1. สร้าง blob/base64 ของรูปภาพที่ครอบผ่านยูทิลิตี้ getCroppedImg
+  // 2. อัปเดต avatarPreview ด้วยรูปภาพที่ได้
+  // 3. ปิดโมดัลครอบภาพและล้างสถานะชั่วคราว
   const handleApplyCrop = async () => {
     if (imageToCrop && croppedAreaPixels) {
       try {
@@ -119,6 +153,36 @@ export default function SettingsPage() {
     }
   };
 
+  const onCropComplete = useCallback((_: any, pixels: Area) => {
+    setCroppedAreaPixels(pixels);
+  }, []);
+
+  // ฟังก์ชัน handleRemoveAvatar
+  // เริ่มต้นขั้นตอนการยืนยันการลบรูปโปรไฟล์
+  // 1. แสดงโมดัลยืนยันการลบแบบกำหนดเอง
+  const handleRemoveAvatar = () => {
+    setShowRemoveConfirm(true);
+  };
+
+  // ฟังก์ชัน confirmRemoveAvatar
+  // ดำเนินการลบรูปโปรไฟล์
+  // 1. ล้างตัวอย่างรูปโปรไฟล์และอัปเดตข้อมูลฟอร์มด้วยค่า null
+  // 2. ทำเครื่องหมายสถานะว่ามีการเปลี่ยนแปลงเพื่อให้ต้องกดบันทึก
+  // 3. ปิดโมดัลยืนยัน
+  const confirmRemoveAvatar = () => {
+    setAvatarPreview(null);
+    setFormData((prev) => ({ ...prev, avatarUrl: null }));
+    setHasChanges(true);
+    setShowRemoveConfirm(false);
+  };
+
+  // ฟังก์ชัน handleSave
+  // บันทึกการเปลี่ยนแปลงโปรไฟล์ทั้งหมดไปยัง backend
+  // 1. เปิด SweetAlert เพื่อยืนยันก่อนดำเนินการ
+  // 2. แสดงสถานะการโหลดระหว่างการร้องขอ API
+  // 3. จัดการตรรกะรูปโปรไฟล์: ส่ง base64 สำหรับภาพใหม่ หรือ null สำหรับการลบ
+  // 4. ส่งคำร้องขอ PUT ไปยัง /users/:id พร้อมข้อมูลทั้งหมด
+  // 5. อัปเดต local storage และส่งเหตุการณ์ refresh เมื่อสำเร็จ
   const handleSave = async () => {
     const result = await Swal.fire({
       title: "ปรับใช้การเปลี่ยนแปลง?",
@@ -146,28 +210,12 @@ export default function SettingsPage() {
         });
 
         let currentAvatarUrl = avatarPreview;
-
-        // If avatar is new (base64), upload via backend
-        if (avatarPreview && avatarPreview.startsWith("data:")) {
-          const userRaw = localStorage.getItem("user");
-          const user = JSON.parse(userRaw!) as { id: string };
-
-          const blob = await base64ToBlob(avatarPreview);
-          const formDataObj = new FormData();
-          formDataObj.append("avatar", blob, "avatar.webp");
-
-          const uploadRes = await api.post<{ avatar_url: string }>(`/users/${user.id}/avatar`, formDataObj, {
-            useToken: true,
-          });
-
-          if (!uploadRes.ok || !uploadRes.data) {
-            throw new Error(uploadRes.error || "Failed to upload avatar");
-          }
-
-          currentAvatarUrl = uploadRes.data.avatar_url;
+        if (avatarPreview === null) {
+          currentAvatarUrl = null;
+        } else if (avatarPreview && avatarPreview.startsWith("data:")) {
+          currentAvatarUrl = avatarPreview;
         }
 
-        // Save other profile data
         const userRaw = localStorage.getItem("user");
         const user = JSON.parse(userRaw!) as { id: string };
 
@@ -181,22 +229,33 @@ export default function SettingsPage() {
           useToken: true,
         });
 
-        if (!response.ok || !response.data) throw new Error(response.error || "Failed to update profile");
+        if (!response.ok || !response.data) {
+           const errMsg = response.data?.message || response.data?.details || "Failed to update profile";
+           throw new Error(errMsg);
+        }
 
         const updatedUser = response.data;
+        const newSyncedData = {
+          ...formData,
+          displayName: updatedUser.display_name,
+          avatarUrl: updatedUser.avatar_url,
+          bio: updatedUser.bio || "",
+          phone: updatedUser.phone || "",
+          dob: updatedUser.dob || ""
+        };
 
-        // Update local storage
-        const newUser = { ...JSON.parse(userRaw!), display_name: updatedUser.display_name, avatar_url: updatedUser.avatar_url };
-        localStorage.setItem("user", JSON.stringify(newUser));
-
-        setInitialData({ ...formData, avatarUrl: updatedUser.avatar_url });
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setFormData(newSyncedData);
+        setInitialData(newSyncedData);
         setAvatarPreview(updatedUser.avatar_url);
         setHasChanges(false);
 
+        window.dispatchEvent(new Event("profile-updated"));
         void Swal.fire({ icon: "success", title: "สำเร็จ", text: "บันทึกการตั้งค่าเรียบร้อยแล้ว", background: "#1a1c2e", color: "#fff", timer: 1500, showConfirmButton: false });
       } catch (error: any) {
         console.error("Save error:", error);
-        void Swal.fire({ icon: "error", title: "เกิดข้อผิดพลาด", text: error.message || "ไม่สามารถบันทึกข้อมูลได้", background: "#1a1c2e", color: "#fff" });
+        const errorDetail = error.response?.data?.details || error.response?.data?.message || error.message || "ไม่สามารถบันทึกข้อมูลได้";
+        void Swal.fire({ icon: "error", title: "เกิดข้อผิดพลาด", text: errorDetail, background: "#1a1c2e", color: "#fff" });
       } finally {
         setIsSubmitting(false);
       }
@@ -212,21 +271,11 @@ export default function SettingsPage() {
     setNewEmail("");
   };
 
-  const handleEmailChange = async () => {
-    if (!newEmail) {
-      return Swal.fire({ icon: "error", title: "ข้อมูลไม่ครบ", text: "กรุณาระบุอีเมลใหม่", background: "#1a1c2e", color: "#fff" });
-    }
-    void Swal.fire({
-      icon: "success",
-      title: "ส่งลิงก์ยืนยันแล้ว",
-      text: "กรุณาตรวจสอบอีเมลใหม่ของคุณเพื่อยืนยันการเปลี่ยนแปลง (Mockup)",
-      background: "#1a1c2e",
-      color: "#fff",
-    });
-    setShowEmailFields(false);
-    setNewEmail("");
-  };
-
+  // ฟังก์ชัน handlePasswordChange
+  // ขั้นตอนการจำลองการเปลี่ยนรหัสผ่าน
+  // 1. ตรวจสอบว่ากรอกข้อมูลครบทุกช่อง
+  // 2. ตรวจสอบว่ารหัสผ่านใหม่และยืนยันรหัสผ่านตรงกัน
+  // 3. จำลองการตอบกลับว่าสำเร็จและรีเซ็ตสถานะฟอร์ม
   const handlePasswordChange = async () => {
     if (!passwordForm.old || !passwordForm.new || !passwordForm.confirm) {
       return Swal.fire({ icon: "error", title: "ข้อมูลไม่ครบ", text: "กรุณากรอกข้อมูลรหัสผ่านให้ครบทุกช่อง", background: "#1a1c2e", color: "#fff" });
@@ -246,11 +295,28 @@ export default function SettingsPage() {
     setPasswordForm({ old: "", new: "", confirm: "" });
   };
 
-  const { logout, isLoggingOut } = useLogout();
-
-  const handleLogout = () => {
-    logout("/");
+  // ฟังก์ชัน handleEmailChange
+  // ขั้นตอนการจำลองการตรวจสอบอีเมล
+  // 1. ตรวจสอบว่ามีการระบุอีเมล
+  // 2. แสดงการแจ้งเตือนว่าส่งลิงก์ยืนยันแล้ว
+  // 3. ปิดช่องสำหรับการแก้ไขอีเมล
+  const handleEmailChange = async () => {
+    if (!newEmail) {
+      return Swal.fire({ icon: "error", title: "ข้อมูลไม่ครบ", text: "กรุณาระบุอีเมลใหม่", background: "#1a1c2e", color: "#fff" });
+    }
+    void Swal.fire({
+      icon: "success",
+      title: "ส่งลิงก์ยืนยันแล้ว",
+      text: "กรุณาตรวจสอบอีเมลใหม่ของคุณเพื่อยืนยันการเปลี่ยนแปลง (Mockup)",
+      background: "#1a1c2e",
+      color: "#fff",
+    });
+    setShowEmailFields(false);
+    setNewEmail("");
   };
+
+  const { logout, isLoggingOut } = useLogout();
+  const handleLogout = () => logout("/");
 
   const handleExportData = () => {
     void Swal.fire({
@@ -274,7 +340,6 @@ export default function SettingsPage() {
       background: "#1a1c2e",
       color: "#fff",
     });
-
     if (result.isConfirmed) {
       void Swal.fire({ icon: "success", title: "ส่งคำขอแล้ว", text: "ผู้ดูแลระบบจะดำเนินการภายใน 24-48 ชั่วโมง", background: "#1a1c2e", color: "#fff" });
     }
@@ -341,6 +406,46 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {/* Remove Confirmation Modal */}
+      {showRemoveConfirm && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#11131f] border border-white/10 w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+              <h3 className="font-black uppercase tracking-tighter text-lg">ลบรูปโปรไฟล์</h3>
+              <button onClick={() => setShowRemoveConfirm(false)} className="text-white/40 hover:text-white transition-colors">
+                <Icon name="xmark" className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-8 text-center space-y-6">
+              <div className="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 mx-auto border border-red-500/20">
+                <Icon name="trash" className="w-8 h-8" />
+              </div>
+              <p className="text-sm text-white/60 leading-relaxed font-medium">
+                ต้องการลบรูปโปรไฟล์ปัจจุบันใช่หรือไม่?
+                <br />
+                <span className="text-[10px] font-black uppercase tracking-[0.1em] text-white/20 mt-2 block">
+                  (การลบจะมีผลถาวรหลังจากบันทึกการตั้งค่า)
+                </span>
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowRemoveConfirm(false)}
+                  className="flex-1 py-4 bg-white/5 border border-white/5 rounded-2xl text-[11px] font-black uppercase tracking-widest text-white/40 hover:bg-white/10 hover:text-white transition-all"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={confirmRemoveAvatar}
+                  className="flex-1 py-4 bg-red-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_10px_30px_rgba(239,68,68,0.3)] hover:bg-red-400"
+                >
+                  ยืนยันการลบ
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto w-full max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
         {/* 1. Public Profile */}
@@ -363,7 +468,19 @@ export default function SettingsPage() {
                   formData.displayName.charAt(0).toUpperCase()
                 )}
               </div>
+              
+              {avatarPreview && (
+                <button
+                  onClick={handleRemoveAvatar}
+                  type="button"
+                  className="absolute bottom-[-8px] left-[-8px] w-10 h-10 bg-red-500/90 text-white flex items-center justify-center rounded-2xl z-20 backdrop-blur-md cursor-pointer border border-white/20 shadow-2xl hover:scale-110 hover:bg-red-600 transition-all group/btn"
+                >
+                  <Icon name="trash" className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
+                </button>
+              )}
+
               <button
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="absolute bottom-[-8px] right-[-8px] w-10 h-10 bg-primary/95 text-white flex items-center justify-center rounded-2xl z-20 backdrop-blur-md cursor-pointer border border-white/20 shadow-2xl hover:scale-110 hover:bg-violet-500 transition-all group/btn"
               >
@@ -392,7 +509,7 @@ export default function SettingsPage() {
 
               <div className="w-full space-y-2">
                 <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">คำแนะนำตัว</label>
-                <textarea name="bio" value={formData.bio} onChange={handleInputChange} rows={3} className="w-full p-5 bg-white/[0.03] border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:border-primary transition-all resize-none shadow-inner" placeholder="Tell us about yourself..."></textarea>
+                <textarea name="bio" value={formData.bio} onChange={handleInputChange} rows={3} className="w-full p-5 bg-white/[0.03] border border-white/10 rounded-2xl text-sm text-white focus:outline-none focus:border-primary transition-all resize-none shadow-inner" placeholder="Describe who you are here"></textarea>
               </div>
             </div>
           </div>
@@ -487,7 +604,7 @@ export default function SettingsPage() {
                   type="button"
                   disabled
                   title="ฟีเจอร์นี้ยังไม่เปิดใช้งาน"
-                  className="px-4 py-2 bg-white/5 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/20 cursor-not-allowed transition-all"
+                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/20 cursor-not-allowed transition-all"
                 >
                   แก้ไข
                 </button>
@@ -668,3 +785,11 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+// ความปลอดภัย
+// ตรวจสอบรหัสความปลอดภัย
+// 1. การตรวจสอบการยืนยันตัวตนด้วย JWT ดำเนินการขณะโหลด; เปลี่ยนเส้นทางไปยัง /login หากหายไปหรือไม่ถูกต้อง
+// 2. การอัปเดตโปรไฟล์ผ่าน api.put จะมี Bearer Token สำหรับการอนุญาตฝั่งเซิร์ฟเวอร์
+// 3. การอัปโหลดรูปโปรไฟล์จะถูกประมวลผลเป็น base64 และส่งไปยัง backend จัดเก็บข้อมูลที่ปลอดภัย
+// 4. ขั้นตอนการเปลี่ยนรหัสผ่านและอีเมลเป็นข้อมูลจำลอง แต่ถูกออกแบบมาเพื่อให้ต้องมีการยืนยัน
+// 5. การควบคุมการเข้าถึงช่วยให้มั่นใจว่าผู้ใช้สามารถแก้ไขข้อมูลโปรไฟล์ของตนเองได้เท่านั้นโดยใช้ ID ที่ไม่ซ้ำกัน
