@@ -21,6 +21,9 @@ interface ManagementCardProps {
   index: number;
   openMenuId: string | number | null;
   setOpenMenuId: (id: string | number | null) => void;
+  description?: string;
+  editDescriptionValue?: string;
+  setEditDescriptionValue?: (v: string) => void;
 }
 
 // ส่วนประกอบ ManagementCard
@@ -49,6 +52,9 @@ export const ManagementCard = ({
   index,
   openMenuId,
   setOpenMenuId,
+  description,
+  editDescriptionValue,
+  setEditDescriptionValue,
 }: ManagementCardProps) => {
   const isOpen = openMenuId === id;
 
@@ -64,17 +70,39 @@ export const ManagementCard = ({
           <div className="flex-1 min-w-0">
             {isEditing ? (
               <div className="flex items-center gap-2 animate-in fade-in zoom-in duration-200">
-                <input
-                  autoFocus
-                  type="text"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void onUpdate(id);
-                    if (e.key === "Escape") onCancelEdit();
-                  }}
-                  className="w-full bg-black/40 border border-primary/50 rounded-xl px-3 py-1.5 text-sm text-white focus:outline-none"
-                />
+                <div className="flex-1 space-y-2">
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder={`ชื่อ${entityName}...`}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !setEditDescriptionValue) void onUpdate(id);
+                      if (e.key === "Escape") onCancelEdit();
+                    }}
+                    className="w-full bg-black/40 border border-primary/50 rounded-xl px-3 py-1.5 text-sm text-white focus:outline-none"
+                  />
+                  {setEditDescriptionValue && (
+                    <div className="relative group/desc">
+                      <input
+                        type="text"
+                        placeholder="คำอธิบาย..."
+                        value={editDescriptionValue}
+                        maxLength={255}
+                        onChange={(e) => setEditDescriptionValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") void onUpdate(id);
+                          if (e.key === "Escape") onCancelEdit();
+                        }}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl pl-3 pr-16 py-2 text-sm text-white/90 focus:outline-none focus:border-primary/50 transition-colors"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white/20 group-focus-within/desc:text-primary transition-colors">
+                        {editDescriptionValue?.length || 0}/255
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-1">
                   <button
                     onClick={() => void onUpdate(id)}
@@ -92,9 +120,16 @@ export const ManagementCard = ({
                 </div>
               </div>
             ) : (
-              <h3 className="text-xl font-black text-white group-hover:text-primary transition-colors truncate pt-1">
-                {name}
-              </h3>
+              <div className="space-y-1 min-w-0">
+                <h3 className="text-xl font-black text-white group-hover:text-primary transition-colors truncate">
+                  {name}
+                </h3>
+                {description && (
+                  <p className="text-sm text-white/40 line-clamp-2 leading-relaxed">
+                    {description}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
@@ -125,8 +160,8 @@ export const ManagementCard = ({
         <div className="flex-1 flex flex-col justify-end">
           {!isEditing && (
             <div className="flex items-center gap-2 mt-auto">
-              <Icon name="link" className="w-3 h-3 text-emerald-400" />
-              <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+              <Icon name="link" className="w-4 h-4 text-emerald-400" />
+              <p className="text-xs font-bold text-white/60 uppercase tracking-wider">
                 {questionCount.toLocaleString()} {unitLabel}
               </p>
             </div>

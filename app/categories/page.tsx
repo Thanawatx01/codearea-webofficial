@@ -17,9 +17,11 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     const fetchCategories = async () => {
+      const useToken =
+        typeof window !== "undefined" && Boolean(localStorage.getItem("token"));
       const res = await api.get<{ data: Category[] }>(
         "/question-categories/list",
-        { useToken: true },
+        { useToken },
       );
       if (res.ok && res.data?.data) {
         setCategories(res.data.data);
@@ -44,9 +46,9 @@ export default function CategoriesPage() {
     <div className="min-h-screen text-white">
       <main className="max-w-7xl mx-auto px-6 py-20">
         <div className="text-center space-y-6">
-          <h1 className="text-4xl md:text-5xl font-bold">Problem Categories</h1>
+          <h1 className="text-4xl md:text-5xl font-bold">ประเภทโจทย์</h1>
           <p className="text-white/60 text-lg">
-            Explore problems by category and difficulty
+            สำรวจโจทย์ตามหมวดหมู่
           </p>
         </div>
 
@@ -61,7 +63,7 @@ export default function CategoriesPage() {
                 {category.name}
               </h3>
               <p className="text-white/60 text-sm mt-2">
-                {category.question_count ?? 0} problems
+                {category.question_count ?? 0} โจทย์
               </p>
               {category.description && (
                 <p className="text-white/40 text-xs mt-1 line-clamp-2">

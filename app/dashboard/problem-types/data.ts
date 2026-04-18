@@ -1,6 +1,7 @@
 export type ProblemTypeItem = {
   id: string | number;
   name: string;
+  description: string;
   questionCount: number;
 };
 
