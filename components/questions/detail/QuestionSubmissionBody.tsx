@@ -20,9 +20,10 @@ export default function QuestionSubmissionBody({ code }: { code: string }) {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const stored = useMemo((): StoredQuestionSubmission | null => {
-    if (typeof window === "undefined") return null;
-    return readLastQuestionSubmission(code);
+  const [stored, setStored] = useState<StoredQuestionSubmission | null>(null);
+
+  useEffect(() => {
+    setStored(readLastQuestionSubmission(code));
   }, [code]);
 
   useEffect(() => {

@@ -22,7 +22,7 @@ export async function streamPostSubmitAnalysis(
     isAI?: boolean;
   },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const url = buildApiUrl("analyze", { isAI: options.isAI ?? true });
+  const url = buildApiUrl("/ai-tutor/analyze", { isAI: false });
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "text/plain, */*",

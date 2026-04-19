@@ -161,9 +161,10 @@ export async function callApi<T = unknown>(
  * Format error message from API response
  */
 function formatErrorMessage(res: Response, data: any): string {
-  // 1. ลองหา message จาก JSON response ของ backend ก่อน
-  if (data && typeof data === "object" && "message" in data && data.message) {
-    return String(data.message);
+  // 1. ลองหา message/error/details จาก JSON response ของ backend ก่อน
+  if (data && typeof data === "object") {
+    const msg = data.message || data.error || data.details;
+    if (msg) return String(msg);
   }
 
   // 2. ถ้าไม่มี จัดการตาม HTTP Status Code

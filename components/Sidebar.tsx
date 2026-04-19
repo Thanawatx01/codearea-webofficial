@@ -75,11 +75,11 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    title: "ตั้งค่าผู้ใช้",
+    title: "การตั้งค่า",
     items: [
       {
-        label: "ตั้งค่าโปรไฟล์",
-        href: "/profile/settings",
+        label: "การกำหนดค่าระบบ",
+        href: "/dashboard/configurations",
         iconName: "settings",
       },
     ],
