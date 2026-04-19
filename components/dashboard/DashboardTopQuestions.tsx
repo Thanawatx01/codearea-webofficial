@@ -1,3 +1,9 @@
+// Dashboard Top Questions Component
+// คอมโพเนนต์แสดงรายการโจทย์ยอดนิยม 5 อันดับแรก
+// 1. แสดงชื่อโจทย์และรหัสโจทย์ (Code)
+// 2. เรียงลำดับตามจำนวนครั้งที่มีการส่งโค้ด
+// 3. ใช้การออกแบบที่เน้นความทันสมัยด้วยเลขลำดับและ Badge สถิติ
+
 import { DashboardPanelHeader } from "./DashboardPanelHeader";
 import type { DashboardPayload } from "./types";
 
@@ -5,6 +11,11 @@ type DashboardTopQuestionsProps = {
   questions: DashboardPayload["top_questions"];
 };
 
+// DashboardTopQuestions
+// ส่วนจัดเรียงและแสดงผลรายการโจทย์ที่มีการส่งสูงสุด
+// 1. รับข้อมูล questions จาก DashboardPayload
+// 2. แสดงตัวเลขลำดับ 1-5 ในกล่อง Gradient
+// 3. จัดการ Layout ให้ลื่นไหลด้วย Hover Effect บนรายการโจทย์
 export function DashboardTopQuestions({
   questions,
 }: DashboardTopQuestionsProps) {
@@ -19,6 +30,7 @@ export function DashboardTopQuestions({
         {questions.map((q, index) => (
           <li key={q.question_id}>
             <div className="group flex items-center gap-3 rounded-2xl border border-transparent bg-white/[0.02] px-3 py-3 transition hover:border-white/[0.08] hover:bg-white/[0.04]">
+              {/* ตัวเลขลำดับยอดนิยม */}
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/30 to-violet-600/10 text-sm font-bold text-violet-200 ring-1 ring-white/10 transition group-hover:from-primary/40 group-hover:ring-primary/25">
                 {index + 1}
               </span>
@@ -30,6 +42,7 @@ export function DashboardTopQuestions({
                   {q.code}
                 </p>
               </div>
+              {/* Badge แสดงจำนวนการส่ง */}
               <span className="shrink-0 rounded-lg bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-cyan-200/95 ring-1 ring-cyan-400/20">
                 {q.submission_count.toLocaleString("th-TH")}{" "}
                 <span className="font-normal text-cyan-200/60">ครั้ง</span>

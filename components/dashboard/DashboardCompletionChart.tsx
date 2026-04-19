@@ -1,3 +1,9 @@
+// Dashboard Completion Chart Component
+// คอมโพเนนต์แสดงกราฟวงกลม (Pie Chart) เปรียบเทียบสัดส่วนการส่งโค้ด
+// 1. แสดงผลสำเร็จ (Accepted) เทียบกับ ไม่สำเร็จ (Fail/Error)
+// 2. ใช้ Gradients เพื่อความสวยงามแบบ Premium
+// 3. จัดการเรื่อง Hydration ด้วย isMounted เพื่อป้องกันการทำงานผิดพลาดบน Server-side
+
 "use client";
 
 import { useId, useState, useEffect } from "react";
@@ -19,6 +25,10 @@ type DashboardCompletionChartProps = {
   unsuccessfulSubmissions: number;
 };
 
+// DashboardCompletionChart
+// ส่วนดึงข้อมูลและจัดการกราฟสถิติ
+// 1. ใช้ useId เพื่อสร้าง Unique ID สำหรับ Gradient ป้องกันการซ้ำซ้อน
+// 2. ใช้ isMounted เพื่อรอกราฟโหลดในฝั่ง Client
 export function DashboardCompletionChart({
   pieRows,
   successfulSubmissions,
@@ -40,6 +50,7 @@ export function DashboardCompletionChart({
         subtitle="สัดส่วนการส่งที่สำเร็จและยังไม่สำเร็จ"
       />
       <div className="relative mt-2 flex flex-1 flex-col">
+        {/* เลเยอร์แสงฟุ้ง (Glow Effect) */}
         <div
           className="pointer-events-none absolute left-1/2 top-1/2 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.06] blur-3xl"
           aria-hidden
@@ -49,10 +60,12 @@ export function DashboardCompletionChart({
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <PieChart>
               <defs>
+                {/* นิยามสี Gradient สำหรับส่วนที่ผ่าน */}
                 <linearGradient id={successId} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#5eead4" />
                   <stop offset="100%" stopColor="#059669" />
                 </linearGradient>
+                {/* นิยามสี Gradient สำหรับส่วนที่ไม่ผ่าน */}
                 <linearGradient id={failId} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#fcd34d" />
                   <stop offset="100%" stopColor="#ea580c" />
@@ -101,11 +114,13 @@ export function DashboardCompletionChart({
             </PieChart>
           </ResponsiveContainer>
           ) : (
+            /* แสดงลูปโหลดระหว่างรอ Hydration */
             <div className="w-full h-full flex items-center justify-center opacity-10">
               <div className="w-32 h-32 rounded-full border-4 border-white animate-pulse" />
             </div>
           )}
         </div>
+        {/* ส่วนแสดงป้ายกำกับด้านล่างแบบกำหนดเอง */}
         <div className="mt-4 flex flex-wrap justify-center gap-3">
           <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-1.5 text-xs text-emerald-200/90">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />

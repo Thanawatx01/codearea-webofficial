@@ -5,6 +5,8 @@ import { DashboardCompletionChart } from "@/components/dashboard/DashboardComple
 import { DashboardErrorState } from "@/components/dashboard/DashboardErrorState";
 import { DashboardLoadingState } from "@/components/dashboard/DashboardLoadingState";
 import { DashboardRecentActivity } from "@/components/dashboard/DashboardRecentActivity";
+import { DashboardCategorySubmissions } from "@/components/dashboard/DashboardCategorySubmissions";
+import { DashboardQuestionAttempts } from "@/components/dashboard/DashboardQuestionAttempts";
 import { DashboardSummaryCards } from "@/components/dashboard/DashboardSummaryCards";
 import { DashboardTopQuestions } from "@/components/dashboard/DashboardTopQuestions";
 import type { DashboardPayload } from "@/components/dashboard/types";
@@ -82,6 +84,8 @@ export default function DashboardPage() {
               />
               <DashboardTopQuestions questions={data.top_questions} />
             </section>
+            <DashboardCategorySubmissions />
+            <DashboardQuestionAttempts />
             <DashboardRecentActivity rows={data.recent_user_activity} />
           </>
         ) : null}
