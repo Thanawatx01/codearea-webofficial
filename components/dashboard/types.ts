@@ -1,3 +1,10 @@
+// Dashboard Type Definitions
+// รวมประเภทข้อมูล (TypeScript Interfaces) ที่ใช้ในหน้า Dashboard
+// 1. DashboardPayload: ข้อมูลสรุปภาพรวมจาก API หลัก
+// 2. CategoryStat: ข้อมูลสถิติตามหมวดหมู่
+// 3. QuestionStat: ข้อมูลสถิติตามรายข้อ
+
+// ประเภทข้อมูลหลักของระบบ Dashboard
 export type DashboardPayload = {
   test_cases_total: number;
   admins_total: number;
@@ -27,6 +34,7 @@ export type DashboardPayload = {
   }>;
 };
 
+// ข้อมูลสำหรับ Card สรุปผล
 export type DashboardSummaryCard = {
   label: string;
   hint: string;
@@ -36,4 +44,25 @@ export type DashboardSummaryCard = {
   glow: string;
 };
 
+// แถวข้อมูลสำหรับกราฟวงกลม
 export type PieRow = { name: string; value: number };
+
+// ข้อมูลสถิติตามหมวดหมู่ (Category Analysis)
+export type CategoryStat = {
+  categoryId: number | null;
+  categoryName: string;
+  questionCount: number;
+  notDoneCount: number;
+  doneCount: number;
+  total: number;
+};
+
+// ข้อมูลสถิติตามโจทย์ (Question Analysis)
+export type QuestionStat = {
+  questionId: number;
+  code: string;
+  title: string;
+  notDoneCount: number;
+  doneCount: number;
+  total: number;
+};

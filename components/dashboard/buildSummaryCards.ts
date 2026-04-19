@@ -1,5 +1,15 @@
+// Dashboard Summary Cards Builder
+// ฟังก์ชันสำหรับเตรียมข้อมูล (Mapping) เพื่อแสดงใน Summary Cards
+// 1. แปลงข้อมูลจาก DashboardPayload ให้เป็น DashboardSummaryCard[]
+// 2. กำหนดไอคอน, สี, และข้อความอธิบาย (Hint) สำหรับแต่ละหมวด
+
 import type { DashboardPayload, DashboardSummaryCard } from "./types";
 
+// buildDashboardSummaryCards
+// สร้าง Array ของวัตถุข้อมูลสำหรับคอมโพเนนต์ DashboardSummaryCards
+// 1. รับก้อนข้อมูลดิบจาก API
+// 2. คำนวณค่าสำเร็จ (Done) จากโครงสร้างข้อมูลย่อย
+// 3. กำหนดสไตล์การออกแบบ (Gradients/Glows) ให้แต่ละ Card มีเอกลักษณ์
 export function buildDashboardSummaryCards(
   data: DashboardPayload,
 ): DashboardSummaryCard[] {
