@@ -340,24 +340,22 @@ function OllamaSection() {
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
 
-  const loadOllamaModels = async (url: string, silent = false) => {
-    if (!url || !url.startsWith("http")) { setAvailableModels([]); return { ok: false, error: "URL ไม่ถูกต้อง" }; }
+  const loadOllamaModels = async (silent = false) => {
     if (!silent) setFetchingModels(true);
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch(`${url.replace(/\/$/, "")}/api/tags`, { signal: controller.signal, cache: "no-cache" });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const data = await res.json();
-        const names = data.models?.map((m: any) => m.name) || [];
-        setAvailableModels(names);
+      const res = await api.get<string[]>("/settings/ollama/models", { useToken: true });
+      if (res.ok && res.data) {
+        setAvailableModels(res.data);
         return { ok: true };
       }
-      setAvailableModels([]); return { ok: false, error: `Server responded with ${res.status}` };
+      setAvailableModels([]); 
+      return { ok: false, error: res.error || "ไม่สามารถดึงข้อมูลโมเดลได้" };
     } catch (err: any) {
-      setAvailableModels([]); return { ok: false, error: err.name === "AbortError" ? "Timeout" : "Network Error" };
-    } finally { if (!silent) setFetchingModels(false); }
+      setAvailableModels([]); 
+      return { ok: false, error: "Network Error" };
+    } finally { 
+      if (!silent) setFetchingModels(false); 
+    }
   };
 
   useEffect(() => {
@@ -366,7 +364,7 @@ function OllamaSection() {
       if (res.ok && res.data) {
         setOllamaConfig(res.data);
         setOriginalOllama(res.data);
-        if (res.data.url) void loadOllamaModels(res.data.url, true);
+        if (res.data.url) void loadOllamaModels(true);
       }
       setLoading(false);
     }
@@ -413,7 +411,7 @@ function OllamaSection() {
   const testOllama = async () => {
     setTesting(true);
     try {
-      const result = await loadOllamaModels(ollamaConfig.url);
+      const result = await loadOllamaModels();
       if (!result.ok) throw new Error(result.error);
       if (ollamaConfig.model) {
         const res = await api.post("/settings/ollama/test", { url: ollamaConfig.url, model: ollamaConfig.model }, { useToken: true });
