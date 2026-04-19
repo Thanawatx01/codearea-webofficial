@@ -80,11 +80,11 @@ export async function fetchQuestionHint(
 > {
   const path = resolveQuestionHintPath(options.path);
 
-  const res = await callApi<unknown>(path, {
+  const res = await callApi<unknown>("/ai-tutor/hint", {
     method: "POST",
     body,
     useToken: options.useToken,
-    isAI: true,
+    isAI: false,
   });
 
   if (!res.ok) {

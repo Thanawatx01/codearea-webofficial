@@ -47,8 +47,8 @@ export async function streamQuestionCodeCompare(
     path?: string;
   },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const path = resolveQuestionComparePath(options.path);
-  const url = buildApiUrl(path, { isAI: options.isAI ?? true });
+  const path = "/ai-tutor/compare";
+  const url = buildApiUrl(path, { isAI: false });
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "text/plain, */*",
