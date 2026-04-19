@@ -82,3 +82,4 @@ frontend/
 - 📝 **Monaco Editor Integration**: ![Badge](https://img.shields.io/badge/Monaco%20Editor-0078d4?style=flat-square&logo=visual-studio-code&logoColor=white) ใช้งาน Engine เดียวกับ VS Code
 - 💅 **Modern UI with DaisyUI**: ![Badge](https://img.shields.io/badge/daisyui-5ad7ff?style=flat-square&logo=daisyui&logoColor=white) สวยงาม รวดเร็ว และรองรับธีมที่หลากหลาย
 - ⚡ **Next.js App Router**: ![Badge](https://img.shields.io/badge/next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white) ระบบ Route ที่ทันสมัยและรองรับ Server Components
+- 🤖 **AI Tutor BaaS Powered**: ทำงานร่วมกับ AI Tutor ผ่านระบบ Backend-as-a-Service จัดการโมเดลและการเชื่อมต่อจากศูนย์กลาง
