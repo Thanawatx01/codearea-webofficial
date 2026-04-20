@@ -20,6 +20,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  useLayoutEffect,
   type MouseEvent,
 } from "react";
 import AttachedDocumentBlock from "./AttachedDocumentBlock";
@@ -81,6 +82,18 @@ export default function QuestionDetailBody({ code }: { code: string }) {
   const colDragRef = useRef<{ startX: number; startPct: number } | null>(null);
   const aiStreamCancelRef = useRef<(() => void) | null>(null);
   const aiBusyRef = useRef(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      setIsAuthenticated(!!token);
+    };
+    checkAuth();
+    // Optional: listen for storage changes if needed
+    window.addEventListener("storage", checkAuth);
+    return () => window.removeEventListener("storage", checkAuth);
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1280px)");
@@ -532,6 +545,7 @@ export default function QuestionDetailBody({ code }: { code: string }) {
                 }
                 canSendCompare={canSendCompare}
                 compareBaselineCode={oldCodeForCompare}
+                isAuthenticated={isAuthenticated}
               />
             </div>
           </>

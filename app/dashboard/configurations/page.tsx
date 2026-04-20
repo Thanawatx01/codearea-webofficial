@@ -20,12 +20,6 @@ interface AIConfig {
   [key: string]: any;
 }
 
-interface OllamaConfig {
-  url: string;
-  model: string;
-  [key: string]: any;
-}
-
 // --- Shared Section Component ---
 
 interface ConfigCardProps {
@@ -40,7 +34,6 @@ interface ConfigCardProps {
 
 /**
  * A reusable, premium-styled card for configuration sections.
- * Ensures consistent design across Executor, AI, and Ollama settings.
  */
 function ConfigCard({
   title,
@@ -244,7 +237,7 @@ function AISection() {
     setSaving(false);
     if (res.ok) {
       setOriginalAi(ai);
-      void Swal.fire({ icon: "success", title: "บันทึกเรียบร้อย", text: "บันทึกการตั้งค่า AI Agent สำเร็จ", confirmButtonColor: "#3b82f6", background: "#1a1c2e", color: "#fff" });
+      void Swal.fire({ icon: "success", title: "บันทึกเรียบร้อย", text: "บันทึกการตั้งค่า AI Tutor URL สำเร็จ", confirmButtonColor: "#3b82f6", background: "#1a1c2e", color: "#fff" });
     } else {
       void Swal.fire({ icon: "error", title: "เกิดข้อผิดพลาด", text: res.error || "ไม่สามารถบันทึกการตั้งค่าได้", background: "#1a1c2e", color: "#fff" });
     }
@@ -268,7 +261,7 @@ function AISection() {
       if (!res.ok) throw new Error(res.error || "Failed to delete");
       setAi({ url: "http://localhost:8080" });
       setOriginalAi(null);
-      Swal.fire({ icon: "success", title: "รีเซ็ตสำเร็จ", timer: 1500, showConfirmButton: false, background: "#1a1c2e", color: "#fff" });
+      Swal.fire({ icon: "success", title: "รีเซ็ตสำเร็จ", timer: 1500, background: "#1a1c2e", color: "#fff", showConfirmButton: false });
     } catch (e: any) {
       Swal.fire({ icon: "error", title: "เกิดข้อผิดพลาด", text: e.message, background: "#1a1c2e", color: "#fff" });
     }
@@ -279,7 +272,7 @@ function AISection() {
     try {
       const res = await api.post("/settings/ai/test", { url: ai.url }, { useToken: true });
       if (res.ok) {
-        void Swal.fire({ icon: "success", title: "เชื่อมต่อสำเร็จ", text: "สามารถเชื่อมต่อกับ AI Connector API ได้ปกติ", confirmButtonColor: "#10b981", background: "#1a1c2e", color: "#fff" });
+        void Swal.fire({ icon: "success", title: "เชื่อมต่อสำเร็จ", text: "สามารถเชื่อมต่อกับ AI Tutor API ได้ปกติ", confirmButtonColor: "#10b981", background: "#1a1c2e", color: "#fff" });
       } else {
         throw new Error(res.error || "เชื่อมต่อไม่สำเร็จ");
       }
@@ -292,32 +285,45 @@ function AISection() {
 
   return (
     <ConfigCard
-      title="AI Agent Connector API"
-      subtitle="กำหนดเซิร์ฟเวอร์สำหรับการให้บริการ AI (คำใบ้, การวิเคราะห์โค้ด)"
+      title="AI Tutor Service Connection"
+      subtitle="กำหนด URL ของ AI Tutor BaaS (Python Service) เพื่อใช้ในฟีเจอร์คำใบ้ วิเคราะห์ และเปรียบเทียบโค้ด"
       icon="rocket"
       accentColor="purple"
       footerLeft={
-        <>
+        <div className="flex flex-wrap gap-2">
           <button onClick={testAi} disabled={testing || !ai.url} className="h-11 px-5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-white/80 hover:bg-white/10 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50">
             {testing ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-transparent" /> : <Icon name="activity" className="h-4 w-4" />}
-            ทดสอบ
+            ทดสอบการเชื่อมต่อ
           </button>
+          
+          {ai.url && (
+            <a 
+              href={ai.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="h-11 px-5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs font-bold text-indigo-400 hover:bg-indigo-500/20 transition-all flex items-center gap-2 active:scale-95"
+            >
+              <Icon name="rocket" className="h-4 w-4" />
+              Open BaaS Dashboard
+            </a>
+          )}
+
           <button onClick={handleReset} className="h-11 px-4 rounded-xl bg-rose-500/5 border border-rose-500/10 text-rose-400 hover:bg-rose-500/10 transition-all active:scale-95" title="คืนค่าเริ่มต้น">
             <Icon name="trash" className="h-4 w-4" />
           </button>
-        </>
+        </div>
       }
       footerRight={
         <button onClick={handleSave} disabled={saving} className="h-11 px-8 rounded-xl bg-purple-600 shadow-[0_4px_20px_rgba(147,51,234,0.3)] text-xs font-black uppercase tracking-widest text-white hover:bg-purple-500 hover:scale-[1.02] transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50">
           {saving ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-transparent" /> : <Icon name="check" className="h-4 w-4" />}
-          บันทึก AI Agent
+          บันทึก AI Tutor Config
         </button>
       }
     >
-      <ThemedInput label="API URL" value={ai.url} onChangeAction={(e: ChangeEvent<HTMLInputElement>) => setAi({ ...ai, url: e.target.value })} placeholder="http://localhost:8080"
+      <ThemedInput label="AI Tutor BaaS URL" value={ai.url} onChangeAction={(e: ChangeEvent<HTMLInputElement>) => setAi({ ...ai, url: e.target.value })} placeholder="http://localhost:8080"
         rightSlot={
           <button onClick={() => setAi({ url: "http://localhost:8080" })} className="text-[9px] font-bold bg-white/5 border border-white/10 px-2 py-1 rounded hover:bg-white/10 transition-colors text-white/60">
-            DEFAULT
+            DEFAULT (LOCAL)
           </button>
         }
       />
@@ -327,177 +333,6 @@ function AISection() {
           Current Database Value: <span className="text-white/50">{originalAi.url}</span>
         </p>
       )}
-    </ConfigCard>
-  );
-}
-
-function OllamaSection() {
-  const [ollamaConfig, setOllamaConfig] = useState<OllamaConfig>({ url: "http://localhost:11434", model: "gemma2:9b" });
-  const [originalOllama, setOriginalOllama] = useState<OllamaConfig | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [fetchingModels, setFetchingModels] = useState(false);
-
-  const loadOllamaModels = async (silent = false) => {
-    if (!silent) setFetchingModels(true);
-    try {
-      const res = await api.get<string[]>("/settings/ollama/models", { useToken: true });
-      if (res.ok && res.data) {
-        setAvailableModels(res.data);
-        return { ok: true };
-      }
-      setAvailableModels([]); 
-      return { ok: false, error: res.error || "ไม่สามารถดึงข้อมูลโมเดลได้" };
-    } catch (err: any) {
-      setAvailableModels([]); 
-      return { ok: false, error: "Network Error" };
-    } finally { 
-      if (!silent) setFetchingModels(false); 
-    }
-  };
-
-  useEffect(() => {
-    async function load() {
-      const res = await api.get<OllamaConfig>("/settings/ollama", { useToken: true });
-      if (res.ok && res.data) {
-        setOllamaConfig(res.data);
-        setOriginalOllama(res.data);
-        if (res.data.url) void loadOllamaModels(true);
-      }
-      setLoading(false);
-    }
-    void load();
-  }, []);
-
-  const handleSave = async () => {
-    setSaving(true);
-    const res = await api.post("/settings/ollama", ollamaConfig, { useToken: true });
-    setSaving(false);
-    if (res.ok) {
-      setOriginalOllama(ollamaConfig);
-      void Swal.fire({ icon: "success", title: "บันทึกเรียบร้อย", text: "บันทึกการตั้งค่า Ollama สำเร็จ", confirmButtonColor: "#3b82f6", background: "#1a1c2e", color: "#fff" });
-    } else {
-      void Swal.fire({ icon: "error", title: "เกิดข้อผิดพลาด", text: res.error || "ไม่สามารถบันทึกการตั้งค่าได้", background: "#1a1c2e", color: "#fff" });
-    }
-  };
-
-  const handleReset = async () => {
-    const result = await Swal.fire({
-      title: "คืนค่าเริ่มต้น Ollama?",
-      text: "ระบบจะลบการตั้งค่า URL และ Model ที่คุณบันทึกไว้",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "รีเซ็ต",
-      cancelButtonText: "ยกเลิก",
-      background: "#1a1c2e",
-      color: "#fff",
-      confirmButtonColor: "#f43f5e",
-    });
-    if (!result.isConfirmed) return;
-    try {
-      const res = await api.delete("/settings/ollama", { useToken: true });
-      if (!res.ok) throw new Error(res.error || "Failed to delete");
-      setOllamaConfig({ url: "http://localhost:11434", model: "gemma2:9b" });
-      setOriginalOllama(null);
-      setAvailableModels([]);
-      Swal.fire({ icon: "success", title: "รีเซ็ตสำเร็จ", timer: 1500, showConfirmButton: false, background: "#1a1c2e", color: "#fff" });
-    } catch (e: any) {
-      Swal.fire({ icon: "error", title: "เกิดข้อผิดพลาด", text: e.message, background: "#1a1c2e", color: "#fff" });
-    }
-  };
-
-  const testOllama = async () => {
-    setTesting(true);
-    try {
-      const result = await loadOllamaModels();
-      if (!result.ok) throw new Error(result.error);
-      if (ollamaConfig.model) {
-        const res = await api.post("/settings/ollama/test", { url: ollamaConfig.url, model: ollamaConfig.model }, { useToken: true });
-        if (res.ok) {
-          void Swal.fire({ icon: "success", title: "เชื่อมต่อสำเร็จ", text: `เชื่อมต่อกับ Ollama และพบโมเดล ${ollamaConfig.model} เรียบร้อย`, confirmButtonColor: "#10b981", background: "#1a1c2e", color: "#fff" });
-        } else { throw new Error(res.error || "โมเดลนี้อาจไม่มีอยู่ในเครื่อง"); }
-      } else {
-        void Swal.fire({ icon: "success", title: "เชื่อมต่อกับ Ollama แล้ว", text: "แสดงรายการโมเดลที่พบเจอ", confirmButtonColor: "#10b981", background: "#1a1c2e", color: "#fff" });
-      }
-    } catch (err: any) {
-      void Swal.fire({ icon: "error", title: "การเชื่อมต่อล้มเหลว", text: err.message, background: "#1a1c2e", color: "#fff" });
-    } finally { setTesting(false); }
-  };
-
-  if (loading) return null;
-
-  return (
-    <ConfigCard
-      title="Ollama Local Backend"
-      subtitle="กำหนดเซิร์ฟเวอร์ Ollama และโมเดลที่ต้องการใช้งานในเครื่อง (Local)"
-      icon="cpu"
-      accentColor="emerald"
-      footerLeft={
-        <>
-          <button onClick={testOllama} disabled={testing || !ollamaConfig.url} className="h-11 px-5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-white/80 hover:bg-white/10 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50">
-            {testing ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-transparent" /> : <Icon name="activity" className="h-4 w-4" />}
-            ทดสอบโมเดล
-          </button>
-          <button onClick={handleReset} className="h-11 px-4 rounded-xl bg-rose-500/5 border border-rose-500/10 text-rose-400 hover:bg-rose-500/10 transition-all active:scale-95" title="คืนค่าเริ่มต้น">
-            <Icon name="trash" className="h-4 w-4" />
-          </button>
-        </>
-      }
-      footerRight={
-        <button onClick={handleSave} disabled={saving} className="h-11 px-8 rounded-xl bg-emerald-600 shadow-[0_4px_20px_rgba(16,185,129,0.3)] text-xs font-black uppercase tracking-widest text-white hover:bg-emerald-500 hover:scale-[1.02] transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50">
-          {saving ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-transparent" /> : <Icon name="check" className="h-4 w-4" />}
-          บันทึก Ollama
-        </button>
-      }
-    >
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <ThemedInput label="Ollama API URL" value={ollamaConfig.url} onChangeAction={(e: ChangeEvent<HTMLInputElement>) => { setOllamaConfig({ ...ollamaConfig, url: e.target.value, model: "" }); setAvailableModels([]); }} placeholder="http://localhost:11434"
-            rightSlot={<button onClick={() => setOllamaConfig({ ...ollamaConfig, url: "http://localhost:11434" })} className="text-[9px] font-bold bg-white/5 border border-white/10 px-2 py-1 rounded hover:bg-white/10 transition-colors text-white/60">DEFAULT</button>}
-          />
-          {originalOllama && (
-            <p className="mt-2 flex items-center gap-2 px-1 text-[10px] font-medium text-white/30">
-              <Icon name="history" className="h-3.5 w-3.5" />
-              Current Database Value: <span className="text-white/50">{originalOllama.url}</span>
-            </p>
-          )}
-        </div>
-        <div className="sm:col-span-1">
-          <label className="block px-1 text-[10px] font-bold uppercase tracking-[0.15em] text-white/40 mb-3">Available Models</label>
-          <div className="min-h-[100px] flex flex-col justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-4 text-center">
-            {!ollamaConfig.url && (
-              <div className="flex flex-col items-center">
-                <Icon name="link" className="h-6 w-6 text-white/10 mb-2" />
-                <p className="text-[10px] font-medium text-white/20">กรุณากำหนด URL ก่อน</p>
-              </div>
-            )}
-            {ollamaConfig.url && availableModels.length === 0 && !fetchingModels && (
-              <div className="flex flex-col items-center">
-                <Icon name="search" className="h-6 w-6 text-white/20 mb-2" />
-                <p className="text-[10px] font-medium text-white/40">คลิก "ทดสอบโมเดล" เพื่อดึงข้อมูล</p>
-              </div>
-            )}
-            {availableModels.length > 0 && (
-              <div className="flex flex-wrap gap-2 justify-center">
-                {availableModels.map(name => (
-                  <div key={name} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shadow-sm transition-all hover:bg-emerald-500/20">
-                    <Icon name="cpu" className="h-3 w-3.5 shrink-0" />
-                    <span className="text-[10px] font-bold tracking-tight">{name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {fetchingModels && (
-              <div className="flex flex-col items-center gap-3 animate-pulse">
-                <div className="h-4 w-4 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-                <p className="text-[10px] font-bold text-white/30 tracking-widest uppercase">Scanning...</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
     </ConfigCard>
   );
 }
@@ -515,7 +350,12 @@ export default function ConfigurationsPage() {
         <div className="flex flex-col gap-10 pb-20">
           <ExecutorSection />
           <AISection />
-          <OllamaSection />
+          {/* Note: Internal AI and Ollama configurations have been moved to a standalone BaaS UI */}
+          <div className="rounded-3xl border border-dashed border-white/5 bg-white/[0.01] p-12 text-center">
+            <Icon name="rocket" className="mx-auto h-10 w-10 text-white/10 mb-4" />
+            <h3 className="text-sm font-black uppercase tracking-widest text-white/40">AI Services Configured Externally</h3>
+            <p className="mt-2 text-xs font-medium text-white/20">Ollama and AI Agent settings are now managed via the dedicated AI Tutor BaaS interface.</p>
+          </div>
         </div>
       </main>
     </div>
