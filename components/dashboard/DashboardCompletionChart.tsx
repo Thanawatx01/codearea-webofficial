@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useId, useState, useEffect } from "react";
+import { useId } from "react";
 import {
   Cell,
   Legend,
@@ -34,10 +34,6 @@ export function DashboardCompletionChart({
   successfulSubmissions,
   unsuccessfulSubmissions,
 }: DashboardCompletionChartProps) {
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
   const uid = useId().replace(/:/g, "");
   const successId = `dashPieSuccess-${uid}`;
   const failId = `dashPieFail-${uid}`;
@@ -55,9 +51,14 @@ export function DashboardCompletionChart({
           className="pointer-events-none absolute left-1/2 top-1/2 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.06] blur-3xl"
           aria-hidden
         />
-        <div className="relative h-[300px] w-full min-w-0 min-h-0">
-          {isMounted ? (
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+        <div className="relative w-full min-w-0 min-h-[280px]">
+          <ResponsiveContainer
+            width="100%"
+            minWidth={0}
+            minHeight={280}
+            aspect={1.55}
+            debounce={80}
+          >
             <PieChart>
               <defs>
                 {/* นิยามสี Gradient สำหรับส่วนที่ผ่าน */}
@@ -113,12 +114,6 @@ export function DashboardCompletionChart({
               />
             </PieChart>
           </ResponsiveContainer>
-          ) : (
-            /* แสดงลูปโหลดระหว่างรอ Hydration */
-            <div className="w-full h-full flex items-center justify-center opacity-10">
-              <div className="w-32 h-32 rounded-full border-4 border-white animate-pulse" />
-            </div>
-          )}
         </div>
         {/* ส่วนแสดงป้ายกำกับด้านล่างแบบกำหนดเอง */}
         <div className="mt-4 flex flex-wrap justify-center gap-3">

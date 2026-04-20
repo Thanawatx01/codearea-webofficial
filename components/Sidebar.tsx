@@ -1,10 +1,10 @@
 "use client";
 
+import { useLogout } from "@/components/auth/LogoutProvider";
 import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useLogout } from "@/components/auth/LogoutProvider";
 
 interface MenuItem {
   label: string;
@@ -58,12 +58,12 @@ const menuGroups: MenuGroup[] = [
     title: "รายงาน",
     items: [
       {
-        label: "การส่งคำตอบ",
-        href: "/dashboard/submissions",
+        label: "สถิติการส่งตามหมวดหมู่",
+        href: "/dashboard/category-stats",
         iconName: "submission",
       },
       {
-        label: "สถิติโจทย์",
+        label: "สถิติการส่งตามโจทย์",
         href: "/dashboard/problem-stats",
         iconName: "stats",
       },
@@ -207,7 +207,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <Icon name="logout" className="h-5 w-5" />
             )}
           </span>
-          {!collapsed && <span>{isLoggingOut ? "กำลังออก..." : "ออกจากระบบ"}</span>}
+          {!collapsed && (
+            <span>{isLoggingOut ? "กำลังออก..." : "ออกจากระบบ"}</span>
+          )}
         </button>
       </div>
     </aside>

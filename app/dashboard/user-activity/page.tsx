@@ -1,226 +1,206 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import Header from "@/components/Header";
 import DataTable from "@/components/DataTable";
 import type { DataTableColumn, DataTableHeader } from "@/components/DataTable";
+import Header from "@/components/Header";
+import { ReportFilters } from "@/components/reports/ReportFilters";
+import { ReportKpiCards } from "@/components/reports/ReportKpiCards";
+import {
+  normalizePaginated,
+  presetDateRange,
+  toDateTimeRange,
+} from "@/components/reports/report-utils";
+import { Icon } from "@/components/icons/Icon";
 import { api } from "@/lib/api";
-import { useRouter } from "next/navigation";
-
-const ActivityIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-  </svg>
-);
-
-const SearchIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-);
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type UserActivityRow = {
-  id: string;
-  username: string;
-  solved_count: number;
-  total_score: number;
-  max_score: number;
+  user_id?: number;
+  display_name?: string;
+  email?: string;
+  total_attempt?: number;
+  total_unfinished?: number;
+  total_finished?: number;
+  avg_submit_per_question?: number;
 };
 
-const mockActivities: UserActivityRow[] = [
-  { id: "mock-1", username: "Raksit", solved_count: 45, total_score: 4500, max_score: 5000 },
-  { id: "mock-2", username: "admin", solved_count: 50, total_score: 5000, max_score: 5000 },
-  { id: "mock-3", username: "thanawat", solved_count: 20, total_score: 1800, max_score: 5000 },
-  { id: "mock-4", username: "athp", solved_count: 5, total_score: 450, max_score: 5000 },
-  { id: "mock-5", username: "Nut", solved_count: 38, total_score: 3600, max_score: 5000 },
-  { id: "mock-6", username: "pupha", solved_count: 12, total_score: 1100, max_score: 5000 },
-];
-
 export default function UserActivityPage() {
-  const router = useRouter();
-  const [activities, setActivities] = useState<UserActivityRow[]>(mockActivities);
+  const [rows, setRows] = useState<UserActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [preset, setPreset] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchActivities = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await api.get<{ data: UserActivityRow[] }>("/users/leaderboard", {
-        useToken: true,
-      });
-
-      if (res.ok && res.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
-        setActivities(res.data.data);
-      } else {
-        console.log("Leaderboard API empty or failed, using placeholders");
-        // Keep mock data if API returns empty
-      }
-    } catch (e) {
-      console.error("Error fetching leaderboard:", e);
-      // Fallback to mock data is already handled by initial state
+  const applyPreset = useCallback((value: string) => {
+    setPreset(value);
+    setPage(1);
+    if (value !== "custom") {
+      const range = presetDateRange(value);
+      setStartDate(range.startDate);
+      setEndDate(range.endDate);
     }
-    setLoading(false);
   }, []);
 
-  useEffect(() => {
-    const userJson = localStorage.getItem("user");
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        if (user.role_id === 2) {
-          setIsAuthorized(true);
-        } else {
-          setIsAuthorized(false);
-          router.replace("/dashboard/problems");
-        }
-      } catch (e) {
-        console.error("Error parsing user from localStorage:", e);
-        router.replace("/login");
-      }
+  const loadUserActivity = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage("");
+    const res = await api.get("/user-activities", {
+      useToken: true,
+      params: {
+        page,
+        limit: 20,
+        search: search || undefined,
+        start_date: toDateTimeRange(startDate, false) || undefined,
+        end_date: toDateTimeRange(endDate, true) || undefined,
+      },
+    });
+    if (res.ok) {
+      const normalized = normalizePaginated<UserActivityRow>(res.data);
+      setRows(normalized.rows);
+      setTotalPages(normalized.pagination.totalPages || 1);
     } else {
-      router.replace("/login");
+      setRows([]);
+      setTotalPages(1);
+      setErrorMessage(res.error ?? "โหลดกิจกรรมผู้ใช้ไม่สำเร็จ");
     }
-  }, [router]);
+    setLoading(false);
+  }, [page, search, startDate, endDate]);
 
   useEffect(() => {
-    if (isAuthorized) {
-      void fetchActivities();
-    }
-  }, [isAuthorized, fetchActivities]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async report load
+    void loadUserActivity();
+  }, [loadUserActivity]);
 
-  const filteredActivities = useMemo(() => {
-    return activities.filter(u => 
-      u.username.toLowerCase().includes(searchQuery.toLowerCase())
+  const kpis = useMemo(() => {
+    const totalUsers = rows.length;
+    const totalAttempts = rows.reduce(
+      (sum, row) => sum + Number(row.total_attempt ?? 0),
+      0,
     );
-  }, [activities, searchQuery]);
-
-  const totalPages = Math.ceil(filteredActivities.length / 10) || 1;
-  const paginatedActivities = useMemo(() => {
-    const start = (page - 1) * 10;
-    return filteredActivities.slice(start, start + 10);
-  }, [filteredActivities, page]);
-
-  if (isAuthorized === null) {
-    return (
-      <div className="flex h-full w-full items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-      </div>
+    const totalFinished = rows.reduce(
+      (sum, row) => sum + Number(row.total_finished ?? 0),
+      0,
     );
-  }
-
-  if (isAuthorized === false) return null;
+    const avg =
+      totalUsers > 0
+        ? rows.reduce(
+            (sum, row) => sum + Number(row.avg_submit_per_question ?? 0),
+            0,
+          ) / totalUsers
+        : 0;
+    return [
+      { label: "จำนวนผู้ใช้", value: totalUsers, accent: "border-l-2 border-l-violet-400/60" },
+      { label: "ความพยายามรวม", value: totalAttempts, accent: "border-l-2 border-l-cyan-400/60" },
+      { label: "ส่งสำเร็จรวม", value: totalFinished, accent: "border-l-2 border-l-emerald-400/60" },
+      { label: "ค่าเฉลี่ยส่งต่อคำถาม", value: avg.toFixed(2), accent: "border-l-2 border-l-amber-400/60" },
+    ];
+  }, [rows]);
 
   const headers: DataTableHeader[] = [
-    { key: "no", label: "#", align: "center", className: "w-12" },
-    { key: "user", label: "ชื่อผู้ใช้" },
-    { key: "solved", label: "ทำไปแล้ว (ข้อ)", align: "center" },
-    { key: "score", label: "คะแนนที่ได้", align: "center" },
-    { key: "performance", label: "ประสิทธิภาพ", align: "center" },
+    { key: "no", label: "#", align: "center", className: "w-14" },
+    { key: "user", label: "ผู้ใช้" },
+    { key: "email", label: "อีเมล" },
+    { key: "attempt", label: "พยายาม", align: "right" },
+    { key: "unfinished", label: "ไม่สำเร็จ", align: "right" },
+    { key: "finished", label: "สำเร็จ", align: "right" },
+    { key: "avg", label: "เฉลี่ย/คำถาม", align: "right" },
   ];
 
   const columns: DataTableColumn<UserActivityRow>[] = [
     {
       key: "no",
-      className: "text-center text-white/30 text-xs font-mono",
-      render: (_row, index) => index + 1 + (page - 1) * 10,
+      className: "text-center text-white/40 text-xs tabular-nums",
+      render: (_row, index) => index + 1 + (page - 1) * 20,
     },
     {
       key: "user",
-      render: (row) => (
-        <span className="text-sm font-bold text-white hover:text-primary transition-colors cursor-pointer">
-          {row.username}
-        </span>
-      ),
+      className: "font-medium text-white/90",
+      render: (row) => row.display_name ?? "-",
     },
     {
-      key: "solved",
-      className: "text-center",
-      render: (row) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-primary/15 text-primary border border-primary/20">
-          {row.solved_count.toLocaleString()}
-        </span>
-      ),
+      key: "email",
+      className: "text-white/55",
+      render: (row) => row.email ?? "-",
     },
     {
-      key: "score",
-      className: "text-center",
-      render: (row) => (
-        <span className="text-sm font-bold">
-          <span className="text-emerald-400">{row.total_score.toLocaleString()}</span>
-          <span className="text-white/30 mx-1">/</span>
-          <span className="text-white/50">{(row.max_score || 0).toLocaleString()}</span>
-        </span>
-      ),
+      key: "attempt",
+      className: "text-right tabular-nums",
+      render: (row) => Number(row.total_attempt ?? 0).toLocaleString("th-TH"),
     },
     {
-      key: "performance",
-      className: "text-center w-48",
-      render: (row) => {
-        const percent = row.max_score > 0 ? Math.round((row.total_score / row.max_score) * 100) : 0;
-        return (
-          <div className="flex flex-col items-center gap-1.5 w-full max-w-[120px] mx-auto">
-            <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-              <div 
-                className={`h-full rounded-full ${percent >= 80 ? 'bg-emerald-400' : percent >= 50 ? 'bg-amber-400' : 'bg-red-400'}`}
-                style={{ width: `${percent}%` }}
-              ></div>
-            </div>
-            <span className="text-[10px] font-bold text-white/50">{percent}% Completion</span>
-          </div>
-        );
-      },
+      key: "unfinished",
+      className: "text-right tabular-nums text-orange-300",
+      render: (row) => Number(row.total_unfinished ?? 0).toLocaleString("th-TH"),
+    },
+    {
+      key: "finished",
+      className: "text-right tabular-nums text-emerald-300",
+      render: (row) => Number(row.total_finished ?? 0).toLocaleString("th-TH"),
+    },
+    {
+      key: "avg",
+      className: "text-right tabular-nums",
+      render: (row) => Number(row.avg_submit_per_question ?? 0).toFixed(2),
     },
   ];
 
   return (
     <>
-      <Header title="กิจกรรมผู้ใช้" icon={<ActivityIcon />} />
-      <main className="flex-1 p-6 space-y-5 overflow-y-auto w-full max-w-7xl mx-auto">
-        <div className="bg-[#161622]/60 backdrop-blur-2xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
-          <div className="px-8 py-6 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-3">
-                <span className="w-1.5 h-6 bg-primary rounded-full shadow-[0_0_15px_rgba(139,92,246,0.5)]"></span>
-                สถิติการเรียนรู้รายบุคคล
-              </h2>
-              <p className="text-xs text-white/40 mt-1 font-medium italic">ข้อมูลจำนวนโจทย์ที่ทำผ่านและคะแนนรวมที่ได้รับจากคะแนนเต็ม</p>
-            </div>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-white/20 group-focus-within:text-primary transition-colors">
-                <SearchIcon />
-              </div>
-              <input
-                type="text"
-                placeholder="ค้นหาชื่อผู้ใช้..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(1);
-                }}
-                className="bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-black/30 transition-all w-full md:w-64"
-              />
-            </div>
+      <Header title="กิจกรรมผู้ใช้" icon={<Icon name="activity" className="h-5 w-5" />} />
+      <main className="flex-1 space-y-6 overflow-y-auto w-full max-w-7xl mx-auto p-6">
+        <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
+          <div className="mb-4 flex items-center gap-2 text-sm font-bold text-white">
+            <span className="h-5 w-1 rounded-full bg-primary" />
+            ตัวกรองกิจกรรมผู้ใช้
           </div>
+          <ReportFilters
+            preset={preset}
+            onPresetChange={applyPreset}
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={(value) => {
+              setStartDate(value);
+              setPage(1);
+            }}
+            onEndDateChange={(value) => {
+              setEndDate(value);
+              setPage(1);
+            }}
+            search={search}
+            onSearchChange={(value) => {
+              setSearch(value);
+              setPage(1);
+            }}
+            searchPlaceholder="ค้นหาชื่อผู้ใช้หรืออีเมล..."
+          />
+        </section>
 
-          <div className="p-6">
-            <DataTable
-              headers={headers}
-              columns={columns}
-              rows={paginatedActivities}
-              rowKey={(row) => row.id}
-              loading={loading}
-              errorMessage={error}
-              emptyMessage="ยังไม่มีข้อมูลกิจกรรม"
-              pagination={{
-                page,
-                totalPages,
-                onPageChangeAction: setPage,
-              }}
-            />
-          </div>
-        </div>
+        <ReportKpiCards items={kpis} />
+
+        <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-white">
+            <span className="h-5 w-1 rounded-full bg-primary" />
+            รายงานกิจกรรมผู้ใช้
+          </h2>
+          <DataTable
+            headers={headers}
+            columns={columns}
+            rows={rows}
+            rowKey={(row, index) => `${row.user_id ?? index}`}
+            loading={loading}
+            errorMessage={errorMessage}
+            emptyMessage="ไม่มีข้อมูลกิจกรรมผู้ใช้"
+            pagination={{
+              page,
+              totalPages,
+              onPageChangeAction: setPage,
+            }}
+          />
+        </section>
       </main>
     </>
   );
