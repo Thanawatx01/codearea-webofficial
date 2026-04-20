@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "postman.postman-for-vscode",
+    "formulahendry.auto-rename-tag",
+    "usernamehw.errorlens",
+    "dsznajder.es7-react-js-snippets",
+    "ms-vscode.vscode-typescript-next",
+    "jock.svg",
+    "bradlc.vscode-tailwindcss",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig"
+  ]
+}
+
+

@@ -1,164 +1,85 @@
-# Code Area
+# CodeArea — Frontend (Official Web)
 
-Code Area คือระบบสำหรับฝึกทำโจทย์ **Algorithm และ Data Structure** คล้ายกับ LeetCode หรือ HackerRank  
-โดยระบบจะสามารถ **รันโค้ด ตรวจคำตอบด้วย Test Case และใช้ AI ช่วยอธิบายแนวคิดในการแก้โจทย์**
+เว็บแอปพลิเคชันส่วนหน้าสำหรับ CodeArea แพลตฟอร์มฝึกฝนการเขียนโค้ด พัฒนาด้วย Next.js และ Tailwind CSS ออกแบบมาให้มีความทันสมัยและตอบสนองได้ดีเยี่ยม (Responsive)
 
-โปรเจคนี้พัฒนาด้วย **Next.js (Frontend) + Node.js (Backend)** และมีระบบ **Code Judge + AI Feedback**
+## 📂 Project Structure
 
----
+```text
+frontend/
+├── app/                  # Next.js App Router (หน้าเว็บและ Layout)
+│   ├── (auth)/           # หน้าเข้าสู่ระบบและสมัครสมาชิก
+│   ├── questions/        # หน้าจัดรายการโจทย์และหน้าทำโจทย์
+│   └── globals.css       # สไตล์ส่วนกลาง (Tailwind v4)
+├── components/           # คอมโพเนนต์ที่นำมาใช้ซ้ำได้
+│   ├── editor/           # ทุกส่วนประกอบที่เกี่ยวกับ Editor (Monaco, Markdown, Executor)
+│   ├── layout/           # ส่วนประกอบหลัก (Navbar, Footer, Sidebar)
+│   └── ui/               # องค์ประกอบพื้นฐาน (Buttons, Cards, Modals)
+├── lib/                  # ห้องสมุดและเครื่องมือช่วย
+│   ├── api.ts            # การเชื่อมต่อกับ Backend API
+│   ├── judge0.ts         # การจัดการ Code Execution
+│   └── utils.ts          # ฟังก์ชันช่วยเหลือทั่วไป
+├── public/               # ไฟล์รูปภาพและสื่อต่างๆ
+├── .env.example          # แม่แบบไฟล์ตั้งค่าตัวแปรสภาพแวดล้อม
+├── next.config.ts        # การตั้งค่า Next.js
+└── package.json          # รายการไลบรารีและคำสั่งรันระบบ
+```
 
-# Tech Stack
+## 🛠️ Requirements
 
-## Frontend
-- Next.js
-- React
-- TailwindCSS
-
-## Backend
-- Node.js
-- Express / API Routes
-
-## Database
-- PostgreSQL หรือ MySQL
-
-## Code Judge
-- Docker Sandbox
-- Compile และ Run code แบบแยก process
-
-## AI Integration
-- ใช้ AI ช่วย
-  - อธิบาย Algorithm
-  - Review Code
-  - แนะนำ Optimization
-
----
-
-# Core Features
-
-## 1. Coding Problem System
-
-ผู้ใช้สามารถเลือกโจทย์และเขียนโค้ดเพื่อแก้ปัญหา
-
-ข้อมูลของโจทย์ประกอบด้วย
-
-- Title
-- Description
-- Constraints
-- Difficulty
-- Time Limit
-- Memory Limit
-- Tags
+| Requirement | Badge | Description |
+| :--- | :--- | :--- |
+| **Next.js** | ![NextJS](https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white) | Framework หลัก (v16 App Router) |
+| **React** | ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) | UI Library (v19) |
+| **Tailwind** | ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) | ระบบกำหนดสไตล์ (v4) |
+| **Monaco** | ![Monaco Editor](https://img.shields.io/badge/Monaco%20Editor-0078d4?style=for-the-badge&logo=visual-studio-code&logoColor=white) | ตัวแก้ไขโค้ดระดับแนวหน้า (VS Code Engine) |
+| **DaisyUI** | ![DaisyUI](https://img.shields.io/badge/daisyui-5ad7ff?style=for-the-badge&logo=daisyui&logoColor=white) | Library สำหรับ UI Components |
+| **Node.js** | ![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white) | Runtime แนะนำ v18 ขึ้นไป |
 
 ---
 
-## 2. Test Case Judge
+## 📖 Setup Guide
 
-ระบบจะนำโค้ดของผู้ใช้ไปรันกับ Test Case
+ทำตามขั้นตอนด้านล่างเพื่อเริ่มรันโปรเจคในเครื่อง (Local Development):
 
-ประเภทของ Test Case
+1.  **ติดตั้ง Dependencies**:
+    ```bash
+    npm install
+    ```
 
-- Sample Test Case (แสดงให้ผู้ใช้เห็น)
-- Hidden Test Case (ใช้ตรวจตอน submit)
+2.  **ตั้งค่า Environment**:
+    คัดลอกไฟล์แม่แบบและตรวจสอบค่า URL ของ Backend:
+    ```bash
+    cp .env.example .env
+    ```
+    *หมายเหตุ: ตั้งแต่ v1.1 การเชื่อมต่อระบบรันโค้ด (Execution Engine: Piston/Judge0) ไม่ต้องตั้งค่าในไฟล์ `.env` อีกต่อไป แต่สามารถตั้งค่าคอนฟิกระบบแบบ Global ได้โดยตรงผ่านเมนู IDE บนหน้า Dashboard (สงวนสิทธิ์เฉพาะสิทธิ์แอดมิน)*
 
-ผลลัพธ์ที่เป็นไปได้
+3.  **เริ่มต้นรันระบบ**:
+    ```bash
+    npm run dev
+    ```
 
-- Accepted
-- Wrong Answer
-- Time Limit Exceeded
-- Runtime Error
-- Compile Error
-
----
-
-## 3. Submission History
-
-ผู้ใช้สามารถดูประวัติการ submit ได้
-
-ข้อมูลที่เก็บ เช่น
-
-- Code ที่ submit
-- ภาษาโปรแกรม
-- Run time
-- Memory used
-- Status ของแต่ละ Test Case
+เปิดเบราว์เซอร์ที่ [http://localhost:3000](http://localhost:3000) (หรือพอร์ตอื่นๆ ที่ระบบแจ้ง)
 
 ---
 
-## 4. AI Explanation
+## 📜 คำสั่งที่ใช้งานบ่อย (Available Scripts)
 
-ระหว่างทำโจทย์ ผู้ใช้สามารถถาม AI เพื่อช่วยอธิบายแนวคิด
+- `npm run dev`: เริ่มต้นรันเซิร์ฟเวอร์ในโหมดพัฒนา (Hot Reload)
+- `npm run build`: จัดเตรียมแอปพลิเคชันสำหรับใช้งานจริง (Production)
+- `npm run start`: รันแแอปพลิเคชันที่ผ่านการ Build แล้ว
+- `npm run lint`: ตรวจสอบความถูกต้องและคุณภาพของโค้ดด้วย ESLint
 
-AI จะช่วย
-
-- อธิบาย algorithm แบบ step-by-step
-- อธิบาย logic ของโจทย์
-- แนะนำแนวคิดในการแก้ปัญหา
-
-โดย **AI จะไม่แสดงเฉลยเป็น code โดยตรง**
-
----
-
-## 5. AI Code Review
-
-หลังจาก submit แล้ว AI จะสามารถช่วย
-
-- วิเคราะห์ code
-- แนะนำ best practice
-- แนะนำวิธีลด Time Complexity
-- แนะนำวิธีปรับปรุง Memory usage
+## 💻 Tech Stack
+<p align="left">
+  <a href="https://skillicons.dev">
+    <img src="https://skillicons.dev/icons?i=nextjs,react,tailwind,ts,nodejs,vscode,postman,docker" />
+  </a>
+</p>
 
 ---
 
-## 6. Compare Submissions
-
-ผู้ใช้สามารถกลับมาทำโจทย์เดิมได้อีกครั้ง
-
-ระบบจะสามารถ
-
-- เปรียบเทียบ submission ปัจจุบันกับ submission ก่อนหน้า
-- วิเคราะห์ว่าดีขึ้นหรือแย่ลงอย่างไร
-- แนะนำวิธีปรับปรุง
-
----
-
-# Database Design
-
-ตารางหลักของระบบ
-
-- users
-- questions
-- question_categories
-- tags
-- question_tag
-- test_cases
-- submissions
-- submission_test_cases
-- languages
-- ai_feedback
-
-ระบบถูกออกแบบให้รองรับ
-
-- Multiple test cases
-- Multi-language execution
-- AI feedback ต่อ submission
-
----
-
-# Project Goals
-
-โปรเจคนี้มีเป้าหมายเพื่อ
-
-- สร้างแพลตฟอร์มฝึกเขียน algorithm
-- ช่วยให้ผู้ใช้เข้าใจ algorithm มากขึ้น
-- ใช้ AI เป็นผู้ช่วยในการเรียนรู้
-- สร้างระบบ judge ที่คล้ายกับระบบจริง
-
----
-
-# Future Improvements
-
-- Contest Mode
-- Ranking System
-- Discussion System
-- AI Hint System
-- Visualization Algorithm
+## ✨ คุณสมบัติเด่น (Features)
+- 📝 **Monaco Editor Integration**: ![Badge](https://img.shields.io/badge/Monaco%20Editor-0078d4?style=flat-square&logo=visual-studio-code&logoColor=white) ใช้งาน Engine เดียวกับ VS Code
+- 💅 **Modern UI with DaisyUI**: ![Badge](https://img.shields.io/badge/daisyui-5ad7ff?style=flat-square&logo=daisyui&logoColor=white) สวยงาม รวดเร็ว และรองรับธีมที่หลากหลาย
+- ⚡ **Next.js App Router**: ![Badge](https://img.shields.io/badge/next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white) ระบบ Route ที่ทันสมัยและรองรับ Server Components
+- 🤖 **AI Tutor BaaS Powered**: ทำงานร่วมกับ AI Tutor ผ่านระบบ Backend-as-a-Service จัดการโมเดลและการเชื่อมต่อจากศูนย์กลาง

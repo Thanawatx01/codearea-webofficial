@@ -1,0 +1,125 @@
+import {
+  ThemedAsyncMultiSelect2,
+  ThemedAsyncSelect2,
+  ThemedInput,
+  ThemedSelect,
+  type Select2Option,
+} from "@/components/FormControls";
+import {
+  loadQuestionCategoryOptionsForFilter,
+  loadTagOptionsForFilter,
+} from "@/lib/questionTaxonomyApi";
+
+type ProblemsFilterFormProps = {
+  category: Select2Option | null;
+  search: string;
+  difficulty: string;
+  tag: Select2Option[];
+  status: string;
+  onCategoryChangeAction: (option: Select2Option | null) => void;
+  onSearchChangeAction: (value: string) => void;
+  onDifficultyChangeAction: (value: string) => void;
+  onTagChangeAction: (value: Select2Option[]) => void;
+  onStatusChangeAction: (value: string) => void;
+  onSubmitAction: () => void;
+};
+
+export function ProblemsFilterForm({
+  category,
+  search,
+  difficulty,
+  tag,
+  status,
+  onCategoryChangeAction,
+  onSearchChangeAction,
+  onDifficultyChangeAction,
+  onTagChangeAction,
+  onStatusChangeAction,
+  onSubmitAction,
+}: ProblemsFilterFormProps) {
+  const categoryValue = category;
+  const tagValues = tag;
+
+  return (
+    <section className="rounded-xl border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur-xl">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-6">
+        <ThemedAsyncSelect2
+          label="หมวดหมู่"
+          value={categoryValue}
+          onChangeAction={(option) => onCategoryChangeAction(option)}
+          loadOptionsAction={loadQuestionCategoryOptionsForFilter}
+          placeholder="ค้นหาหมวดหมู่..."
+          size="sm"
+        />
+
+        <ThemedInput
+          label="ชื่อ"
+          type="text"
+          placeholder="ค้นหาชื่อ ..."
+          value={search}
+          onChangeAction={(e) => onSearchChangeAction(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && onSubmitAction()}
+          className="h-[42px] rounded-xl px-4"
+        />
+
+        <ThemedSelect
+          label="ระดับ"
+          value={difficulty}
+          onChangeAction={(e) => onDifficultyChangeAction(e.target.value)}
+          className="h-[42px] rounded-xl px-4"
+        >
+          <option value="" className="text-black">
+            ทั้งหมด
+          </option>
+          <option value="1" className="text-black">
+            ง่าย
+          </option>
+          <option value="2" className="text-black">
+            ปานกลาง
+          </option>
+          <option value="3" className="text-black">
+            ยาก
+          </option>
+        </ThemedSelect>
+
+        <ThemedAsyncMultiSelect2
+          label="แท็ก"
+          value={tagValues}
+          onChangeAction={(options) =>
+            onTagChangeAction(options)
+          }
+          loadOptionsAction={loadTagOptionsForFilter}
+          placeholder="ค้นหาแท็ก..."
+          size="sm"
+        />
+
+        <ThemedSelect
+          label="สถานะ"
+          value={status}
+          onChangeAction={(e) => onStatusChangeAction(e.target.value)}
+          className="h-[42px] rounded-xl px-4"
+        >
+          <option value="" className="text-black">
+            ทั้งหมด
+          </option>
+          <option value="1" className="text-black">
+            เปิดใช้งาน
+          </option>
+          <option value="0" className="text-black">
+            ปิดใช้งาน
+          </option>
+        </ThemedSelect>
+
+        <div className="flex items-end">
+          <button
+            type="button"
+            onClick={onSubmitAction}
+            className="h-[42px] w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 text-sm font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] hover:shadow-blue-500/40 active:scale-95"
+          >
+            ค้นหา
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}

@@ -1,0 +1,40 @@
+{
+  "name": "codearea-webofficial",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "@supabase/supabase-js": "^2.101.1",
+    "@uiw/react-md-editor": "^4.0.11",
+    "monaco-editor": "^0.53.0",
+    "next": "^16.2.4",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-easy-crop": "^5.5.7",
+    "react-markdown": "^10.1.0",
+    "react-select": "^5.10.2",
+    "recharts": "^3.8.0",
+    "remark-gfm": "^4.0.1",
+    "sweetalert2": "^11.26.21"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "daisyui": "^5.5.19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
