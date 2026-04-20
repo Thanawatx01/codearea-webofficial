@@ -1,13 +1,13 @@
 "use client";
 
 import { ThemedInput } from "@/components/FormControls";
+import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import { api } from "@/lib/api";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Image from "next/image";
-import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 
 interface RegisterResponse {
   token?: string;
@@ -30,12 +30,22 @@ export default function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    const token = localStorage.getItem("token");
+    const userRaw = localStorage.getItem("user");
+    if (token && userRaw) {
+      try {
+        const user = JSON.parse(userRaw) as { role_id?: number };
+        router.replace(user.role_id === 2 ? "/dashboard" : "/");
+        return;
+      } catch {
+        // ignore malformed user payload and continue normal register flow
+      }
+    }
+
+  }, [router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -69,10 +79,10 @@ export default function RegisterPage() {
     if (res.data?.token && res.data.user) {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      
+
       // Notify other components (like NavigationHeader) in same-tab
       window.dispatchEvent(new Event("storage"));
-      
+
       document.cookie = `token=${encodeURIComponent(res.data.token)}; path=/; samesite=lax`;
       document.cookie = `role_id=${res.data.user.role_id}; path=/; samesite=lax`;
       document.cookie = `display_name=${encodeURIComponent(res.data.user.display_name)}; path=/; samesite=lax`;
@@ -89,17 +99,10 @@ export default function RegisterPage() {
     router.push("/login");
   };
 
-  if (!isMounted) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center p-6 pt-32 pb-12 font-sans text-white" />
-    );
-  }
-
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-6 pt-32 pb-12 font-sans text-white">
       {/* Main Container */}
       <div className="relative flex w-full max-w-[1000px] flex-col overflow-hidden rounded-[3rem] border border-white/10 bg-[#05060d]/85 shadow-2xl backdrop-blur-[80px] lg:flex-row">
-
         {/* Left Side: Aesthetic Background */}
         <div className="relative hidden w-full lg:block lg:w-1/2">
           <div className="absolute inset-0 z-0 overflow-hidden">
@@ -130,8 +133,6 @@ export default function RegisterPage() {
             </p>
 
             <div className="h-1 w-12 rounded-full bg-violet-500/50" />
-
-
           </div>
         </div>
 
@@ -263,11 +264,17 @@ export default function RegisterPage() {
 
           <p className="mt-6 text-center text-[10px] leading-relaxed text-white/30">
             ในการสมัครสมาชิกถือว่าคุณยอมรับ{" "}
-            <Link href="#" className="underline transition-all hover:text-white">
+            <Link
+              href="#"
+              className="underline transition-all hover:text-white"
+            >
               ข้อตกลงในการให้บริการ
             </Link>{" "}
             และ{" "}
-            <Link href="#" className="underline transition-all hover:text-white">
+            <Link
+              href="#"
+              className="underline transition-all hover:text-white"
+            >
               นโยบายความเป็นส่วนตัว
             </Link>
             .

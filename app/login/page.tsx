@@ -1,13 +1,13 @@
 "use client";
 
 import { ThemedInput } from "@/components/FormControls";
+import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import { api } from "@/lib/api";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Image from "next/image";
-import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 
 interface LoginResponse {
   token: string;
@@ -21,28 +21,39 @@ interface LoginResponse {
 }
 
 export default function LoginPage() {
-  const [formData, setFormData] = useState({
-    email: "admin@codearea.app",
-    password: "1234567890",
+  const [formData, setFormData] = useState(() => {
+    const savedEmail =
+      typeof window !== "undefined"
+        ? localStorage.getItem("remember_email")
+        : null;
+    return {
+      email: savedEmail || "admin@codearea.app",
+      password: "1234567890",
+    };
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const [rememberMe, setRememberMe] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      localStorage.getItem("remember_me_checked") === "true",
+  );
   const router = useRouter();
 
   useEffect(() => {
-    setIsMounted(true);
-    // โหลดข้อมูลที่จดจำไว้
-    const savedEmail = localStorage.getItem("remember_email");
-    const savedChecked = localStorage.getItem("remember_me_checked") === "true";
-
-    if (savedEmail) {
-      setFormData(prev => ({ ...prev, email: savedEmail }));
-      setRememberMe(savedChecked);
+    const token = localStorage.getItem("token");
+    const userRaw = localStorage.getItem("user");
+    if (token && userRaw) {
+      try {
+        const user = JSON.parse(userRaw) as { role_id?: number };
+        router.replace(user.role_id === 2 ? "/dashboard" : "/");
+        return;
+      } catch {
+        // ignore malformed user payload and continue normal login flow
+      }
     }
-  }, []);
+  }, [router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -91,28 +102,21 @@ export default function LoginPage() {
       const from = params.get("from");
       const safeFrom =
         from &&
-          from.startsWith("/dashboard") &&
-          !from.includes("//") &&
-          !from.includes("\\")
+        from.startsWith("/dashboard") &&
+        !from.includes("//") &&
+        !from.includes("\\")
           ? from
           : null;
       router.replace(safeFrom ?? "/dashboard");
     } else {
-      router.replace("/profile");
+      router.replace("/");
     }
   };
-
-  if (!isMounted) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center p-6 pt-32 pb-12 font-sans text-white" />
-    );
-  }
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-6 pt-32 pb-12 font-sans text-white">
       {/* Main Container */}
       <div className="relative flex w-full max-w-[1000px] flex-col overflow-hidden rounded-[3rem] border border-white/10 bg-[#05060d]/85 shadow-2xl backdrop-blur-[80px] lg:flex-row">
-
         {/* Left Side: Aesthetic Background */}
         <div className="relative hidden w-full lg:block lg:w-1/2">
           <div className="absolute inset-0 z-0 overflow-hidden">
@@ -143,8 +147,6 @@ export default function LoginPage() {
             </p>
 
             <div className="h-1 w-12 rounded-full bg-violet-500/50" />
-
-
           </div>
         </div>
 
@@ -266,7 +268,10 @@ export default function LoginPage() {
 
           <p className="mt-12 text-center text-[10px] leading-relaxed text-white/30">
             ในการเข้าสู่ระบบถือว่าคุณยอมรับ{" "}
-            <Link href="#" className="underline transition-all hover:text-white">
+            <Link
+              href="#"
+              className="underline transition-all hover:text-white"
+            >
               ข้อตกลงและเงื่อนไข
             </Link>
             .
