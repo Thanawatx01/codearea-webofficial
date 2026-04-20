@@ -24,6 +24,7 @@ export default function QuestionAiAssistantPanel({
   onSend,
   sending = false,
   mode = "hint",
+  isAuthenticated = true,
   onModeChange,
   compareOldOptions = [],
   compareOldId,
@@ -49,6 +50,7 @@ export default function QuestionAiAssistantPanel({
   canSendCompare?: boolean;
   /** โค้ดจากตัวเลือกฐาน (ประวัติ / progress / session) */
   compareBaselineCode?: string;
+  isAuthenticated?: boolean;
 }) {
   const messagesScrollRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +64,7 @@ export default function QuestionAiAssistantPanel({
   const hintSendDisabled = sending || !draft.trim();
   const compareSendDisabled =
     sending || !canSendCompare || compareOldOptions.length === 0;
-  const sendDisabled = mode === "hint" ? hintSendDisabled : compareSendDisabled;
+  const sendDisabled = !isAuthenticated || (mode === "hint" ? hintSendDisabled : compareSendDisabled);
 
   return (
     <div
@@ -86,7 +88,7 @@ export default function QuestionAiAssistantPanel({
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/10 bg-white/[0.03] px-2">
             <span className="text-xs font-bold tracking-wide text-white/75">
-              ผู้ช่วย AI
+              AI Process Assistant
             </span>
             <div className="flex items-center gap-0.5">
               <button
@@ -192,15 +194,31 @@ export default function QuestionAiAssistantPanel({
             ref={messagesScrollRef}
             className="flex min-h-56 flex-1 flex-col gap-3 overflow-y-auto p-3 xl:min-h-72"
           >
-            {messages.length === 0 ? (
+            {!isAuthenticated ? (
+              <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+                <span className="text-3xl opacity-40">🔒</span>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-white/80">Login Required</p>
+                  <p className="max-w-48 text-[11px] leading-relaxed text-white/40">
+                    Sign in to use the AI Process Assistant and get coding hints.
+                  </p>
+                </div>
+                <a
+                  href="/login"
+                  className="rounded-lg bg-white/10 px-4 py-1.5 text-[11px] font-bold text-white transition hover:bg-white/20"
+                >
+                  Go to Login
+                </a>
+              </div>
+            ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
                 <span className="text-3xl opacity-40" aria-hidden>
                   😎
                 </span>
                 <p className="max-w-56 text-xs leading-relaxed text-white/45">
                   {mode === "compare"
-                    ? "เลือกเวอร์ชันโค้ดเก่า แล้วถามโฟกัส (ไม่บังคับ) — ระบบสตรีมคำตอบเปรียบเทียบจากฐาน AI"
-                    : "พิมพ์คำถามเกี่ยวกับโจทย์ — ส่งผ่าน API คำใบ้ แล้วแสดงคำตอบทีละส่วน"}
+                    ? "Select an old version and ask Focus — System will stream code comparisons."
+                    : "Ask questions about the problem — Get AI-powered hints and analysis."}
                 </p>
               </div>
             ) : (
@@ -273,12 +291,14 @@ export default function QuestionAiAssistantPanel({
                 }
               }}
               placeholder={
-                mode === "compare"
-                  ? "โฟกัสการเปรียบเทียบ (ไม่บังคับ) · Enter ส่ง · Shift+Enter ขึ้นบรรทัด"
-                  : "ถามเกี่ยวกับโจทย์… (Enter ส่ง · Shift+Enter ขึ้นบรรทัด)"
+                !isAuthenticated
+                  ? "Please login to chat..."
+                  : mode === "compare"
+                    ? "Focus on... (Optional) · Enter to send · Shift+Enter for new line"
+                    : "Ask about the problem... (Enter to send · Shift+Enter for new line)"
               }
               rows={2}
-              disabled={sending}
+              disabled={sending || !isAuthenticated}
               className="mb-2 w-full resize-none rounded-lg border border-white/10 bg-black/35 px-3 py-2 text-xs text-white placeholder:text-white/28 focus:border-violet-500/35 focus:outline-none focus:ring-1 focus:ring-violet-500/25 disabled:cursor-not-allowed disabled:opacity-45"
             />
             <button
