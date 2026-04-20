@@ -4,10 +4,10 @@
 // 2. แสดงสถิติจำนวนที่ส่งผ่าน (Done) และยังไม่ผ่าน (Not Done)
 // 3. รองรับการกรองตามวันที่ (Presets) และเลือกหมวดหมู่ที่เฉพาะเจาะจง
 
-import { useCallback, useEffect, useState } from "react";
+import { Icon } from "@/components/icons/Icon";
 import { api } from "@/lib/api";
+import { useCallback, useEffect, useState } from "react";
 import { DashboardPanelHeader } from "./DashboardPanelHeader";
-import type { CategoryStat } from "./types";
 import {
   DashboardTableBody,
   DashboardTableContainer,
@@ -16,7 +16,7 @@ import {
   DashboardTh,
   DashboardTr,
 } from "./DashboardTable";
-import { Icon } from "@/components/icons/Icon";
+import type { CategoryStat } from "./types";
 
 export function DashboardCategorySubmissions() {
   const [data, setData] = useState<CategoryStat[]>([]);
@@ -208,23 +208,15 @@ export function DashboardCategorySubmissions() {
                   )}
                 </div>
               </DashboardTd>
-              {row.questionCount > 0 ? (
-                <>
-                  <DashboardTd className="text-right font-medium tabular-nums text-orange-300/90">
-                    {row.notDoneCount.toLocaleString("th-TH")}
-                  </DashboardTd>
-                  <DashboardTd className="text-right font-medium tabular-nums text-emerald-300">
-                    {row.doneCount.toLocaleString("th-TH")}
-                  </DashboardTd>
-                  <DashboardTd className="text-right font-medium tabular-nums text-white">
-                    {row.total.toLocaleString("th-TH")}
-                  </DashboardTd>
-                </>
-              ) : (
-                <DashboardTd colSpan={3} className="text-right text-white/20">
-                  -
-                </DashboardTd>
-              )}
+              <DashboardTd className="text-right font-medium tabular-nums text-orange-300/90">
+                {row.notDoneCount?.toLocaleString("th-TH") ?? 0}
+              </DashboardTd>
+              <DashboardTd className="text-right font-medium tabular-nums text-emerald-300">
+                {row.doneCount?.toLocaleString("th-TH") ?? 0}
+              </DashboardTd>
+              <DashboardTd className="text-right font-medium tabular-nums text-white">
+                {row.total?.toLocaleString("th-TH") ?? 0}
+              </DashboardTd>
             </DashboardTr>
           ))}
           {data.length === 0 && !loading && (
