@@ -4,7 +4,7 @@ import { useLogout } from "@/components/auth/LogoutProvider";
 import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 interface MenuItem {
   label: string;
@@ -39,6 +39,11 @@ const menuGroups: MenuGroup[] = [
         label: "แท็ก",
         href: "/dashboard/tags",
         iconName: "tag",
+      },
+      {
+        label: "Achievements",
+        href: "/dashboard/achievements",
+        iconName: "award",
       },
       { label: "โจทย์", href: "/dashboard/problems", iconName: "problem" },
       { label: "IDE", href: "/dashboard/ide", iconName: "ide" },
@@ -82,6 +87,11 @@ const menuGroups: MenuGroup[] = [
         href: "/dashboard/configurations",
         iconName: "settings",
       },
+      {
+        label: "Audit Logs",
+        href: "/dashboard/audit-logs",
+        iconName: "history",
+      },
     ],
   },
 ];
@@ -91,23 +101,30 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
+// # Sidebar Component
+// # ส่วนแถบเมนูด้านข้าง (Navigation Sidebar) พร้อมระบบย่อ/ขยาย และการจัดการสิทธิ์
+// # Props -> Menu Data -> Navigation Render -> Logout Action
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  // # step 1: เรียกใช้ Hooks สำหรับการนำทางและการออกจากระบบ
   const pathname = usePathname();
-  const router = useRouter();
 
   const { logout, isLoggingOut } = useLogout();
 
+  // # step 2: จัดการฟังก์ชันการออกจากระบบ (Logout)
   const handleLogout = () => {
+    // # Security 
+    // # Check for security code
     logout("/");
   };
 
+  // # step 3: ส่วนการแสดงผลหลัก (Render)
   return (
     <aside
       className={`fixed bottom-0 left-0 top-0 z-40 flex flex-col overflow-y-auto border-r border-white/10 bg-linear-to-b from-[#05060d]/95 via-[#090b16]/95 to-[#081225]/95 backdrop-blur-md transition-[width] duration-200 ${
         collapsed ? "w-[84px]" : "w-[260px]"
       }`}
     >
-      {/* Logo */}
+      {/* Logo Section */}
       <div
         className={`flex h-16 items-center border-b border-white/5 ${
           collapsed ? "justify-between px-2" : "justify-between px-4"
@@ -138,7 +155,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </button>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation Section */}
       <nav
         className={`flex-1 py-4 ${collapsed ? "px-2 space-y-4" : "px-3 space-y-6"}`}
       >
@@ -190,6 +207,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         })}
       </nav>
 
+      {/* Logout Section */}
       <div className={`border-t border-white/10 ${collapsed ? "p-2" : "p-3"}`}>
         <button
           type="button"

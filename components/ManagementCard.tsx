@@ -24,6 +24,10 @@ interface ManagementCardProps {
   description?: string;
   editDescriptionValue?: string;
   setEditDescriptionValue?: (v: string) => void;
+  created_at?: string;
+  updated_at?: string;
+  created_by_name?: string;
+  updated_by_name?: string;
 }
 
 // ส่วนประกอบ ManagementCard
@@ -55,6 +59,10 @@ export const ManagementCard = ({
   description,
   editDescriptionValue,
   setEditDescriptionValue,
+  created_at,
+  updated_at,
+  created_by_name,
+  updated_by_name,
 }: ManagementCardProps) => {
   const isOpen = openMenuId === id;
 
@@ -157,13 +165,34 @@ export const ManagementCard = ({
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col justify-end">
+        <div className="flex-1 flex flex-col justify-end space-y-3">
           {!isEditing && (
-            <div className="flex items-center gap-2 mt-auto">
-              <Icon name="link" className="w-4 h-4 text-emerald-400" />
-              <p className="text-xs font-bold text-white/60 uppercase tracking-wider">
-                {questionCount.toLocaleString()} {unitLabel}
-              </p>
+            <div className="flex flex-col gap-2 mt-auto">
+              <div className="flex items-center gap-2">
+                <Icon name="link" className="w-4 h-4 text-emerald-400" />
+                <p className="text-xs font-bold text-white/60 uppercase tracking-wider">
+                  {questionCount.toLocaleString()} {unitLabel}
+                </p>
+              </div>
+              
+              {(created_by_name || updated_at) && (
+                <div className="pt-2 border-t border-white/5 space-y-1">
+                  {created_by_name && (
+                    <div className="flex items-center gap-2 text-[10px] text-white/30">
+                      <Icon name="user" className="w-3 h-3" />
+                      <span>สร้างโดย: <span className="text-white/50">{created_by_name}</span></span>
+                      {created_at && <span>({new Date(created_at).toLocaleDateString()})</span>}
+                    </div>
+                  )}
+                  {updated_at && (
+                    <div className="flex items-center gap-2 text-[10px] text-white/30">
+                      <Icon name="calendar" className="w-3 h-3" />
+                      <span>แก้ไขล่าสุด: <span className="text-white/50">{updated_by_name || created_by_name}</span></span>
+                      <span>({new Date(updated_at).toLocaleDateString()} {new Date(updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -21,6 +21,10 @@ type TagApiRow = {
   label?: string;
   question_count?: number;
   count?: number;
+  created_at?: string;
+  updated_at?: string;
+  created_by_name?: string;
+  updated_by_name?: string;
 };
 
 type TagsResponse = {
@@ -71,7 +75,15 @@ export default function TagsPage() {
               const id = row.id ?? "";
               const name = row.name ?? row.tag_name ?? row.label ?? JSON.stringify(row.id) ?? "Unknown Tag";
               const questionCount = Number(row.question_count ?? row.count ?? 0);
-              return { id, name, questionCount };
+              return { 
+                id, 
+                name, 
+                questionCount,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+                created_by_name: row.created_by_name,
+                updated_by_name: row.updated_by_name,
+              };
             })
             .filter((item) => String(item.name).length > 0);
 
@@ -435,6 +447,10 @@ export default function TagsPage() {
                 index={idx}
                 openMenuId={openMenuId}
                 setOpenMenuId={setOpenMenuId}
+                created_at={item.created_at}
+                updated_at={item.updated_at}
+                created_by_name={item.created_by_name}
+                updated_by_name={item.updated_by_name}
               />
             ))}
           </div>

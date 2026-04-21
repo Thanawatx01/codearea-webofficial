@@ -22,6 +22,10 @@ type CategoryApiRow = {
   description?: string;
   question_count?: number;
   count?: number;
+  created_at?: string;
+  updated_at?: string;
+  created_by_name?: string;
+  updated_by_name?: string;
 };
 
 type CategoriesResponse = {
@@ -75,7 +79,16 @@ export default function ProblemTypesPage() {
               const name = row.name ?? row.category_name ?? row.title ?? JSON.stringify(row.id) ?? "ไม่ทราบประเภท";
               const description = row.description ?? "";
               const questionCount = Number(row.question_count ?? row.count ?? 0);
-              return { id, name, description, questionCount };
+              return { 
+                id, 
+                name, 
+                description, 
+                questionCount,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+                created_by_name: row.created_by_name,
+                updated_by_name: row.updated_by_name,
+              };
             })
             .filter((item) => String(item.name).length > 0);
 
@@ -448,6 +461,10 @@ export default function ProblemTypesPage() {
                 index={idx}
                 openMenuId={openMenuId}
                 setOpenMenuId={setOpenMenuId}
+                created_at={item.created_at}
+                updated_at={item.updated_at}
+                created_by_name={item.created_by_name}
+                updated_by_name={item.updated_by_name}
               />
             ))}
           </div>

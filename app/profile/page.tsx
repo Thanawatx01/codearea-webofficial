@@ -68,10 +68,31 @@ export default function ProfilePage() {
     failedCount: 0,
     accuracy: 0,
     recentActivity: [] as any[],
-    categories: [] as { name: string; count: number }[],
     tags: [] as { name: string; count: number }[],
-    solvedQuestions: [] as any[]
+    categories: [] as { name: string; count: number }[],
+    solvedQuestions: [] as any[],
+    globalRank: 0,
+    totalUsers: 0
   });
+  
+  // --- New Progression Mock Data ---
+  const [levelInfo, setLevelInfo] = useState({
+    level: 1,
+    name: "Newbie Coder",
+    currentXp: 0,
+    nextLevelXp: 1000,
+    progress: 0
+  });
+
+  const [streakInfo, setStreakInfo] = useState({
+    currentStreak: 5,
+    maxStreak: 12,
+    lastSevenDays: [true, true, false, true, true, true, true], // Mock activity
+  });
+
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [skillTree, setSkillTree] = useState<any[]>([]);
   // ใช้ Callback Ref + ResizeObserver ตรวจจับว่า container มีขนาดจริงแล้วจึงแสดง Recharts
   // Callback ref จะทำงานทันทีที่ DOM element ถูกสร้าง — ไม่ขึ้นกับ isLoading
   const [chartReady, setChartReady] = useState(false);
@@ -135,7 +156,9 @@ export default function ProfilePage() {
           recentActivity: d.recent_activity || [],
           categories: d.category_stats || [],
           tags: d.tag_stats || [],
-          solvedQuestions: d.solved_questions || []
+          solvedQuestions: d.solved_questions || [],
+          globalRank: d.user.global_rank || 0,
+          totalUsers: d.user.total_users || 0
         });
 
         setProfileData(prev => ({
@@ -146,6 +169,39 @@ export default function ProfilePage() {
           phone: d.user.phone || "",
           dob: d.user.dob || ""
         }));
+
+        // Update Progression Data from API
+        if (d.progression) {
+          const p = d.progression;
+          
+          setStreakInfo({
+            currentStreak: p.streak.current_streak,
+            maxStreak: p.streak.max_streak,
+            lastSevenDays: p.streak.activity_history || [],
+          });
+
+          setAchievements(p.achievements || []);
+
+          if (Array.isArray(p.skills)) {
+            setSkillTree(p.skills.map((s: any) => ({
+              name: s.name,
+              level: Math.min(100, Math.round((s.current / (s.max || 1)) * 100)),
+              icon: s.icon,
+              color: s.name.toLowerCase().includes('front') ? "from-pink-500 to-rose-500" :
+                     s.name.toLowerCase().includes('back') ? "from-blue-500 to-indigo-500" :
+                     s.name.toLowerCase().includes('algo') ? "from-amber-500 to-orange-500" :
+                     s.name.toLowerCase().includes('devops') ? "from-emerald-500 to-teal-500" :
+                     "from-slate-500 to-gray-500"
+            })));
+          }
+        }
+
+        // Update Stats with Global Rank
+        setStats(prev => ({
+          ...prev,
+          globalRank: d.user.global_rank,
+          totalUsers: d.user.total_users
+        }));
       }
 
       // ขั้นตอนที่ 3: ดึงข้อมูลการส่งคำตอบล่าสุดสำหรับรายการบนแดชบอร์ด
@@ -155,12 +211,47 @@ export default function ProfilePage() {
         setSubmissions(subRes.data.data || []);
       }
 
+      // ขั้นตอนที่ 4: ดึงข้อมูล Leaderboard จริง
+      const lbRes = await api.get<any>("/leaderboard", { useToken: true, params: { limit: 5 } });
+      if (lbRes.ok && lbRes.data) {
+        const podium = lbRes.data.podium || [];
+        const table = lbRes.data.table?.data || [];
+        const combined = [...podium, ...table].slice(0, 5);
+        
+        setLeaderboard(combined.map((item: any) => ({
+          rank: item.rank,
+          name: item.display_name || item.email?.split("@")[0] || "User",
+          xp: item.total_point,
+          avatar: item.avatar_url || "",
+          isMe: item.email === user.email
+        })));
+      }
+
     } catch (error) {
       console.error("Failed to fetch profile data", error);
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  // Level Calculation Logic
+  useEffect(() => {
+    const xpPerLevel = 1000;
+    const level = Math.floor(stats.xp / xpPerLevel) + 1;
+    const currentXpInLevel = stats.xp % xpPerLevel;
+    const progress = (currentXpInLevel / xpPerLevel) * 100;
+    
+    const levelNames = ["Newbie Coder", "Script Kiddy", "Code Apprentice", "Junior Dev", "Mid-Level Engineer", "Senior Architect", "Principal Lead", "Code Master", "Grandmaster", "Legendary Coder"];
+    const levelName = levelNames[Math.min(level - 1, levelNames.length - 1)];
+
+    setLevelInfo({
+      level,
+      name: levelName,
+      currentXp: currentXpInLevel,
+      nextLevelXp: xpPerLevel,
+      progress
+    });
+  }, [stats.xp]);
 
   // ผลกระทบในการเริ่มต้น (Initialization Effect)
   useEffect(() => {
@@ -280,125 +371,145 @@ export default function ProfilePage() {
               {/* เนื้อหาแดชบอร์ด / ภาพรวม (Dashboard / Overview Content) */}
               {activeTab === "dashboard" && (
                 <div className="space-y-8 animate-in fade-in duration-500">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                    {/* คอลัมน์ซ้าย: ผลการทำงานและหมวดหมู่ (Left Column: Performance & Category) */}
-                    <div className="lg:col-span-1 space-y-6">
-                      {/* Performance Card */}
-                      <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl -z-10 group-hover:bg-emerald-500/10 transition-colors"></div>
-                        <h3 className="text-sm font-black uppercase tracking-widest text-white/40 mb-6 flex items-center gap-2">
-                          <Icon name="target" className="w-4 h-4 text-emerald-500" />
-                          ประสิทธิภาพ
-                        </h3>
-                        <div className="space-y-6">
-                          <div className="flex items-end justify-between">
-                            <div>
-                              <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">อัตราการทำโจทย์สำเร็จ</p>
-                              <p className="text-3xl font-black text-white">{stats.accuracy}%</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">จำนวน XP</p>
-                              <p className="text-xl font-bold text-orange-400">{stats.xp.toLocaleString()}</p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                <span className="text-[11px] font-bold text-white/60">ผ่าน</span>
-                              </div>
-                              <p className="text-xl font-black text-white ml-3.5">{stats.passedCount}</p>
-                            </div>
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                                <span className="text-[11px] font-bold text-white/60">ไม่ผ่าน</span>
-                              </div>
-                              <p className="text-xl font-black text-white ml-3.5">{stats.failedCount}</p>
-                            </div>
-                          </div>
+                  
+                  {/* Row 1: Quick Stats Summary */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* XP & Level Card */}
+                    <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-4 shadow-xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-orange-500/10 blur-2xl -z-10 group-hover:bg-orange-500/20 transition-all"></div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+                          <Icon name="zap" className="w-4 h-4 text-orange-500" />
                         </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">เลเวล {levelInfo.level}</span>
                       </div>
-
-                      {/* กราฟใยแมงมุมวิเคราะห์ทักษะ (Skills Web Chart) */}
-                      <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden group flex flex-col">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-sm font-black uppercase tracking-widest text-white/40 flex items-center gap-2">
-                            <Icon name="tag" className="w-4 h-4 text-pink-500" />
-                            วิเคราะห์ความสามารถ
-                          </h3>
+                      <p className="text-xl font-black text-white truncate">{levelInfo.name}</p>
+                      <div className="mt-4 space-y-1.5">
+                        <div className="flex justify-between text-[9px] font-bold uppercase tracking-wider text-white/30">
+                          <span>{levelInfo.currentXp} XP</span>
+                          <span>{levelInfo.nextLevelXp} XP</span>
                         </div>
-
-                        {/* Sub-tabs for Category and Tags */}
-                        <div className="flex bg-white/5 rounded-lg mb-4 p-1 ring-1 ring-white/10">
-                          <button
-                            onClick={() => setChartTab("category")}
-                            className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${chartTab === "category" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white/60"}`}
-                          >
-                            ประเภท
-                          </button>
-                          <button
-                            onClick={() => setChartTab("tags")}
-                            className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all ${chartTab === "tags" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white/60"}`}
-                          >
-                            แท็ก
-                          </button>
-                        </div>
-
-                        <div ref={chartContainerRef} className="flex-1 min-h-[250px] w-full flex items-center justify-center">
-                          {(chartTab === "category" ? stats.categories : stats.tags).length > 0 ? (
-                            <div className="flex-1 flex flex-col w-full h-full">
-                              <div className="relative w-full h-[220px] -ml-2">
-                                {(() => {
-                                  const sourceData = chartTab === "category" ? stats.categories : stats.tags;
-                                  const currentData = [...sourceData];
-                                  while (currentData.length > 0 && currentData.length < 5) {
-                                    currentData.push({ name: `\u200B${currentData.length}`, count: 0 });
-                                  }
-                                  const maxVal = Math.max(...currentData.map(d => d.count), 5);
-
-                                  if (!chartReady) return <div className="w-full h-full bg-white/5 animate-pulse rounded-full" />;
-
-                                  return (
-                                    <ResponsiveContainer width="100%" height="100%" debounce={50}>
-                                      <RadarChart cx="50%" cy="50%" outerRadius="65%" data={currentData}>
-                                        <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                                        <PolarAngleAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 'bold' }} />
-                                        <PolarRadiusAxis angle={30} domain={[0, maxVal]} tick={false} axisLine={false} />
-                                        <Radar name="Solved" dataKey="count" stroke="#ec4899" fill="#ec4899" fillOpacity={0.3} />
-                                      </RadarChart>
-                                    </ResponsiveContainer>
-                                  );
-                                })()}
-                              </div>
-
-                              {/* Legend - สรุปจำนวนแยกตามประเภท/แท็ก */}
-                              <div className="mt-2 grid grid-cols-1 gap-1.5 px-2">
-                                {(chartTab === "category" ? stats.categories : stats.tags).map((item, idx) => (
-                                  <div key={idx} className="flex items-center justify-between gap-3 p-2 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] hover:border-pink-500/20 transition-all group/legend">
-                                    <div className="flex items-center gap-2.5 overflow-hidden">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.5)] shrink-0" />
-                                      <span className="text-[10px] font-bold text-white/50 truncate group-hover/legend:text-white/80 transition-colors uppercase tracking-wider">{item.name}</span>
-                                    </div>
-                                    <span className="text-[10px] font-black text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-lg border border-pink-500/10 min-w-8 text-center">{item.count}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="w-full py-10 flex flex-col items-center text-center border border-dashed border-white/5 rounded-xl">
-                              <Icon name="activity" className="w-6 h-6 text-white/10 mb-2" />
-                              <p className="text-xs text-white/20 italic">ยังไม่มีข้อมูล {chartTab}</p>
-                            </div>
-                          )}
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-linear-to-r from-orange-500 to-amber-400 transition-all duration-1000 ease-out" 
+                            style={{ width: `${levelInfo.progress}%` }}
+                          />
                         </div>
                       </div>
                     </div>
 
-                    {/* คอลัมน์ขวา: กิจกรรมล่าสุด (Right Column: Recent Activity) */}
+                    {/* Streak Card */}
+                    <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-4 shadow-xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-red-500/10 blur-2xl -z-10 group-hover:bg-red-500/20 transition-all"></div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center border border-red-500/20">
+                          <Icon name="fire" className="w-4 h-4 text-red-500 animate-pulse" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">ทำต่อเนื่อง</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-3xl font-black text-white">{streakInfo.currentStreak}</p>
+                        <p className="text-xs font-bold text-white/40">วัน</p>
+                      </div>
+                      <div className="flex gap-1 mt-4">
+                        {streakInfo.lastSevenDays.map((active, i) => (
+                          <div 
+                            key={i} 
+                            className={`h-2 flex-1 rounded-full ${active ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]" : "bg-white/5"}`}
+                            title={`Day ${i+1}: ${active ? 'Active' : 'Inactive'}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Problems Solved Card */}
+                    <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-4 shadow-xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 blur-2xl -z-10 group-hover:bg-emerald-500/20 transition-all"></div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                          <Icon name="check-circle" className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">โจทย์ที่ผ่าน</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-3xl font-black text-white">{stats.passedCount}</p>
+                        <p className="text-xs font-bold text-white/40">/ {stats.totalSubmissions}</p>
+                      </div>
+                      <p className="text-[10px] font-bold text-emerald-500/60 mt-4 uppercase tracking-widest">ความถูกต้อง {stats.accuracy}%</p>
+                    </div>
+
+                    {/* Ranking Card */}
+                    <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-4 shadow-xl relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 blur-2xl -z-10 group-hover:bg-blue-500/20 transition-all"></div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                          <Icon name="trophy" className="w-4 h-4 text-blue-500" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">อันดับโลก</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-3xl font-black text-white">#{stats.globalRank || stats.totalUsers}</p>
+                        <p className="text-xs font-bold text-white/40">จาก {stats.totalUsers || 0}</p>
+                      </div>
+                      <p className="text-[10px] font-bold text-blue-500/60 mt-4 uppercase tracking-widest">
+                        {(stats.globalRank / (stats.totalUsers || 1)) <= 0.1 ? 'TOP 10% DEVELOPERS' : 'GLOBAL DEVELOPER'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left Column: Skill Tree & Activity */}
                     <div className="lg:col-span-2 space-y-6">
+                      
+                      {/* Tech Skill Tree (Simplified) */}
+                      <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                        <div className="flex items-center justify-between mb-8">
+                          <h3 className="text-sm font-black uppercase tracking-widest text-white/40 flex items-center gap-2">
+                            <Icon name="rocket" className="w-4 h-4 text-purple-500" />
+                            Skill Mastery Tree
+                          </h3>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          {skillTree.map((skill) => (
+                            <Link 
+                              key={skill.name} 
+                              href={`/questions?search=${encodeURIComponent(skill.name)}`}
+                              className="block group/skill hover:scale-[1.01] transition-all"
+                            >
+                              <div className="space-y-3 p-4 rounded-2xl border border-transparent hover:border-white/10 hover:bg-white/[0.02] transition-all">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-xl bg-linear-to-br ${skill.color} p-[1px]`}>
+                                      <div className="w-full h-full rounded-xl bg-[#0d1117] flex items-center justify-center">
+                                        <Icon name={skill.icon} className="w-5 h-5 text-white" />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-bold text-white group-hover/skill:text-primary transition-colors">{skill.name}</p>
+                                      <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">Level {Math.floor(skill.level / 20) + 1}</p>
+                                    </div>
+                                  </div>
+                                  <span className="text-sm font-black text-white/60">{skill.level}%</span>
+                                </div>
+                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden p-[1px]">
+                                  <div 
+                                    className={`h-full bg-linear-to-r ${skill.color} rounded-full transition-all duration-1000`}
+                                    style={{ width: `${skill.level}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+
+                        {/* Connection Lines (Visual Polish) */}
+                        <div className="mt-8 pt-6 border-t border-white/5 flex justify-center">
+                          <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Keep solving to unlock advanced specializations</p>
+                        </div>
+                      </div>
+
+                      {/* Recent Activity */}
                       <div className="bg-[#0d1117] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
                         <div className="px-6 py-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
                           <h3 className="text-sm font-black uppercase tracking-widest text-white/40 flex items-center gap-2">
@@ -410,47 +521,125 @@ export default function ProfilePage() {
                           </button>
                         </div>
 
-                        <div className="divide-y divide-white/5">
+                        <div className="divide-y divide-white/5 max-h-[400px] overflow-y-auto no-scrollbar">
                           {stats.recentActivity.length > 0 ? stats.recentActivity.map((sub) => (
-                            <div key={sub.id} className="p-4 sm:p-6 hover:bg-white/[0.01] transition-colors group flex items-start sm:items-center justify-between gap-4">
-                              <div className="flex items-start sm:items-center gap-4 min-w-0">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${sub.status === 1 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-red-500/10 border-red-500/20 text-red-500"
-                                  }`}>
-                                  <Icon name={sub.status === 1 ? "check-circle" : "xmark"} className="w-5 h-5" />
+                            <div key={sub.id} className="p-4 hover:bg-white/[0.01] transition-colors group flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-4 min-w-0">
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${sub.status === 1 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-red-500/10 border-red-500/20 text-red-500"}`}>
+                                  <Icon name={sub.status === 1 ? "check-circle" : "xmark"} className="w-4 h-4" />
                                 </div>
                                 <div className="min-w-0">
-                                  <h4 className="font-bold text-white text-sm sm:text-base group-hover:text-primary transition-colors truncate">
+                                  <h4 className="font-bold text-white text-sm truncate group-hover:text-primary transition-colors">
                                     {sub.questions?.title || "Unknown Question"}
                                   </h4>
-                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                                    <span className="text-[10px] font-mono text-white/30 uppercase tracking-widest">{sub.language}</span>
-                                    <span className="text-[10px] text-white/30">•</span>
-                                    <span className="text-[10px] text-white/30">{new Date(sub.created_at).toLocaleDateString()}</span>
-                                    {sub.run_time && (
-                                      <>
-                                        <span className="text-[10px] text-white/30">•</span>
-                                        <span className="text-[10px] text-white/30">{sub.run_time}ms</span>
-                                      </>
-                                    )}
+                                  <div className="flex items-center gap-x-2 text-[9px] text-white/30 uppercase font-mono tracking-widest mt-0.5">
+                                    <span>{sub.language}</span>
+                                    <span>•</span>
+                                    <span>{new Date(sub.created_at).toLocaleDateString()}</span>
                                   </div>
                                 </div>
                               </div>
-                              <div className="shrink-0 text-right hidden sm:block">
-                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${sub.status === 1 ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
-                                  }`}>
-                                  {sub.status === 1 ? "ถูกต้อง" : "ผิด"}
-                                </span>
-                              </div>
+                              <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${sub.status === 1 ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}>
+                                {sub.status === 1 ? "PASSED" : "FAILED"}
+                              </span>
                             </div>
                           )) : (
                             <div className="p-12 text-center">
                               <Icon name="activity" className="w-12 h-12 text-white/5 mx-auto mb-4" />
                               <p className="text-sm text-white/30">ยังไม่มีกิจกรรมล่าสุด</p>
-                              <Link href="/questions" className="text-xs text-blue-400 hover:underline mt-2 inline-block">เริ่มทำโจทย์</Link>
                             </div>
                           )}
                         </div>
                       </div>
+                    </div>
+
+                    {/* Right Column: Achievements & Leaderboard */}
+                    <div className="lg:col-span-1 space-y-6">
+                      
+                      {/* Achievements Card */}
+                      <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-6 shadow-xl relative">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-sm font-black uppercase tracking-widest text-white/40 flex items-center gap-2">
+                            <Icon name="award" className="w-4 h-4 text-amber-500" />
+                            Achievements
+                          </h3>
+                        </div>
+                        <div className="grid grid-cols-5 gap-3">
+                          {achievements.map((ach) => (
+                            <div 
+                              key={ach.id} 
+                              className={`aspect-square rounded-xl flex items-center justify-center border transition-all cursor-help group/ach relative ${
+                                ach.earned 
+                                  ? "bg-white/5 border-white/10 hover:border-amber-500/50 hover:bg-white/10" 
+                                  : "bg-black/20 border-white/5 hover:border-white/10"
+                              }`}
+                            >
+                              <div className={`transition-all duration-300 ${ach.earned ? "scale-100" : "scale-90 grayscale opacity-20"}`}>
+                                <Icon name={ach.icon} className={`w-6 h-6 ${ach.earned ? ach.color : "text-white"}`} />
+                              </div>
+
+                              {!ach.earned && (
+                                <div className="absolute inset-0 flex items-center justify-center opacity-40 group-hover/ach:opacity-10 transition-opacity">
+                                  <Icon name="lock" className="w-3 h-3 text-white/20" />
+                                </div>
+                              )}
+                              
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 p-3 bg-[#1c2128] border border-white/10 rounded-xl opacity-0 invisible group-hover/ach:opacity-100 group-hover/ach:visible transition-all z-[100] text-center pointer-events-none shadow-2xl backdrop-blur-md">
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${ach.earned ? "bg-amber-500/10" : "bg-white/5"}`}>
+                                    <Icon name={ach.icon} className={`w-4 h-4 ${ach.earned ? ach.color : "text-white/20"}`} />
+                                  </div>
+                                  <div>
+                                    <p className="text-[11px] font-black text-white leading-none mb-1">{ach.name}</p>
+                                    <p className="text-[9px] text-white/40 leading-tight px-1">{ach.description}</p>
+                                  </div>
+                                  <div className={`mt-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${ach.earned ? "bg-emerald-500/10 text-emerald-500" : "bg-white/5 text-white/30"}`}>
+                                    {ach.earned ? "UNLOCKED" : "LOCKED"}
+                                  </div>
+                                </div>
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-[#1c2128]"></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Global Leaderboard Mini */}
+                      <div className="bg-[#0d1117] border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-sm font-black uppercase tracking-widest text-white/40 flex items-center gap-2">
+                            <Icon name="trending-up" className="w-4 h-4 text-blue-500" />
+                            Leaderboard
+                          </h3>
+                        </div>
+                        <div className="space-y-4">
+                          {leaderboard.map((user) => (
+                            <div key={user.name} className={`flex items-center justify-between p-2 rounded-xl border transition-all ${user.isMe ? "bg-primary/10 border-primary/20" : "bg-white/[0.02] border-transparent"}`}>
+                              <div className="flex items-center gap-3">
+                                <span className={`text-xs font-black w-4 ${user.rank === 1 ? "text-amber-400" : user.rank === 2 ? "text-slate-300" : user.rank === 3 ? "text-orange-400" : "text-white/20"}`}>
+                                  {user.rank}
+                                </span>
+                                <div className="w-6 h-6 rounded-full bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                                  {user.avatar ? (
+                                    <img src={user.avatar} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-[10px] font-bold text-white/40">{(user.name || "U").charAt(0).toUpperCase()}</span>
+                                  )}
+                                </div>
+                                <span className={`text-xs font-bold ${user.isMe ? "text-primary" : "text-white/60"}`}>
+                                  {user.name}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-black text-white/40">{user.xp.toLocaleString()} XP</span>
+                            </div>
+                          ))}
+                        </div>
+                        <button className="w-full mt-6 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/40 hover:bg-white/10 hover:text-white transition-all">
+                          View Full Rankings
+                        </button>
+                      </div>
+
                     </div>
                   </div>
                 </div>

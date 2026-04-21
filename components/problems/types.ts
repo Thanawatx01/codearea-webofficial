@@ -26,6 +26,10 @@ export type ProblemRow = {
   status: boolean;
   tags: string[];
   user_progress?: ProblemUserProgress | null;
+  created_at?: string;
+  updated_at?: string;
+  created_by_name?: string;
+  updated_by_name?: string;
 };
 
 export const getDifficultyStyle = (difficulty: string | number | null) => {

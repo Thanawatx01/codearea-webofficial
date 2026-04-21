@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+
 import { Icon } from "@/components/icons/Icon";
 import { useLogout } from "@/components/auth/LogoutProvider";
 
@@ -13,7 +13,6 @@ interface HeaderProps {
 }
 
 export default function Header({ title, icon, showUserDropdown = true }: HeaderProps) {
-  const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

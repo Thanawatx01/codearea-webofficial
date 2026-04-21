@@ -26,7 +26,7 @@ type DataTableProps<T> = {
   headers: DataTableHeader[];
   columns: DataTableColumn<T>[];
   rows: T[];
-  rowKey: (row: T, index: number) => string;
+  rowKey: (row: T, index: number) => string | number;
   loading?: boolean;
   errorMessage?: string;
   emptyMessage?: string;

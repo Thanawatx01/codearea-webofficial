@@ -16,9 +16,11 @@ import {
   useMemo,
   useRef,
   useState,
+  Suspense,
 } from "react";
+import { useSearchParams } from "next/navigation";
 
-export default function QuestionsPage() {
+function QuestionsPageContent() {
   const [category, setCategory] = useState<Select2Option | null>(null);
   const [difficulty, setDifficulty] = useState("");
   const [sidebarTag, setSidebarTag] = useState<Select2Option | null>(null);
@@ -32,6 +34,20 @@ export default function QuestionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [showTags, setShowTags] = useState(true);
+
+  const searchParams = useSearchParams();
+
+  // Handle URL Params for initial state
+  useEffect(() => {
+    const catParam = searchParams.get("category");
+    const searchParam = searchParams.get("search");
+    
+    if (catParam) {
+      setSearch(catParam);
+    } else if (searchParam) {
+      setSearch(searchParam);
+    }
+  }, [searchParams]);
 
   const searchFilterKey = useMemo(
     () =>
@@ -163,5 +179,13 @@ export default function QuestionsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function QuestionsPage() {
+  return (
+    <Suspense fallback={<div>Loading questions...</div>}>
+      <QuestionsPageContent />
+    </Suspense>
   );
 }

@@ -22,6 +22,9 @@ type ProblemsTableProps = {
   onToggleStatusAction: (code: string, currentStatus: boolean) => void;
 };
 
+// # ProblemsTable Component
+// # ส่วนแสดงผลตารางรายการโจทย์ปัญหา พร้อมระบบค้นหา แบ่งหน้า และแสดงรายละเอียดเชิงลึก
+// # Props -> DataTable -> Detail Modal -> Management Actions
 export function ProblemsTable({
   rows,
   total,
@@ -34,8 +37,10 @@ export function ProblemsTable({
   onDeleteAction,
   onToggleStatusAction,
 }: ProblemsTableProps) {
+  // # step 1: จัดการสถานะการเลือกโจทย์เพื่อแสดงใน Modal
   const [selectedProblem, setSelectedProblem] = useState<ProblemRow | null>(null);
 
+  // # step 2: กำหนดโครงสร้างหัวตาราง (Headers)
   const headers: DataTableHeader[] = [
     { key: "code", label: "ไอดี", className: "w-16" },
     { key: "category_name", label: "หมวดหมู่" },
@@ -46,6 +51,7 @@ export function ProblemsTable({
     { key: "status", label: "สถานะ", align: "center" },
   ];
 
+  // # step 3: กำหนดวิธีการแสดงผลข้อมูลในแต่ละคอลัมน์ (Columns)
   const columns: DataTableColumn<ProblemRow>[] = [
     {
       key: "code",
@@ -112,6 +118,7 @@ export function ProblemsTable({
     },
   ];
 
+  // # step 4: ส่วนการแสดงผลหลัก (Render)
   return (
     <section className="min-w-0 rounded-xl border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur-xl">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -148,14 +155,16 @@ export function ProblemsTable({
         }}
       />
 
+      {/* # step 5: Modal แสดงรายละเอียดโจทย์เชิงลึก (Creation & Update Metadata) */}
       <Modal
         isOpen={!!selectedProblem}
         onCloseAction={() => setSelectedProblem(null)}
         title={selectedProblem?.title || "Problem Details"}
-        size="lg"
+        size="md"
         footer={
           isAdmin && selectedProblem && (
             <div className="flex flex-wrap items-center justify-end gap-3">
+              {/* # Security Check for Admin Management */}
               <Link
                 href={`/dashboard/problems/update/${encodeURIComponent(selectedProblem.code)}`}
                 className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/5 px-5 py-2 text-xs font-black text-white uppercase tracking-widest transition-all hover:bg-white/10"
@@ -234,19 +243,38 @@ export function ProblemsTable({
               )}
             </div>
 
-            <div className="col-span-full space-y-6 pt-4 border-t border-white/5">
+            <div className="col-span-full space-y-4 pt-4 border-t border-white/5">
               <div>
-                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/20">คำอธิบายโจทย์</p>
-                <div className="rounded-2xl border border-white/5 bg-black/20 p-5 text-sm leading-relaxed text-white/60 font-medium">
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-white/20">คำอธิบายโจทย์</p>
+                <div className="rounded-xl border border-white/5 bg-black/20 p-4 text-xs leading-relaxed text-white/60 font-medium">
                   {selectedProblem.description}
                 </div>
               </div>
               <div>
-                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/20">ข้อจำกัดของระบบ</p>
-                <div className="rounded-2xl border border-white/5 bg-black/40 p-5 text-sm font-mono leading-relaxed text-blue-400/70">
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-white/20">ข้อจำกัดของระบบ</p>
+                <div className="rounded-xl border border-white/5 bg-black/40 p-4 text-[10px] font-mono leading-relaxed text-blue-400/70">
                   {selectedProblem.constraints || "No specific constraints recorded for this logic problem."}
                 </div>
               </div>
+
+              {(selectedProblem.created_by_name || selectedProblem.updated_at) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-white/5">
+                  {selectedProblem.created_by_name && (
+                    <DetailItem 
+                      label="สร้างโดย" 
+                      value={`${selectedProblem.created_by_name}${selectedProblem.created_at ? ` (${new Date(selectedProblem.created_at).toLocaleDateString()})` : ""}`} 
+                      icon="user" 
+                    />
+                  )}
+                  {selectedProblem.updated_at && (
+                    <DetailItem 
+                      label="แก้ไขล่าสุด" 
+                      value={`${selectedProblem.updated_by_name || selectedProblem.created_by_name} (${new Date(selectedProblem.updated_at).toLocaleDateString()} ${new Date(selectedProblem.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`} 
+                      icon="calendar" 
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -255,12 +283,18 @@ export function ProblemsTable({
   );
 }
 
+// # DetailItem Function
+// # ส่วนแสดงผลข้อมูลรายแถวในรายละเอียดโจทย์ พร้อมไอคอนและป้ายกำกับ
+// # Props (label, value, icon) -> Group Layout -> Icon & Content
 function DetailItem({ label, value, icon, badgeStyle }: { label: string; value?: string | null; icon: string; badgeStyle?: string }) {
+  // # step 1: ตรวจสอบความถูกต้องของข้อมูล
   if (!value) return null;
+
+  // # step 2: คืนค่าผลลัพธ์การแสดงผล
   return (
-    <div className="group flex items-center gap-4">
-      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/20 transition-all group-hover:bg-primary/10 group-hover:text-primary group-hover:scale-105">
-        <Icon name={icon} className="h-5 w-5" />
+    <div className="group flex items-center gap-3">
+      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white/5 text-white/20 transition-all group-hover:bg-primary/10 group-hover:text-primary">
+        <Icon name={icon} className="h-4 w-4" />
       </div>
       <div>
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">{label}</p>
