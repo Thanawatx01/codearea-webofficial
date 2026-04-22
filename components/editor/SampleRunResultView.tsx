@@ -9,6 +9,7 @@ export type SampleExampleRow = {
   id?: number;
   input_data: string;
   output_data: string;
+  case_order?: number | null;
 };
 
 function formatMem(bytes: number): string {
@@ -27,7 +28,8 @@ function findRunForExample(
     const byId = result.results.find((r) => r.test_case_id === sample.id);
     if (byId) return byId;
   }
-  return result.results.find((r) => r.case_order === index + 1);
+  const order = sample.case_order ?? (index + 1);
+  return result.results.find((r) => r.case_order === order);
 }
 
 /** เมื่อไม่มีตัวอย่างจากโจทย์ แต่มีผลรัน — แสดงรายการจาก API อย่างเดียว */
@@ -100,7 +102,7 @@ function MergedExampleCard({
   return (
     <li className="rounded-xl border border-white/10 bg-black/35 p-3 text-xs">
       <p className="mb-2 font-mono text-[9px] uppercase tracking-wider text-white/40">
-        ตัวอย่าง {index + 1}
+        ตัวอย่าง {sample.case_order ?? (index + 1)}
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>

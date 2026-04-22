@@ -1,11 +1,14 @@
-import type { QuestionDetail } from "./types";
+import type { QuestionDetail, QuestionTestCase } from "./types";
+import { Icon } from "@/components/icons/Icon";
 
 export default function QuestionStatementSection({
   data,
   tags,
+  sampleTests = [],
 }: {
   data: QuestionDetail;
   tags: string[];
+  sampleTests?: QuestionTestCase[];
 }) {
   return (
     <>
@@ -71,13 +74,44 @@ export default function QuestionStatementSection({
       </dl>
 
       {data.constraints ? (
-        <section>
+        <section className="mb-6">
           <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-white/40">
             ข้อจำกัด
           </h3>
           <pre className="whitespace-pre-wrap rounded-xl border border-white/10 bg-black/35 p-3 font-mono text-xs leading-relaxed text-sky-200/90">
             {data.constraints}
           </pre>
+        </section>
+      ) : null}
+
+      {sampleTests.length > 0 ? (
+        <section className="space-y-4">
+          <h3 className="text-[10px] font-bold uppercase tracking-wider text-white/40">
+            ตัวอย่างทดสอบ (Sample Test Cases)
+          </h3>
+          <div className="space-y-4">
+            {sampleTests.map((test, idx) => (
+              <div key={test.id ?? idx} className="rounded-xl border border-white/10 bg-black/20 overflow-hidden">
+                <div className="bg-white/5 px-3 py-1.5 border-b border-white/10 flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-white/40 uppercase">ตัวอย่าง {test.case_order ?? (idx + 1)}</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/10">
+                  <div className="p-3">
+                    <div className="text-[9px] font-bold text-white/20 uppercase mb-1 flex items-center gap-1">
+                      <Icon name="arrow-right" className="w-2.5 h-2.5" /> Input
+                    </div>
+                    <pre className="font-mono text-xs text-white/80 whitespace-pre-wrap break-all bg-black/20 p-2 rounded-lg">{test.input_data || "—"}</pre>
+                  </div>
+                  <div className="p-3">
+                    <div className="text-[9px] font-bold text-white/20 uppercase mb-1 flex items-center gap-1">
+                      <Icon name="check" className="w-2.5 h-2.5" /> Output
+                    </div>
+                    <pre className="font-mono text-xs text-emerald-300/80 whitespace-pre-wrap break-all bg-black/20 p-2 rounded-lg">{test.output_data || "—"}</pre>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
       ) : null}
     </>

@@ -3,6 +3,8 @@ export type QuestionTestCase = {
   input_data: string;
   output_data: string;
   is_simple?: boolean;
+  case_order?: number | null;
+  status?: boolean;
 };
 
 import type { ProblemUserProgress } from "@/components/problems/types";

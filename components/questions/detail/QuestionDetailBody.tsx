@@ -208,8 +208,11 @@ export default function QuestionDetailBody({ code }: { code: string }) {
   const tags = (data?.tags ?? []).map(normalizeTag).filter(Boolean);
 
   const sampleTests = useMemo(() => {
-    const tc = data?.test_cases ?? [];
-    const simple = tc.filter((t) => t.is_simple === true);
+    const tc = (data?.test_cases ?? [])
+      .filter((t) => t.status !== false)
+      .sort((a, b) => (a.case_order ?? 0) - (b.case_order ?? 0));
+
+    const simple = tc.filter((t) => Boolean(t.is_simple));
     if (simple.length > 0) return simple;
     return tc.slice(0, 5);
   }, [data]);
@@ -469,7 +472,7 @@ export default function QuestionDetailBody({ code }: { code: string }) {
                   }
                 >
                   <div className="px-4 py-4">
-                    <QuestionStatementSection data={data} tags={tags} />
+                    <QuestionStatementSection data={data} tags={tags} sampleTests={sampleTests} />
                     {data.uri ? (
                       <section className="mt-8 border-t border-white/10 pt-6">
                         <h3 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-white/55">
@@ -492,6 +495,7 @@ export default function QuestionDetailBody({ code }: { code: string }) {
                 open={statementPreviewOpen}
                 data={data}
                 tags={tags}
+                sampleTests={sampleTests}
                 onClose={() => setStatementPreviewOpen(false)}
               />
 

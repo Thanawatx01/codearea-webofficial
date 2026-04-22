@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "./icons/Icon";
 
 type ModalProps = {
@@ -53,19 +54,19 @@ export function Modal({
   }, [isOpen, onCloseAction]);
 
   // # step 2: ตรวจสอบสถานะการเปิดใช้งาน
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   // # step 3: ส่วนการแสดงผล (Render)
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-10 animate-in fade-in duration-300">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 sm:p-10 animate-in fade-in duration-300">
       {/* Backdrop: ส่วนพื้นหลังสีดำโปร่งแสง */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onCloseAction}
       />
 
       {/* Modal Container: กล่องเนื้อหาหลัก */}
-      <div 
+      <div
         ref={modalRef}
         className={`relative w-full ${sizeClasses[size]} max-h-[85vh] flex flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#06070d]/95 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.7)] backdrop-blur-3xl animate-in zoom-in-95 slide-in-from-bottom-5 duration-300`}
       >
@@ -98,6 +99,7 @@ export function Modal({
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-[100px]" />
         <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-primary/5 blur-[100px]" />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
