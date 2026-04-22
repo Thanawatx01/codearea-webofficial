@@ -33,6 +33,12 @@ export function Modal({
   size = "md",
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   // # step 1: จัดการ Event Keyboard (Escape) และการล็อค Scroll ของ Body
   useEffect(() => {
