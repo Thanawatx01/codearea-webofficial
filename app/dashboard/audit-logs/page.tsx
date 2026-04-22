@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Icon } from "@/components/icons/Icon";
 import DataTable, { type DataTableHeader, type DataTableColumn } from "@/components/DataTable";
+import { Modal } from "@/components/Modal";
 
 type AuditLog = {
   id: number;
@@ -37,6 +38,7 @@ export default function AuditLogsPage() {
   const [types, setTypes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   
   // Filters
   const [page, setPage] = useState(1);
@@ -106,7 +108,7 @@ export default function AuditLogsPage() {
     { key: "created_at", label: "เวลา", className: "w-48" },
     { key: "user", label: "ผู้ใช้งาน", className: "w-48" },
     { key: "action_type", label: "การกระทำ", className: "w-40" },
-    { key: "action_details", label: "รายละเอียด" },
+    { key: "action_details", label: "รายละเอียด", className: "min-w-[300px]" },
     { key: "ip_address", label: "IP Address", className: "w-32" },
   ];
 
@@ -160,12 +162,15 @@ export default function AuditLogsPage() {
           String(payload);
         
         return (
-          <div className="group relative">
-            <div className="text-xs text-white/60 line-clamp-1 font-mono bg-black/20 px-2 py-1 rounded border border-white/5 cursor-help">
+          <div 
+            onClick={() => setSelectedLog(row)}
+            className="group flex items-center gap-2 max-w-[400px] cursor-pointer"
+          >
+            <div className="flex-1 text-[11px] text-white/60 truncate font-mono bg-black/20 px-2 py-1.5 rounded border border-white/5 group-hover:border-primary/40 group-hover:text-white transition-all">
               {summary}
             </div>
-            <div className="hidden group-hover:block absolute left-0 bottom-full mb-2 z-[100] w-96 max-h-64 overflow-auto bg-[#1a1c2e] border border-white/10 rounded-xl p-4 shadow-2xl backdrop-blur-2xl text-[10px] font-mono text-emerald-400/80 whitespace-pre">
-              {JSON.stringify(details, null, 2)}
+            <div className="opacity-0 group-hover:opacity-100 p-1.5 bg-primary/10 text-primary rounded-lg transition-opacity">
+              <Icon name="maximize-2" className="w-3 h-3" />
             </div>
           </div>
         );
@@ -232,6 +237,55 @@ export default function AuditLogsPage() {
             tableClassName="w-full"
           />
         </div>
+
+        <Modal
+          isOpen={!!selectedLog}
+          onCloseAction={() => setSelectedLog(null)}
+          title="Audit Log Details"
+          size="lg"
+        >
+          {selectedLog && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">Action Type</p>
+                  <p className="text-primary font-black italic">{selectedLog.action_type}</p>
+                </div>
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">Performed By</p>
+                  <p className="text-white font-bold">{selectedLog.users?.display_name || "System"}</p>
+                </div>
+              </div>
+
+              <div className="bg-black/40 rounded-3xl border border-white/10 overflow-hidden">
+                <div className="px-6 py-4 bg-white/5 border-b border-white/5 flex justify-between items-center">
+                  <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Raw Action Details</span>
+                  <span className="text-[10px] font-mono text-white/20">JSON format</span>
+                </div>
+                <div className="p-6 overflow-auto max-h-[400px] custom-scrollbar">
+                  <pre className="text-xs font-mono text-emerald-400/90 whitespace-pre">
+                    {JSON.stringify(selectedLog.action_details, null, 2)}
+                  </pre>
+                </div>
+              </div>
+
+              <div className="bg-white/5 p-6 rounded-3xl border border-white/5 flex flex-col gap-4 text-xs">
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-white/40 font-bold uppercase tracking-widest text-[10px]">Timestamp</span>
+                  <span className="text-white/80">{new Date(selectedLog.created_at).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between border-b border-white/5 pb-2">
+                  <span className="text-white/40 font-bold uppercase tracking-widest text-[10px]">IP Address</span>
+                  <span className="text-white/80 font-mono">{selectedLog.ip_address}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-white/40 font-bold uppercase tracking-widest text-[10px]">User Agent</span>
+                  <span className="text-white/60 text-[10px] font-mono leading-relaxed bg-black/20 p-2 rounded-lg">{selectedLog.user_agent}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </Modal>
       </main>
     </>
   );
