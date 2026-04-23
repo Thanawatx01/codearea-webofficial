@@ -141,7 +141,7 @@ function ExecutorSection() {
     try {
       const res = await api.delete("/settings/executor", { useToken: true });
       if (!res.ok) throw new Error(res.error || "Failed to delete");
-      setExecutor({ type: "piston", url: "http://localhost:3100/api/executor" });
+      setExecutor({ type: "piston", url: "http://localhost:2000" });
       setOriginalExecutor(null);
       Swal.fire({ icon: "success", title: "รีเซ็ตสำเร็จ", background: "#1a1c2e", color: "#fff", timer: 1500, showConfirmButton: false });
     } catch (e: any) {
@@ -194,9 +194,9 @@ function ExecutorSection() {
           <option value="piston">Piston Engine</option>
           <option value="judge0">Judge0 Engine</option>
         </ThemedSelect>
-        <ThemedInput label="API URL" value={executor.url} onChangeAction={(e: ChangeEvent<HTMLInputElement>) => setExecutor({ ...executor, url: e.target.value })} placeholder="http://localhost:3100/api/executor"
+        <ThemedInput label="API URL" value={executor.url} onChangeAction={(e: ChangeEvent<HTMLInputElement>) => setExecutor({ ...executor, url: e.target.value })} placeholder="http://localhost:2000"
           rightSlot={
-            <button onClick={() => setExecutor({ ...executor, url: "http://localhost:3100/api/executor" })} className="text-[9px] font-bold bg-white/5 border border-white/10 px-2 py-1 rounded hover:bg-white/10 transition-colors text-white/60">
+            <button onClick={() => setExecutor({ ...executor, url: "http://localhost:2000" })} className="text-[9px] font-bold bg-white/5 border border-white/10 px-2 py-1 rounded hover:bg-white/10 transition-colors text-white/60">
               DEFAULT
             </button>
           }
@@ -259,7 +259,7 @@ function AISection() {
     try {
       const res = await api.delete("/settings/ai", { useToken: true });
       if (!res.ok) throw new Error(res.error || "Failed to delete");
-      setAi({ url: "http://localhost:8080" });
+      setAi({ url: "http://localhost:8000" });
       setOriginalAi(null);
       Swal.fire({ icon: "success", title: "รีเซ็ตสำเร็จ", timer: 1500, background: "#1a1c2e", color: "#fff", showConfirmButton: false });
     } catch (e: any) {
@@ -320,9 +320,9 @@ function AISection() {
         </button>
       }
     >
-      <ThemedInput label="AI Tutor BaaS URL" value={ai.url} onChangeAction={(e: ChangeEvent<HTMLInputElement>) => setAi({ ...ai, url: e.target.value })} placeholder="http://localhost:8080"
+      <ThemedInput label="AI Tutor BaaS URL" value={ai.url} onChangeAction={(e: ChangeEvent<HTMLInputElement>) => setAi({ ...ai, url: e.target.value })} placeholder="http://localhost:8000"
         rightSlot={
-          <button onClick={() => setAi({ url: "http://localhost:8080" })} className="text-[9px] font-bold bg-white/5 border border-white/10 px-2 py-1 rounded hover:bg-white/10 transition-colors text-white/60">
+          <button onClick={() => setAi({ url: "http://localhost:8000" })} className="text-[9px] font-bold bg-white/5 border border-white/10 px-2 py-1 rounded hover:bg-white/10 transition-colors text-white/60">
             DEFAULT (LOCAL)
           </button>
         }

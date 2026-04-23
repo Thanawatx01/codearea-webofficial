@@ -113,52 +113,54 @@ export function ProblemsTable({
   ];
 
   return (
-    <section className="min-w-0 rounded-xl border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur-xl">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {isAdmin ? (
-          <Link
-            href="/dashboard/problems/new"
-            className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-blue-800 px-6 text-sm font-bold text-white hover:bg-blue-900 sm:w-auto"
-          >
-            + สร้าง
-          </Link>
-        ) : (
-          <div /> // Empty div to maintain spacing
-        )}
-        <p className="text-base font-semibold text-white text-center sm:text-right sm:text-lg">
-          จำนวนข้อมูล {total} รายการ
-        </p>
-      </div>
+    <>
+      <section className="min-w-0 rounded-xl border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur-xl">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {isAdmin ? (
+            <Link
+              href="/dashboard/problems/new"
+              className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-blue-800 px-6 text-sm font-bold text-white hover:bg-blue-900 sm:w-auto"
+            >
+              + สร้าง
+            </Link>
+          ) : (
+            <div /> // Empty div to maintain spacing
+          )}
+          <p className="text-base font-semibold text-white text-center sm:text-right sm:text-lg">
+            จำนวนข้อมูล {total} รายการ
+          </p>
+        </div>
 
-      <DataTable
-        headers={headers}
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => row.code}
-        loading={isLoading}
-        errorMessage={errorMessage}
-        emptyMessage="ไม่พบข้อมูล"
-        tableClassName="w-full border-collapse"
-        headerClassName="whitespace-nowrap"
-        onRowClickAction={(row) => setSelectedProblem(row)}
-        pagination={{
-          page,
-          totalPages,
-          onPageChangeAction: onPageChangeAction,
-        }}
-      />
+        <DataTable
+          headers={headers}
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.code}
+          loading={isLoading}
+          errorMessage={errorMessage}
+          emptyMessage="ไม่พบข้อมูล"
+          tableClassName="w-full border-collapse"
+          headerClassName="whitespace-nowrap"
+          onRowClickAction={(row) => setSelectedProblem(row)}
+          pagination={{
+            page,
+            totalPages,
+            onPageChangeAction: onPageChangeAction,
+          }}
+        />
+      </section>
 
       <Modal
         isOpen={!!selectedProblem}
         onCloseAction={() => setSelectedProblem(null)}
-        title={selectedProblem?.title || "Problem Details"}
+        title={selectedProblem?.title}
         size="lg"
         footer={
           isAdmin && selectedProblem && (
             <div className="flex flex-wrap items-center justify-end gap-3">
               <Link
                 href={`/dashboard/problems/update/${encodeURIComponent(selectedProblem.code)}`}
-                className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/5 px-5 py-2 text-xs font-black text-white uppercase tracking-widest transition-all hover:bg-white/10"
+                className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/5 px-6 py-2.5 text-xs font-black text-white uppercase tracking-widest transition-all hover:bg-white/10"
               >
                 <Icon name="edit" className="h-4 w-4" />
                 แก้ไข
@@ -170,7 +172,7 @@ export function ProblemsTable({
                   onToggleStatusAction(selectedProblem.code, selectedProblem.status);
                   setSelectedProblem(null);
                 }}
-                className={`flex items-center gap-2 rounded-xl px-5 py-2 text-xs font-black uppercase tracking-widest transition-all ${
+                className={`flex items-center gap-2 rounded-xl px-6 py-2.5 text-xs font-black uppercase tracking-widest transition-all ${
                   selectedProblem.status
                     ? "bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500/20"
                     : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
@@ -186,7 +188,7 @@ export function ProblemsTable({
                   onDeleteAction(selectedProblem.code);
                   setSelectedProblem(null);
                 }}
-                className="flex items-center gap-2 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 px-5 py-2 text-xs font-black uppercase tracking-widest transition-all hover:bg-red-500/20"
+                className="flex items-center gap-2 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 px-6 py-2.5 text-xs font-black uppercase tracking-widest transition-all hover:bg-red-500/20"
               >
                 <Icon name="trash" className="h-4 w-4" />
                 ลบ
@@ -196,8 +198,8 @@ export function ProblemsTable({
         }
       >
         {selectedProblem && (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="space-y-5">
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
+            <div className="space-y-6">
               <DetailItem label="ไอดี" value={selectedProblem.code} icon="hash" />
               <DetailItem label="หมวดหมู่" value={selectedProblem.category_name} icon="problem" />
               <DetailItem label="ความยาก" value={getDifficultyStyle(selectedProblem.difficulty).label} icon="trending-up" badgeStyle={getDifficultyStyle(selectedProblem.difficulty).color} />
@@ -205,14 +207,14 @@ export function ProblemsTable({
               <DetailItem label="ความซับซ้อน" value={selectedProblem.expected_complexity} icon="cpu" />
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-6">
               <DetailItem label="เวลาประมวลผล" value={`${selectedProblem.time_limit} ms`} icon="clock" />
               <DetailItem label="หน่วยความจำ" value={`${selectedProblem.memory_limit} KB`} icon="database" />
               <div>
-                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/20">แท็ก</p>
+                <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/30">แท็ก</p>
                 <div className="flex flex-wrap gap-2">
                   {selectedProblem.tags.map(tag => (
-                    <span key={tag} className="rounded-lg border border-white/5 bg-white/5 px-2.5 py-1 text-[10px] font-bold text-white/40 uppercase tracking-tighter">
+                    <span key={tag} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold text-white/50 uppercase tracking-tighter hover:bg-white/10 hover:text-white transition-all cursor-default">
                       {tag}
                     </span>
                   ))}
@@ -221,29 +223,29 @@ export function ProblemsTable({
               </div>
               {selectedProblem.uri && (
                 <div className="pt-2">
-                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/20">เอกสารประกอบ</p>
+                  <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/30">เอกสารประกอบ</p>
                   <Link
                     href={selectedProblem.uri}
                     target="_blank"
-                    className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-[10px] font-black text-primary uppercase tracking-widest transition-all hover:bg-primary/10"
+                    className="group inline-flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-6 py-3 text-xs font-black text-primary uppercase tracking-widest transition-all hover:bg-primary/20 hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    <Icon name="eye" className="h-3.5 w-3.5" />
+                    <Icon name="eye" className="h-4 w-4" />
                     ดูไฟล์ PDF
                   </Link>
                 </div>
               )}
             </div>
 
-            <div className="col-span-full space-y-6 pt-4 border-t border-white/5">
+            <div className="col-span-full space-y-8 pt-8 border-t border-white/5">
               <div>
-                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/20">คำอธิบายโจทย์</p>
-                <div className="rounded-2xl border border-white/5 bg-black/20 p-5 text-sm leading-relaxed text-white/60 font-medium">
-                  {selectedProblem.description}
+                <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/30">คำอธิบายโจทย์</p>
+                <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-6 text-[15px] leading-relaxed text-white/70 font-medium shadow-inner">
+                  {selectedProblem.description || <span className="italic text-white/20">ไม่มีคำอธิบาย</span>}
                 </div>
               </div>
               <div>
-                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/20">ข้อจำกัดของระบบ</p>
-                <div className="rounded-2xl border border-white/5 bg-black/40 p-5 text-sm font-mono leading-relaxed text-blue-400/70">
+                <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/30">ข้อจำกัดของระบบ</p>
+                <div className="rounded-3xl border border-white/5 bg-black/40 p-6 text-sm font-mono leading-relaxed text-blue-400/60 shadow-inner">
                   {selectedProblem.constraints || "No specific constraints recorded for this logic problem."}
                 </div>
               </div>
@@ -251,25 +253,25 @@ export function ProblemsTable({
           </div>
         )}
       </Modal>
-    </section>
+    </>
   );
 }
 
 function DetailItem({ label, value, icon, badgeStyle }: { label: string; value?: string | null; icon: string; badgeStyle?: string }) {
   if (!value) return null;
   return (
-    <div className="group flex items-center gap-4">
-      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/20 transition-all group-hover:bg-primary/10 group-hover:text-primary group-hover:scale-105">
-        <Icon name={icon} className="h-5 w-5" />
+    <div className="group flex items-center gap-5">
+      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white/5 text-white/40 transition-all group-hover:bg-primary/20 group-hover:text-primary group-hover:scale-110 group-hover:rotate-3 shadow-lg">
+        <Icon name={icon} className="h-6 w-6" />
       </div>
       <div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">{label}</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-0.5">{label}</p>
         {badgeStyle ? (
-          <span className={`inline-block mt-0.5 rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ${badgeStyle}`}>
+          <span className={`inline-block rounded-lg px-2.5 py-1 text-[10px] font-black uppercase tracking-widest shadow-sm ${badgeStyle}`}>
             {value}
           </span>
         ) : (
-          <p className="text-sm font-bold text-white/70 group-hover:text-white transition-colors">{value}</p>
+          <p className="text-[15px] font-bold text-white/80 group-hover:text-white transition-colors tracking-tight">{value}</p>
         )}
       </div>
     </div>
