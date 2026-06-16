@@ -169,18 +169,6 @@ export default function UsersPage() {
     });
   };
 
-  const handleResetPassword = async (userId: string) => {
-    void Swal.fire({
-      title: "รีเซ็ตรหัสผ่าน",
-      text: "ระบบกำลังเตรียมส่งอีเมลรีเซ็ตรหัสผ่าน (ฟังก์ชันนี้ยังไม่เปิดใช้งานในระบบจริง)",
-      icon: "info",
-      confirmButtonText: "ตกลง",
-      confirmButtonColor: "#8b5cf6",
-      background: "#1a1c2e",
-      color: "#fff",
-    });
-  };
-
   useEffect(() => {
     if (isAuthorized === true) {
       void fetchUsers();

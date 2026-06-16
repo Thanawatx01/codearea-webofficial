@@ -7,13 +7,6 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
 
-// กำหนดอินเทอร์เฟซของ TypeScript สำหรับข้อมูลของเรา
-interface TechBadge {
-  name: string;
-  color: string;
-  bg: string;
-}
-
 interface GithubStyleProfileData {
   name: string;
   username: string;

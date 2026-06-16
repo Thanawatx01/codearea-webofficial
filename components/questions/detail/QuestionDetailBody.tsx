@@ -20,7 +20,6 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
-  useLayoutEffect,
   type MouseEvent,
 } from "react";
 import AttachedDocumentBlock from "./AttachedDocumentBlock";

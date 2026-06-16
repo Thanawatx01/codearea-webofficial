@@ -10,7 +10,7 @@ import {
   type StoredQuestionSubmission,
 } from "@/lib/questionSubmissionSession";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { QuestionDetail } from "./types";
 
 export default function QuestionSubmissionBody({ code }: { code: string }) {

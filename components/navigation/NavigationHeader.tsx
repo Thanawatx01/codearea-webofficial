@@ -3,8 +3,8 @@
 import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLogout } from "@/components/auth/LogoutProvider";
 
 interface NavLink {
@@ -32,8 +32,20 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
   const pathname = usePathname();
+  const { logout, isLoggingOut } = useLogout();
+
+  // # ฟังก์ชันการออกจากระบบ
+  // เริ่มต้นการล้างเซสชันและทำความสะอาดสถานะ
+  // 1. รีเซ็ตสถานะ UI ท้องถิ่น
+  // 2. ส่งต่อหน้าที่ไปยัง LogoutProvider เพื่อล้างโทเค็นระดับสากล
+  // 3. เปลี่ยนหน้ากลับไปยังหน้าแรก
+  const handleLogout = useCallback(() => {
+    setIsLoggedIn(false);
+    setIsDropdownOpen(false);
+    setIsMobileMenuOpen(false);
+    logout("/");
+  }, [logout]);
 
   // # ตรรกะการตรวจสอบสิทธิ์และเริ่มต้น
   // จัดการการตั้งสถานะการยืนยันตัวตนและตัวฟังเหตุการณ์
@@ -91,7 +103,7 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
       window.removeEventListener("profile-updated", checkAuth);
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [pathname]);
+  }, [pathname, handleLogout]);
 
   // # ส่วนติดต่อผู้ใช้และ Dropdown
   // จัดการการแสดงผลและการปิดเมนู Dropdown
@@ -114,20 +126,6 @@ export function NavigationHeader({ links = [] }: NavigationHeaderProps) {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isDropdownOpen]);
-
-  const { logout, isLoggingOut } = useLogout();
-
-  // # ฟังก์ชันการออกจากระบบ
-  // เริ่มต้นการล้างเซสชันและทำความสะอาดสถานะ
-  // 1. รีเซ็ตสถานะ UI ท้องถิ่น
-  // 2. ส่งต่อหน้าที่ไปยัง LogoutProvider เพื่อล้างโทเค็นระดับสากล
-  // 3. เปลี่ยนหน้ากลับไปยังหน้าแรก
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setIsDropdownOpen(false);
-    setIsMobileMenuOpen(false);
-    logout("/");
-  };
 
   const defaultLinks: NavLink[] = [
     { label: "หน้าหลัก", href: "/" },

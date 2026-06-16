@@ -92,8 +92,6 @@ function ProblemsPageContent() {
 
   useEffect(() => {
     const initFilters = async () => {
-      let shouldFetch = false;
-      
       const catId = searchParams.get("categoryId");
       if (catId) {
         // Find category label
@@ -101,7 +99,6 @@ function ProblemsPageContent() {
         const found = options.find(o => o.value === catId);
         if (found) {
           setCategory(found);
-          shouldFetch = true;
         }
       }
 
@@ -116,7 +113,6 @@ function ProblemsPageContent() {
           // Fallback to ID if not found in first 100
           setTag([{ value: tagName, label: tagName }]);
         }
-        shouldFetch = true;
       }
 
       // If we set filters, we should fetch with them immediately

@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import Header from "@/components/Header";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Icon } from "@/components/icons/Icon";
 import { UnsavedChangesBar } from "@/components/UnsavedChangesBar";
 import Swal from "sweetalert2";
 import Cropper from "react-easy-crop";
-import { getCroppedImg, type Area, base64ToBlob } from "@/lib/imageUtils";
+import { getCroppedImg, type Area } from "@/lib/imageUtils";
 import { useLogout } from "@/components/auth/LogoutProvider";
 
 // ส่วนประกอบหน้า Settings (การตั้งค่า)
@@ -91,7 +90,7 @@ export default function SettingsPage() {
       if (user.avatar_url) {
         setAvatarPreview(user.avatar_url);
       }
-    } catch (e) {
+    } catch {
       router.replace("/login");
     }
   }, [router]);

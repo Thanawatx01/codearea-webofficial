@@ -40,7 +40,6 @@ export default function ProblemTypesPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<SortOrder>("popular");
-  const [isLoadingCounts, setIsLoadingCounts] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | number | null>(null);
@@ -58,7 +57,6 @@ export default function ProblemTypesPage() {
   // 5. อัปเดตสถานะ types ในเครื่องด้วยผลลัพธ์ที่ได้
   // 6. ตั้งค่า isLoadingCounts เป็น false
   const fetchCategoriesWithCounts = useCallback(async () => {
-    setIsLoadingCounts(true);
     try {
       const res = await api.get<CategoriesResponse>("/question-categories", {
         useToken: true,
@@ -89,7 +87,6 @@ export default function ProblemTypesPage() {
     } catch (e) {
       console.error("Error fetching categories:", e);
     }
-    setIsLoadingCounts(false);
   }, []);
 
   useEffect(() => {

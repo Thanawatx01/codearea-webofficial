@@ -4,7 +4,7 @@ import { useLogout } from "@/components/auth/LogoutProvider";
 import { CodeAreaLogo } from "@/components/branding/CodeAreaLogo";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 interface MenuItem {
   label: string;
@@ -93,7 +93,6 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
 
   const { logout, isLoggingOut } = useLogout();
 

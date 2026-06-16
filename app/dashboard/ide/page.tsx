@@ -49,7 +49,7 @@ export default function IDEPage() {
         } else {
           setConnectionStatus("disconnected");
         }
-      } catch (err) {
+      } catch {
         setConnectionStatus("disconnected");
       } finally {
         setIsLoaded(true);

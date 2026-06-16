@@ -55,8 +55,6 @@ export const PISTON_LANGUAGE_MAP: Record<number, { language: string; version: st
  * Converts Piston response to our common SubmissionResult format
  */
 function mapPistonToSubmissionResult(pistonRes: PistonExecuteResponse): SubmissionResult {
-  const isError = pistonRes.run.code !== 0 || (pistonRes.compile && pistonRes.compile.code !== 0);
-
   let status: SubmissionStatus = { id: 3, description: "Accepted" };
   if (pistonRes.compile && pistonRes.compile.code !== 0) {
     status = { id: 6, description: "Compilation Error" };

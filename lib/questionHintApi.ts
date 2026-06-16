@@ -78,8 +78,6 @@ export async function fetchQuestionHint(
   | { ok: true; text: string }
   | { ok: false; error: string; tone: AiMessageTone }
 > {
-  const path = resolveQuestionHintPath(options.path);
-
   const res = await callApi<unknown>("/ai-tutor/hint", {
     method: "POST",
     body,

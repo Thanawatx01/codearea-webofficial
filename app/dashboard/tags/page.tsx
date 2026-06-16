@@ -38,7 +38,6 @@ export default function TagsPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<SortOrder>("popular");
-  const [isLoadingCounts, setIsLoadingCounts] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | number | null>(null);
@@ -55,7 +54,6 @@ export default function TagsPage() {
   // 5. อัปเดตสถานะแท็กในเครื่องหากพบข้อมูลที่แปลงมาได้
   // 6. ตั้งค่า isLoadingCounts เป็น false เมื่อเสร็จสิ้น
   const fetchTagsWithCounts = useCallback(async () => {
-    setIsLoadingCounts(true);
     try {
       const res = await api.get<TagsResponse>("/tags", {
         useToken: true,
@@ -85,7 +83,6 @@ export default function TagsPage() {
     } catch (e) {
       console.error("Error fetching tags:", e);
     }
-    setIsLoadingCounts(false);
   }, []);
 
   useEffect(() => {

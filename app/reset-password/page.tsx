@@ -3,7 +3,6 @@
 import { ThemedInput } from "@/components/FormControls";
 import { Icon } from "@/components/icons/Icon";
 import { api } from "@/lib/api";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import Image from "next/image";

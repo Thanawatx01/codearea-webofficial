@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { performLogout } from "@/lib/authUtils";
 import { LogoutOverlay } from "./LogoutOverlay";
 
@@ -19,7 +19,6 @@ const LogoutContext = createContext<LogoutContextType | undefined>(undefined);
 // 3. จัดการการล้างข้อมูล local storage และโทเค็นผ่าน performLogout
 export function LogoutProvider({ children }: { children: ReactNode }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const router = useRouter();
 
   const pathname = usePathname();
 
